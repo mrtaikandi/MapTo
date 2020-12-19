@@ -66,9 +66,9 @@ namespace MapTo
                 classModifiers: classSyntax.GetClassModifier(),  
                 className: classSyntax.GetClassName(),
                 properties: classSymbol.GetAllMembersOfType<IPropertySymbol>(),
-                destinationNamespace: destinationTypeSymbol.ContainingNamespace.Name,
-                destinationClassName: destinationTypeSymbol.Name,
-                destinationTypeProperties: destinationTypeSymbol.GetAllMembersOfType<IPropertySymbol>());
+                sourceNamespace: destinationTypeSymbol.ContainingNamespace.Name,
+                sourceClassName: destinationTypeSymbol.Name,
+                sourceTypeProperties: destinationTypeSymbol.GetAllMembersOfType<IPropertySymbol>());
         }
 
         private static ITypeSymbol? GetDestinationTypeSymbol(ClassDeclarationSyntax classSyntax, SemanticModel model)

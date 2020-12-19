@@ -79,9 +79,9 @@ namespace MapTo
         {
             builder.AppendLine("using System;");
 
-            if (!string.IsNullOrWhiteSpace(model.DestinationNamespace) && model.Namespace != model.DestinationNamespace)
+            if (!string.IsNullOrWhiteSpace(model.SourceNamespace) && model.Namespace != model.SourceNamespace)
             {
-                builder.AppendFormat("using {0};", model.DestinationNamespace).AppendLine();
+                builder.AppendFormat("using {0};", model.SourceNamespace).AppendLine();
             }
             
             return builder.AppendLine();
@@ -89,18 +89,18 @@ namespace MapTo
 
         private static StringBuilder GenerateConstructor(this StringBuilder builder, MapModel model, out List<IPropertySymbol> mappedProperties)
         {
-            var destinationClassParameterName = model.DestinationClassName.ToCamelCase();
+            var destinationClassParameterName = model.SourceClassName.ToCamelCase();
 
             builder
                 .PadLeft(Indent2)
-                .AppendFormat("public {0}({1} {2})", model.ClassName, model.DestinationClassName, destinationClassParameterName)
+                .AppendFormat("public {0}({1} {2})", model.ClassName, model.SourceClassName, destinationClassParameterName)
                 .AppendOpeningBracket(Indent2)
                 .PadLeft(Indent3)
                 .AppendFormat("if ({0} == null) throw new ArgumentNullException(nameof({0}));", destinationClassParameterName)
                 .AppendLine();
 
             mappedProperties = new List<IPropertySymbol>();
-            foreach (var propertySymbol in model.DestinationTypeProperties)
+            foreach (var propertySymbol in model.SourceTypeProperties)
             {
                 if (model.Properties.Any(p => p.Name == propertySymbol.Name))
                 {
@@ -117,12 +117,12 @@ namespace MapTo
 
         private static StringBuilder GenerateFactoryMethod(this StringBuilder builder, MapModel model)
         {
-            var destinationClassParameterName = model.DestinationClassName.ToCamelCase();
+            var destinationClassParameterName = model.SourceClassName.ToCamelCase();
 
             return builder
                 .AppendLine()
                 .PadLeft(Indent2)
-                .AppendFormat("public static {0} From({1} {2})", model.ClassName, model.DestinationClassName, destinationClassParameterName)
+                .AppendFormat("public static {0} From({1} {2})", model.ClassName, model.SourceClassName, destinationClassParameterName)
                 .AppendOpeningBracket(Indent2)
                 .PadLeft(Indent3)
                 .AppendFormat("return {0} == null ? null : new {1}({0});", destinationClassParameterName, model.ClassName)
