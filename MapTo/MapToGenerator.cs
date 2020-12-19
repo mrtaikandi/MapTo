@@ -66,6 +66,7 @@ namespace MapTo
                 classModifiers: classSyntax.GetClassModifier(),  
                 className: classSyntax.GetClassName(),
                 properties: classSymbol.GetAllMembersOfType<IPropertySymbol>(),
+                destinationNamespace: destinationTypeSymbol.ContainingNamespace.Name,
                 destinationClassName: destinationTypeSymbol.Name,
                 destinationTypeProperties: destinationTypeSymbol.GetAllMembersOfType<IPropertySymbol>());
         }

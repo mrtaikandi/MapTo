@@ -47,7 +47,7 @@ namespace MapTo
 
             builder
                 .AppendFileHeader()
-                .GenerateUsings();
+                .GenerateUsings(model);
 
             // Namespace declaration
             builder
@@ -75,17 +75,22 @@ namespace MapTo
             return (builder.ToString(), $"{model.ClassName}.cs");
         }
 
-        private static StringBuilder GenerateUsings(this StringBuilder builder)
+        private static StringBuilder GenerateUsings(this StringBuilder builder, MapModel model)
         {
-            return builder
-                .AppendLine("using System;")
-                .AppendLine();
+            builder.AppendLine("using System;");
+
+            if (!string.IsNullOrWhiteSpace(model.DestinationNamespace) && model.Namespace != model.DestinationNamespace)
+            {
+                builder.AppendFormat("using {0};", model.DestinationNamespace).AppendLine();
+            }
+            
+            return builder.AppendLine();
         }
-        
+
         private static StringBuilder GenerateConstructor(this StringBuilder builder, MapModel model, out List<IPropertySymbol> mappedProperties)
         {
             var destinationClassParameterName = model.DestinationClassName.ToCamelCase();
-            
+
             builder
                 .PadLeft(Indent2)
                 .AppendFormat("public {0}({1} {2})", model.ClassName, model.DestinationClassName, destinationClassParameterName)
@@ -120,7 +125,7 @@ namespace MapTo
                 .AppendFormat("public static {0} From({1} {2})", model.ClassName, model.DestinationClassName, destinationClassParameterName)
                 .AppendOpeningBracket(Indent2)
                 .PadLeft(Indent3)
-                .AppendFormat("return {0} == null ? null : new {1}({0});", destinationClassParameterName, model.ClassName )
+                .AppendFormat("return {0} == null ? null : new {1}({0});", destinationClassParameterName, model.ClassName)
                 .AppendClosingBracket(Indent2);
         }
 

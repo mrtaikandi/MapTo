@@ -6,12 +6,13 @@ namespace MapTo.Models
 {
     public class MapModel
     {
-        public MapModel(string? ns, string classModifiers, string className, IEnumerable<IPropertySymbol> properties, string destinationClassName, IEnumerable<IPropertySymbol> destinationTypeProperties)
+        public MapModel(string? ns, string classModifiers, string className, IEnumerable<IPropertySymbol> properties, string destinationNamespace, string destinationClassName, IEnumerable<IPropertySymbol> destinationTypeProperties)
         {
             Namespace = ns;
             ClassModifiers = classModifiers;
             ClassName = className;
             Properties = properties;
+            DestinationNamespace = destinationNamespace;
             DestinationClassName = destinationClassName;
             DestinationTypeProperties = destinationTypeProperties;
         }
@@ -23,6 +24,8 @@ namespace MapTo.Models
         public string ClassName { get;  }
         
         public IEnumerable<IPropertySymbol> Properties { get; }
+        
+        public string DestinationNamespace { get; }
         
         public string DestinationClassName { get; }
         
