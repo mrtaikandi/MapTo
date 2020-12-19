@@ -218,6 +218,31 @@ using Bazaar;
             compilation.SyntaxTrees.Count().ShouldBe(3);
             compilation.SyntaxTrees.Last().ToString().ShouldStartWith(expectedResult.Trim());
         }
+        
+        [Fact]
+        public void When_SourceTypeHasMatchingProperties_Should_GenerateToExtensionMethodOnSourceType()
+        {
+            // Arrange
+            var source = GetSourceText();
+            
+            const string expectedResult = @"
+    public static class BazExtensions
+    {
+        public static Foo ToFoo(this Baz baz)
+        {
+            return baz == null ? null : new Foo(baz)
+        }
+    }
+";
+            
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source);
+            
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+            compilation.SyntaxTrees.Count().ShouldBe(3);
+            compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult.Trim());
+        }
 
         private static string GetSourceText(bool includeAttributeNamespace = false, string sourceClassNamespace = "Test")
         {

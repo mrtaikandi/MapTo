@@ -5,7 +5,7 @@ namespace MapTo.Models
 {
     public class MapModel
     {
-        public MapModel(string? ns, string classModifiers, string className, IEnumerable<IPropertySymbol> properties, string sourceNamespace, string sourceClassName, IEnumerable<IPropertySymbol> sourceTypeProperties)
+        public MapModel(string? ns, SyntaxTokenList classModifiers, string className, IEnumerable<IPropertySymbol> properties, string sourceNamespace, string sourceClassName, IEnumerable<IPropertySymbol> sourceTypeProperties)
         {
             Namespace = ns;
             ClassModifiers = classModifiers;
@@ -18,7 +18,7 @@ namespace MapTo.Models
 
         public string? Namespace { get; }
 
-        public string ClassModifiers { get; }
+        public SyntaxTokenList ClassModifiers { get; }
 
         public string ClassName { get;  }
         

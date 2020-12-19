@@ -5,7 +5,6 @@ using System.Text;
 using MapTo.Extensions;
 using MapTo.Models;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
 namespace MapTo
@@ -47,30 +46,40 @@ namespace MapTo
 
             builder
                 .AppendFileHeader()
-                .GenerateUsings(model);
+                .GenerateUsings(model)
 
-            // Namespace declaration
-            builder
+                // Namespace declaration
                 .AppendFormat("namespace {0}", model.Namespace)
-                .AppendOpeningBracket();
+                .AppendOpeningBracket()
 
-            // Class declaration
-            builder
+                // Class declaration
                 .PadLeft(Indent1)
-                .AppendFormat("{0} class {1}", model.ClassModifiers, model.ClassName)
-                .AppendOpeningBracket(Indent1);
+                .AppendFormat("{0} class {1}", model.ClassModifiers.ToFullString().Trim(), model.ClassName)
+                .AppendOpeningBracket(Indent1)
 
-            // Class body
-            builder
+                // Class body
                 .GenerateConstructor(model, out var mappedProperties)
                 .AppendLine()
-                .GenerateFactoryMethod(model);
+                .GenerateFactoryMethod(model)
 
-            // End class declaration
-            builder.AppendClosingBracket(Indent1);
+                // End class declaration
+                .AppendClosingBracket(Indent1)
 
-            // End namespace declaration
-            builder.AppendClosingBracket();
+                // Extensions Class declaration
+                .AppendLine()
+                .AppendLine()
+                .PadLeft(Indent1)
+                .AppendFormat("{0} static class {1}Extensions", model.ClassModifiers.FirstOrDefault().ToFullString().Trim(), model.SourceClassName)
+                .AppendOpeningBracket(Indent1)
+                
+                // Extension class body
+                .GenerateSourceTypeExtensionMethod(model)
+                
+                // End extensions class declaration
+                .AppendClosingBracket(Indent1)
+                
+                // End namespace declaration
+                .AppendClosingBracket();
 
             return (builder.ToString(), $"{model.ClassName}.cs");
         }
@@ -83,20 +92,20 @@ namespace MapTo
             {
                 builder.AppendFormat("using {0};", model.SourceNamespace).AppendLine();
             }
-            
+
             return builder.AppendLine();
         }
 
         private static StringBuilder GenerateConstructor(this StringBuilder builder, MapModel model, out List<IPropertySymbol> mappedProperties)
         {
-            var destinationClassParameterName = model.SourceClassName.ToCamelCase();
+            var sourceClassParameterName = model.SourceClassName.ToCamelCase();
 
             builder
                 .PadLeft(Indent2)
-                .AppendFormat("public {0}({1} {2})", model.ClassName, model.SourceClassName, destinationClassParameterName)
+                .AppendFormat("public {0}({1} {2})", model.ClassName, model.SourceClassName, sourceClassParameterName)
                 .AppendOpeningBracket(Indent2)
                 .PadLeft(Indent3)
-                .AppendFormat("if ({0} == null) throw new ArgumentNullException(nameof({0}));", destinationClassParameterName)
+                .AppendFormat("if ({0} == null) throw new ArgumentNullException(nameof({0}));", sourceClassParameterName)
                 .AppendLine();
 
             mappedProperties = new List<IPropertySymbol>();
@@ -107,28 +116,41 @@ namespace MapTo
                     mappedProperties.Add(propertySymbol);
                     builder
                         .PadLeft(Indent3)
-                        .AppendFormat("{0} = {1}.{2};{3}", propertySymbol.Name, destinationClassParameterName, propertySymbol.Name, Environment.NewLine);
+                        .AppendFormat("{0} = {1}.{2};{3}", propertySymbol.Name, sourceClassParameterName, propertySymbol.Name, Environment.NewLine);
                 }
             }
 
             // End constructor declaration
-            return builder.AppendClosingBracket(Indent2, padNewLine: false);
+            return builder.AppendClosingBracket(Indent2, false);
         }
 
         private static StringBuilder GenerateFactoryMethod(this StringBuilder builder, MapModel model)
         {
-            var destinationClassParameterName = model.SourceClassName.ToCamelCase();
+            var sourceClassParameterName = model.SourceClassName.ToCamelCase();
 
             return builder
                 .AppendLine()
                 .PadLeft(Indent2)
-                .AppendFormat("public static {0} From({1} {2})", model.ClassName, model.SourceClassName, destinationClassParameterName)
+                .AppendFormat("public static {0} From({1} {2})", model.ClassName, model.SourceClassName, sourceClassParameterName)
                 .AppendOpeningBracket(Indent2)
                 .PadLeft(Indent3)
-                .AppendFormat("return {0} == null ? null : new {1}({0});", destinationClassParameterName, model.ClassName)
+                .AppendFormat("return {0} == null ? null : new {1}({0});", sourceClassParameterName, model.ClassName)
                 .AppendClosingBracket(Indent2);
         }
 
+        private static StringBuilder GenerateSourceTypeExtensionMethod(this StringBuilder builder, MapModel model)
+        {
+            var sourceClassParameterName = model.SourceClassName.ToCamelCase();
+
+            return builder
+                .PadLeft(Indent2)
+                .AppendFormat("public static {0} To{0}(this {1} {2})", model.ClassName, model.SourceClassName, sourceClassParameterName)
+                .AppendOpeningBracket(Indent2)
+                .PadLeft(Indent3)
+                .AppendFormat("return {0} == null ? null : new {1}({0})", sourceClassParameterName, model.ClassName)
+                .AppendClosingBracket(Indent2);
+        }
+        
         private static StringBuilder AppendFileHeader(this StringBuilder builder)
         {
             return builder

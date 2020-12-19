@@ -63,7 +63,7 @@ namespace MapTo
             
             return new MapModel(
                 ns: root.GetNamespace(),
-                classModifiers: classSyntax.GetClassModifier(),  
+                classModifiers: classSyntax.Modifiers,  
                 className: classSyntax.GetClassName(),
                 properties: classSymbol.GetAllMembersOfType<IPropertySymbol>(),
                 sourceNamespace: destinationTypeSymbol.ContainingNamespace.Name,
