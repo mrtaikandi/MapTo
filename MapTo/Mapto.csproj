@@ -1,17 +1,37 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <AssemblyName>MapTo</AssemblyName>
+        <Description>Generates mapping code between two types using Roslyn code generator.</Description>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <IncludeSymbols>true</IncludeSymbols>
+        <NoWarn>NU5128</NoWarn>
+        <PackageId>MapTo</PackageId>
+        <PackageProjectUrl>https://github.com/mrtaikandi/mapto</PackageProjectUrl>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <PackageVersion>$(Version)</PackageVersion>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <RepositoryUrl>https://github.com/mrtaikandi/mapto</RepositoryUrl>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <RootNamespace>MapTo</RootNamespace>
         <TargetFramework>netstandard2.0</TargetFramework>
-        <LangVersion>9</LangVersion>
         <Nullable>enable</Nullable>
+        <LangVersion>preview</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.1">
+        <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.2">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="3.8.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="bin\Debug\netstandard2.0\MapTo.dll" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    </ItemGroup>
 </Project>

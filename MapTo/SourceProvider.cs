@@ -37,7 +37,7 @@ namespace MapTo
 }
 ";
 
-            context.AddSource("MapFromAttribute", SourceText.From(source, Encoding.UTF8));
+            context.AddSource("MapFromAttribute.g.cs", source);
         }
 
         internal static (string source, string hintName) GenerateSource(MapModel model)
@@ -81,7 +81,7 @@ namespace MapTo
                 // End namespace declaration
                 .AppendClosingBracket();
 
-            return (builder.ToString(), $"{model.ClassName}.cs");
+            return (builder.ToString(), $"{model.ClassName}.g.cs");
         }
 
         private static StringBuilder GenerateUsings(this StringBuilder builder, MapModel model)

@@ -66,9 +66,11 @@ namespace MapTo
         {
             // Arrange
             const string source = @"
+using MapTo;
+
 namespace Test
 {
-    [MapFrom(typeof(Baz)]
+    [MapFrom(typeof(Baz))]
     public partial class Foo
     {
         
@@ -113,7 +115,7 @@ namespace Test
             const string source = @"
 namespace Test
 {
-    [MapTo.MapFrom(typeof(Baz)]
+    [MapTo.MapFrom(typeof(Baz))]
     public partial class Foo
     {
         
@@ -248,6 +250,7 @@ using Bazaar;
         {
             var builder = new StringBuilder();
             builder.AppendLine($@"
+{(includeAttributeNamespace ? string.Empty : "using MapTo;")}
 namespace Test
 {{
     {(sourceClassNamespace != "Test" && !includeAttributeNamespace ? $"using {sourceClassNamespace};": string.Empty)}

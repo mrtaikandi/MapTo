@@ -24,10 +24,10 @@ namespace MapToTests
 
         internal static void ShouldBeSuccessful(this ImmutableArray<Diagnostic> diagnostics)
         {
-            Assert.False(diagnostics.Any(d => d.Severity >= DiagnosticSeverity.Warning), $"Failed: {diagnostics.FirstOrDefault()?.GetMessage()}");
+            Assert.False(diagnostics.Any(d => d.Severity >= DiagnosticSeverity.Warning), $"Failed: {Environment.NewLine}{string.Join($"{Environment.NewLine}- ", diagnostics.Select(c => c.GetMessage()))}");
         }
 
-        internal static (Compilation compilation, ImmutableArray<Diagnostic> diagnostics) GetOutputCompilation(string source)
+        internal static (Compilation compilation, ImmutableArray<Diagnostic> diagnostics) GetOutputCompilation(string source, bool assertCompilation = false)
         {
             var syntaxTree = CSharpSyntaxTree.ParseText(source);
             var references = AppDomain.CurrentDomain.GetAssemblies()
@@ -37,9 +37,12 @@ namespace MapToTests
 
             var compilation = CSharpCompilation.Create("foo", new[] { syntaxTree }, references, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
-            // NB: Uncomment this line if you want to fail tests when the injected program isn't valid _before_ running generators
-            // var compileDiagnostics = compilation.GetDiagnostics();
-            // Assert.False(compileDiagnostics.Any(d => d.Severity == DiagnosticSeverity.Error), "Failed: " + compileDiagnostics.FirstOrDefault()?.GetMessage());
+            if (assertCompilation)
+            {
+                // NB: fail tests when the injected program isn't valid _before_ running generators
+                var compileDiagnostics = compilation.GetDiagnostics();
+                Assert.False(compileDiagnostics.Any(d => d.Severity == DiagnosticSeverity.Error), $"Failed: {Environment.NewLine}{string.Join($"{Environment.NewLine}- ", compileDiagnostics.Select(c => c.GetMessage()))}");
+            }
 
             ISourceGenerator generator = new MapToGenerator();
             var driver = CSharpGeneratorDriver.Create(generator);

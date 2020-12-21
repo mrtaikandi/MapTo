@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using MapTo.Extensions;
 using MapTo.Models;
 using Microsoft.CodeAnalysis;
@@ -7,6 +6,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MapTo
 {
+    [Generator]
     public class MapToGenerator : ISourceGenerator
     {
         /// <inheritdoc />
