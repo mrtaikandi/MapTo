@@ -23,35 +23,11 @@ namespace MapTo.Extensions
             return type.GetBaseTypesAndThis().SelectMany(n => n.GetMembers());
         }
 
-        public static IEnumerable<T> GetAllMembersOfType<T>(this ITypeSymbol type) where T : ISymbol
-        {
-            return type.GetAllMembers().OfType<T>();
-        }
+        public static IEnumerable<T> GetAllMembersOfType<T>(this ITypeSymbol type) where T : ISymbol => type.GetAllMembers().OfType<T>();
 
-        public static CompilationUnitSyntax GetCompilationUnit(this SyntaxNode syntaxNode)
-        {
-            return syntaxNode.Ancestors().OfType<CompilationUnitSyntax>().Single();
-        }
+        public static CompilationUnitSyntax GetCompilationUnit(this SyntaxNode syntaxNode) => syntaxNode.Ancestors().OfType<CompilationUnitSyntax>().Single();
 
-        public static string GetClassName(this ClassDeclarationSyntax classSyntax)
-        {
-            return classSyntax.Identifier.Text;
-        }
-
-        public static string GetClassModifier(this ClassDeclarationSyntax classSyntax)
-        {
-            return classSyntax.Modifiers.ToFullString().Trim();
-        }
-
-        public static bool HaveAttribute(this ClassDeclarationSyntax classSyntax, string attributeName)
-        {
-            return classSyntax.AttributeLists.Count > 0 &&
-                   classSyntax.AttributeLists.SelectMany(al => al.Attributes
-                           .Where(a =>
-                               (a.Name as IdentifierNameSyntax)?.Identifier.Text == attributeName ||
-                               ((a.Name as QualifiedNameSyntax)?.Right as IdentifierNameSyntax)?.Identifier.ValueText == attributeName))
-                       .Any();
-        }
+        public static string GetClassName(this ClassDeclarationSyntax classSyntax) => classSyntax.Identifier.Text;
 
         public static AttributeSyntax? GetAttribute(this ClassDeclarationSyntax classSyntax, string attributeName)
         {
@@ -62,21 +38,11 @@ namespace MapTo.Extensions
                     ((a.Name as QualifiedNameSyntax)?.Right as IdentifierNameSyntax)?.Identifier.ValueText == attributeName);
         }
 
-        public static string? GetNamespace(this CompilationUnitSyntax root)
-        {
-            return root.ChildNodes()
+        public static string? GetNamespace(this CompilationUnitSyntax root) =>
+            root.ChildNodes()
                 .OfType<NamespaceDeclarationSyntax>()
                 .FirstOrDefault()
                 ?.Name
                 .ToString();
-        }
-
-        public static List<string> GetUsings(this CompilationUnitSyntax root)
-        {
-            return root.ChildNodes()
-                .OfType<UsingDirectiveSyntax>()
-                .Select(n => n.Name.ToString())
-                .ToList();
-        }
     }
 }

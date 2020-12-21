@@ -2,11 +2,11 @@
 
     <PropertyGroup>
         <AssemblyName>MapTo</AssemblyName>
-        <Description>Generates mapping code between two types using Roslyn code generator.</Description>
+        <Description>An object to object mapping generator using using Roslyn code generator.</Description>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <IncludeSymbols>true</IncludeSymbols>
-        <NoWarn>NU5128</NoWarn>
         <PackageId>MapTo</PackageId>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
         <PackageProjectUrl>https://github.com/mrtaikandi/mapto</PackageProjectUrl>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageVersion>$(Version)</PackageVersion>
@@ -16,7 +16,7 @@
         <RootNamespace>MapTo</RootNamespace>
         <TargetFramework>netstandard2.0</TargetFramework>
         <Nullable>enable</Nullable>
-        <LangVersion>preview</LangVersion>
+        <LangVersion>9</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -32,6 +32,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <None Include="..\LICENSE" Pack="true" PackagePath="" Visible="false" />
         <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     </ItemGroup>
 </Project>

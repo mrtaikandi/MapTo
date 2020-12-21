@@ -11,17 +11,6 @@ namespace MapToTests
 {
     internal static class CSharpGenerator
     {
-        internal static string GetGeneratedOutput(this ITestOutputHelper outputHelper, string source)
-        {
-            var (compilation, diagnostics) = GetOutputCompilation(source);
-            diagnostics.ShouldBeSuccessful();
-            
-            var generatedOutput = compilation.SyntaxTrees.Last().ToString();
-            outputHelper.WriteLine(generatedOutput);
-            
-            return generatedOutput;
-        }
-
         internal static void ShouldBeSuccessful(this ImmutableArray<Diagnostic> diagnostics)
         {
             Assert.False(diagnostics.Any(d => d.Severity >= DiagnosticSeverity.Warning), $"Failed: {Environment.NewLine}{string.Join($"{Environment.NewLine}- ", diagnostics.Select(c => c.GetMessage()))}");
@@ -47,7 +36,7 @@ namespace MapToTests
             ISourceGenerator generator = new MapToGenerator();
             var driver = CSharpGeneratorDriver.Create(generator);
             driver.RunGeneratorsAndUpdateCompilation(compilation, out var outputCompilation, out var generateDiagnostics);
-            
+
             return (outputCompilation, generateDiagnostics);
         }
     }
