@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using MapTo.Extensions;
 using MapTo.Models;
 using Microsoft.CodeAnalysis;
@@ -25,61 +26,50 @@ namespace MapTo
                 return;
             }
 
-            foreach (var (classDeclarationSyntax, attributeSyntax) in receiver.CandidateClasses)
+            foreach (var classDeclarationSyntax in receiver.CandidateClasses)
             {
-                var model = GetModel(context.Compilation, classDeclarationSyntax);
+                var (model, diagnostic) = GetModel(context.Compilation, classDeclarationSyntax);
                 if (model is null)
                 {
-                    // TODO: Emit diagnostic info.
+                    context.ReportDiagnostic(diagnostic!);
                     continue;
                 }
   
                 var (source, hintName) = SourceBuilder.GenerateSource(model);
                 
                 context.AddSource(hintName, source);
+                context.ReportDiagnostic(Diagnostics.ClassMappingsGenerated(classDeclarationSyntax.GetLocation(), model.ClassName)); 
             }
         }
 
-        private static MapModel? GetModel(Compilation compilation, ClassDeclarationSyntax classSyntax)
+        private static (MapModel? model, Diagnostic? diagnostic) GetModel(Compilation compilation, ClassDeclarationSyntax classSyntax)
         {
             var root = classSyntax.GetCompilationUnit();
-            if (root is null)
-            {
-                return null;
-            }
-            
             var classSemanticModel = compilation.GetSemanticModel(classSyntax.SyntaxTree);
 
             if (!(classSemanticModel.GetDeclaredSymbol(classSyntax) is INamedTypeSymbol classSymbol))
             {
-                return null;
+                return (default, Diagnostics.SymbolNotFound(classSyntax.GetLocation(), classSyntax.Identifier.ValueText));
             }
 
-            var destinationTypeSymbol = GetDestinationTypeSymbol(classSyntax, classSemanticModel);
-            if (destinationTypeSymbol is null)
+            var sourceTypeSymbol = GetSourceTypeSymbol(classSyntax, classSemanticModel);
+            if (sourceTypeSymbol is null)
             {
-                return null;
+                return (default, Diagnostics.SymbolNotFound(classSyntax.GetLocation(), classSyntax.Identifier.ValueText));
             }
-            
-            return new MapModel(
-                ns: root.GetNamespace(),
-                classModifiers: classSyntax.Modifiers,  
-                className: classSyntax.GetClassName(),
-                properties: classSymbol.GetAllMembersOfType<IPropertySymbol>(),
-                sourceNamespace: destinationTypeSymbol.ContainingNamespace.Name,
-                sourceClassName: destinationTypeSymbol.Name,
-                sourceTypeProperties: destinationTypeSymbol.GetAllMembersOfType<IPropertySymbol>());
+
+            return (MapModel.Create(root, classSyntax, classSymbol, sourceTypeSymbol), default);
         }
 
-        private static ITypeSymbol? GetDestinationTypeSymbol(ClassDeclarationSyntax classSyntax, SemanticModel model)
+        private static ITypeSymbol? GetSourceTypeSymbol(ClassDeclarationSyntax classSyntax, SemanticModel model)
         {
-            var destinationTypeExpressionSyntax = classSyntax
+            var sourceTypeExpressionSyntax = classSyntax
                 .GetAttribute(SourceBuilder.MapFromAttributeName)
                 ?.DescendantNodes()
                 .OfType<TypeOfExpressionSyntax>()
                 .SingleOrDefault();
 
-            return destinationTypeExpressionSyntax is not null ? model.GetTypeInfo(destinationTypeExpressionSyntax.Type).Type : null;
+            return sourceTypeExpressionSyntax is not null ? model.GetTypeInfo(sourceTypeExpressionSyntax.Type).Type : null;
         }
     }
 }

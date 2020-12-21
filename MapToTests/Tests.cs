@@ -93,7 +93,7 @@ namespace Test
 {
     public partial class Foo
     {
-        public Foo(Baz baz)
+        public Foo(Test.Baz baz)
         {
             if (baz == null) throw new ArgumentNullException(nameof(baz));
         }
@@ -136,7 +136,7 @@ namespace Test
 {
     public partial class Foo
     {
-        public Foo(Baz baz)
+        public Foo(Test.Baz baz)
         {
             if (baz == null) throw new ArgumentNullException(nameof(baz));
         }
@@ -160,7 +160,7 @@ namespace Test
             const string expectedResult = @"
     public partial class Foo
     {
-        public Foo(Baz baz)
+        public Foo(Test.Models.Baz baz)
         {
             if (baz == null) throw new ArgumentNullException(nameof(baz));
             Prop1 = baz.Prop1;
@@ -185,7 +185,7 @@ namespace Test
             var source = GetSourceText();
             
             const string expectedResult = @"
-        public static Foo From(Baz baz)
+        public static Foo From(Test.Models.Baz baz)
         {
             return baz == null ? null : new Foo(baz);
         }
@@ -230,9 +230,9 @@ using Bazaar;
             const string expectedResult = @"
     public static class BazExtensions
     {
-        public static Foo ToFoo(this Baz baz)
+        public static Foo ToFoo(this Test.Models.Baz baz)
         {
-            return baz == null ? null : new Foo(baz)
+            return baz == null ? null : new Foo(baz);
         }
     }
 ";
@@ -246,7 +246,7 @@ using Bazaar;
             compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult.Trim());
         }
 
-        private static string GetSourceText(bool includeAttributeNamespace = false, string sourceClassNamespace = "Test")
+        private static string GetSourceText(bool includeAttributeNamespace = false, string sourceClassNamespace = "Test.Models")
         {
             var builder = new StringBuilder();
             builder.AppendLine($@"

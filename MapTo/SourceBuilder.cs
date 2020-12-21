@@ -68,7 +68,7 @@ namespace MapTo
                 .AppendLine()
                 .AppendLine()
                 .PadLeft(Indent1)
-                .AppendFormat("{0} static class {1}Extensions", model.ClassModifiers.FirstOrDefault().ToFullString().Trim(), model.SourceClassName)
+                .AppendFormat("{0} static partial class {1}Extensions", model.ClassModifiers.FirstOrDefault().ToFullString().Trim(), model.SourceClassName)
                 .AppendOpeningBracket(Indent1)
                 
                 // Extension class body
@@ -87,7 +87,8 @@ namespace MapTo
         {
             builder.AppendLine("using System;");
 
-            if (!string.IsNullOrWhiteSpace(model.SourceNamespace) && model.Namespace != model.SourceNamespace)
+            // NB: If class names are the same, we're going to use fully qualified names instead.
+            if (model.Namespace != model.SourceNamespace)
             {
                 builder.AppendFormat("using {0};", model.SourceNamespace).AppendLine();
             }
@@ -101,7 +102,7 @@ namespace MapTo
 
             builder
                 .PadLeft(Indent2)
-                .AppendFormat("public {0}({1} {2})", model.ClassName, model.SourceClassName, sourceClassParameterName)
+                .AppendFormat("public {0}({1} {2})", model.ClassName, model.SourceClassFullName, sourceClassParameterName)
                 .AppendOpeningBracket(Indent2)
                 .PadLeft(Indent3)
                 .AppendFormat("if ({0} == null) throw new ArgumentNullException(nameof({0}));", sourceClassParameterName)
@@ -130,7 +131,7 @@ namespace MapTo
             return builder
                 .AppendLine()
                 .PadLeft(Indent2)
-                .AppendFormat("public static {0} From({1} {2})", model.ClassName, model.SourceClassName, sourceClassParameterName)
+                .AppendFormat("public static {0} From({1} {2})", model.ClassName, model.SourceClassFullName, sourceClassParameterName)
                 .AppendOpeningBracket(Indent2)
                 .PadLeft(Indent3)
                 .AppendFormat("return {0} == null ? null : new {1}({0});", sourceClassParameterName, model.ClassName)
@@ -143,10 +144,10 @@ namespace MapTo
 
             return builder
                 .PadLeft(Indent2)
-                .AppendFormat("public static {0} To{0}(this {1} {2})", model.ClassName, model.SourceClassName, sourceClassParameterName)
+                .AppendFormat("public static {0} To{0}(this {1} {2})", model.ClassName, model.SourceClassFullName, sourceClassParameterName)
                 .AppendOpeningBracket(Indent2)
                 .PadLeft(Indent3)
-                .AppendFormat("return {0} == null ? null : new {1}({0})", sourceClassParameterName, model.ClassName)
+                .AppendFormat("return {0} == null ? null : new {1}({0});", sourceClassParameterName, model.ClassName)
                 .AppendClosingBracket(Indent2);
         }
         

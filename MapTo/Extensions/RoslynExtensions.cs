@@ -28,9 +28,9 @@ namespace MapTo.Extensions
             return type.GetAllMembers().OfType<T>();
         }
 
-        public static CompilationUnitSyntax? GetCompilationUnit(this SyntaxNode syntaxNode)
+        public static CompilationUnitSyntax GetCompilationUnit(this SyntaxNode syntaxNode)
         {
-            return syntaxNode.Ancestors().OfType<CompilationUnitSyntax>().FirstOrDefault();
+            return syntaxNode.Ancestors().OfType<CompilationUnitSyntax>().Single();
         }
 
         public static string GetClassName(this ClassDeclarationSyntax classSyntax)

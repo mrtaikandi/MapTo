@@ -7,7 +7,7 @@ namespace MapTo
 {
     internal class MapToSyntaxReceiver : ISyntaxReceiver
     {
-        public List<(ClassDeclarationSyntax classDeclarationSyntax, AttributeSyntax attributeSyntax)> CandidateClasses { get; } = new();
+        public List<ClassDeclarationSyntax> CandidateClasses { get; } = new();
 
         /// <inheritdoc />
         public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
@@ -31,7 +31,7 @@ namespace MapTo
 
             if (attributeSyntax is not null)
             {
-                CandidateClasses.Add((classDeclaration, attributeSyntax));
+                CandidateClasses.Add(classDeclaration);
             }
         }
     }
