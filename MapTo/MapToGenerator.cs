@@ -34,7 +34,7 @@ namespace MapTo
                     continue;
                 }
   
-                var (source, hintName) = SourceProvider.GenerateSource(model);
+                var (source, hintName) = SourceBuilder.GenerateSource(model);
                 
                 context.AddSource(hintName, source);
             }
@@ -74,7 +74,7 @@ namespace MapTo
         private static ITypeSymbol? GetDestinationTypeSymbol(ClassDeclarationSyntax classSyntax, SemanticModel model)
         {
             var destinationTypeExpressionSyntax = classSyntax
-                .GetAttribute(SourceProvider.MapFromAttributeName)
+                .GetAttribute(SourceBuilder.MapFromAttributeName)
                 ?.DescendantNodes()
                 .OfType<TypeOfExpressionSyntax>()
                 .SingleOrDefault();

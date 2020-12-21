@@ -5,11 +5,10 @@ using System.Text;
 using MapTo.Extensions;
 using MapTo.Models;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Text;
 
 namespace MapTo
 {
-    internal static class SourceProvider
+    internal static class SourceBuilder
     {
         internal const string NamespaceName = "MapTo";
         internal const string MapFromAttributeName = "MapFrom";

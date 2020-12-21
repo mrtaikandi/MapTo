@@ -20,12 +20,12 @@ namespace MapTo
             var attributeSyntax = attributes
                 .SelectMany(a => a.Attributes)
                 .SingleOrDefault(a => a.Name is
-                    IdentifierNameSyntax { Identifier: { ValueText: SourceProvider.MapFromAttributeName } } // For: [MapFrom] 
+                    IdentifierNameSyntax { Identifier: { ValueText: SourceBuilder.MapFromAttributeName } } // For: [MapFrom] 
                     or
                     QualifiedNameSyntax // For: [MapTo.MapFrom]
                     {
-                        Left: IdentifierNameSyntax { Identifier: { ValueText: SourceProvider.NamespaceName } },
-                        Right: IdentifierNameSyntax { Identifier: { ValueText: SourceProvider.MapFromAttributeName } }
+                        Left: IdentifierNameSyntax { Identifier: { ValueText: SourceBuilder.NamespaceName } },
+                        Right: IdentifierNameSyntax { Identifier: { ValueText: SourceBuilder.MapFromAttributeName } }
                     }
                 );
 
