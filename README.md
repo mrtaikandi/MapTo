@@ -52,6 +52,7 @@ namespace App.ViewModels
         public UserViewModel(App.Data.Models.User user)
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
+            
             FirstName = user.FirstName;
             LastName = user.LastName;
         }
@@ -62,7 +63,7 @@ namespace App.ViewModels
         }
     }
 
-    public static partial class UserExtensions
+    public static partial class UserToUserViewModelExtensions
     {
         public static UserViewModel ToUserViewModel(this App.Data.Models.User user)
         {

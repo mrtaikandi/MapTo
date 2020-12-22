@@ -68,7 +68,7 @@ namespace MapTo
                 .AppendLine()
                 .AppendLine()
                 .PadLeft(Indent1)
-                .AppendFormat("{0} static partial class {1}Extensions", model.ClassModifiers.FirstOrDefault().ToFullString().Trim(), model.SourceClassName)
+                .AppendFormat("{0} static partial class {1}To{2}Extensions", model.ClassModifiers.FirstOrDefault().ToFullString().Trim(), model.SourceClassName, model.ClassName)
                 .AppendOpeningBracket(Indent1)
 
                 // Extension class body
@@ -86,13 +86,6 @@ namespace MapTo
         private static StringBuilder GenerateUsings(this StringBuilder builder, MapModel model)
         {
             builder.AppendLine("using System;");
-
-            // NB: If class names are the same, we're going to use fully qualified names instead.
-            if (model.Namespace != model.SourceNamespace)
-            {
-                builder.AppendFormat("using {0};", model.SourceNamespace).AppendLine();
-            }
-
             return builder.AppendLine();
         }
 
@@ -109,14 +102,20 @@ namespace MapTo
                 .AppendLine();
 
             mappedProperties = new List<IPropertySymbol>();
-            foreach (var propertySymbol in model.SourceTypeProperties)
+
+            if (model.SourceTypeProperties.Any())
             {
-                if (model.Properties.Any(p => p.Name == propertySymbol.Name))
+                builder.AppendLine();
+                
+                foreach (var propertySymbol in model.SourceTypeProperties)
                 {
-                    mappedProperties.Add(propertySymbol);
-                    builder
-                        .PadLeft(Indent3)
-                        .AppendFormat("{0} = {1}.{2};{3}", propertySymbol.Name, sourceClassParameterName, propertySymbol.Name, Environment.NewLine);
+                    if (model.Properties.Any(p => p.Name == propertySymbol.Name))
+                    {
+                        mappedProperties.Add(propertySymbol);
+                        builder
+                            .PadLeft(Indent3)
+                            .AppendFormat("{0} = {1}.{2};{3}", propertySymbol.Name, sourceClassParameterName, propertySymbol.Name, Environment.NewLine);
+                    }
                 }
             }
 
