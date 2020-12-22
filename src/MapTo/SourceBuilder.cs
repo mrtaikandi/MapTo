@@ -57,7 +57,7 @@ namespace MapTo
                 .AppendOpeningBracket(Indent1)
 
                 // Class body
-                .GenerateConstructor(model, out var mappedProperties)
+                .GenerateConstructor(model)
                 .AppendLine()
                 .GenerateFactoryMethod(model)
 
@@ -89,7 +89,7 @@ namespace MapTo
             return builder.AppendLine();
         }
 
-        private static StringBuilder GenerateConstructor(this StringBuilder builder, MapModel model, out List<IPropertySymbol> mappedProperties)
+        private static StringBuilder GenerateConstructor(this StringBuilder builder, MapModel model)
         {
             var sourceClassParameterName = model.SourceClassName.ToCamelCase();
 
@@ -98,25 +98,15 @@ namespace MapTo
                 .AppendFormat("public {0}({1} {2})", model.ClassName, model.SourceClassFullName, sourceClassParameterName)
                 .AppendOpeningBracket(Indent2)
                 .PadLeft(Indent3)
-                .AppendFormat("if ({0} == null) throw new ArgumentNullException(nameof({0}));", sourceClassParameterName)
+                .AppendFormat("if ({0} == null) throw new ArgumentNullException(nameof({0}));", sourceClassParameterName).AppendLine()
                 .AppendLine();
 
-            mappedProperties = new List<IPropertySymbol>();
-
-            if (model.SourceTypeProperties.Any())
+            foreach (var property in model.MappedProperties)
             {
-                builder.AppendLine();
-                
-                foreach (var propertySymbol in model.SourceTypeProperties)
-                {
-                    if (model.Properties.Any(p => p.Name == propertySymbol.Name))
-                    {
-                        mappedProperties.Add(propertySymbol);
-                        builder
-                            .PadLeft(Indent3)
-                            .AppendFormat("{0} = {1}.{2};{3}", propertySymbol.Name, sourceClassParameterName, propertySymbol.Name, Environment.NewLine);
-                    }
-                }
+                builder
+                    .PadLeft(Indent3)
+                    .AppendFormat("{0} = {1}.{2};", property, sourceClassParameterName, property)
+                    .AppendLine();
             }
 
             // End constructor declaration

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using MapTo.Extensions;
 using MapTo.Models;
@@ -31,19 +32,11 @@ namespace MapTo
         {
             foreach (var classSyntax in candidateClasses)
             {
-                var root = classSyntax.GetCompilationUnit();
-                var classSemanticModel = context.Compilation.GetSemanticModel(classSyntax.SyntaxTree);
-                var classSymbol = classSemanticModel.GetDeclaredSymbol(classSyntax) as INamedTypeSymbol;
-                var sourceTypeSymbol = GetSourceTypeSymbol(classSyntax, classSemanticModel);
-
-                var (isValid, diagnostics) = Verify(root, classSyntax, classSemanticModel, classSymbol, sourceTypeSymbol);
-                if (!isValid)
+                var model = CreateModel(context, classSyntax);
+                if (model is null)
                 {
-                    diagnostics.ForEach(context.ReportDiagnostic);
                     continue;
                 }
-                
-                var model = new MapModel(root, classSyntax, classSymbol!, sourceTypeSymbol!);
 
                 var (source, hintName) = SourceBuilder.GenerateSource(model);
                 context.AddSource(hintName, source);
@@ -68,21 +61,51 @@ namespace MapTo
             return sourceTypeExpressionSyntax is not null ? model.GetTypeInfo(sourceTypeExpressionSyntax.Type).Type as INamedTypeSymbol : null;
         }
 
-        private static (bool isValid, IEnumerable<Diagnostic> diagnostics) Verify(CompilationUnitSyntax root, ClassDeclarationSyntax classSyntax, SemanticModel classSemanticModel, INamedTypeSymbol? classSymbol, INamedTypeSymbol? sourceTypeSymbol)
+        private static MapModel? CreateModel(GeneratorExecutionContext context, ClassDeclarationSyntax classSyntax)
         {
-            var diagnostics = new List<Diagnostic>();
-
-            if (classSymbol is null)
+            var root = classSyntax.GetCompilationUnit();
+            var classSemanticModel = context.Compilation.GetSemanticModel(classSyntax.SyntaxTree);
+            
+            if (!(classSemanticModel.GetDeclaredSymbol(classSyntax) is INamedTypeSymbol classSymbol))
             {
-                diagnostics.Add(Diagnostics.SymbolNotFound(classSyntax.GetLocation(), classSyntax.Identifier.ValueText));
+                context.ReportDiagnostic(Diagnostics.SymbolNotFoundError(classSyntax.GetLocation(), classSyntax.Identifier.ValueText));
+                return null;
             }
-
+            
+            var sourceTypeSymbol = GetSourceTypeSymbol(classSyntax, classSemanticModel);
             if (sourceTypeSymbol is null)
             {
-                diagnostics.Add(Diagnostics.SymbolNotFound(classSyntax.GetLocation(), classSyntax.Identifier.ValueText));
+                context.ReportDiagnostic(Diagnostics.MapFromAttributeNotFoundError(classSyntax.GetLocation()));
+                return null;
             }
 
-            return (!diagnostics.Any(), diagnostics);
+            var className = classSyntax.GetClassName();
+            var sourceClassName = sourceTypeSymbol.Name;
+            
+            var mappedProperties = GetMappedProperties(classSymbol, sourceTypeSymbol);
+            if (!mappedProperties.Any())
+            {
+                context.ReportDiagnostic(Diagnostics.NoMatchingPropertyFoundError(classSyntax.GetLocation(), className, sourceClassName));
+                return null;
+            }
+
+            return new MapModel(
+                root.GetNamespace(),
+                classSyntax.Modifiers,
+                className,
+                sourceTypeSymbol.ContainingNamespace.ToString(),
+                sourceClassName,
+                sourceTypeSymbol.ToString(),
+                mappedProperties);
+        }
+        
+        private static ImmutableArray<string> GetMappedProperties(ITypeSymbol classSymbol, ITypeSymbol sourceTypeSymbol)
+        {
+            return sourceTypeSymbol
+                .GetAllMembersOfType<IPropertySymbol>()
+                .Select(p => p.Name)
+                .Intersect(classSymbol.GetAllMembersOfType<IPropertySymbol>().Select(p => p.Name))
+                .ToImmutableArray();
         }
     }
 }
