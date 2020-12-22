@@ -1,6 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>9</LangVersion>
+        
         <AssemblyName>MapTo</AssemblyName>
         <Description>An object to object mapping generator using using Roslyn code generator.</Description>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -14,9 +18,6 @@
         <RepositoryUrl>https://github.com/mrtaikandi/mapto</RepositoryUrl>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <RootNamespace>MapTo</RootNamespace>
-        <TargetFramework>netstandard2.0</TargetFramework>
-        <Nullable>enable</Nullable>
-        <LangVersion>9</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
