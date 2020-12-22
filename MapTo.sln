@@ -1,10 +1,10 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapTo", "MapTo\MapTo.csproj", "{4DB371AC-48D0-4F01-8EF3-7707D06EF0A7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapTo", "src\MapTo\MapTo.csproj", "{4DB371AC-48D0-4F01-8EF3-7707D06EF0A7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapToTests", "MapToTests\MapToTests.csproj", "{797DA57B-AC7E-468B-8799-44C5A574C0E3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapToTests", "test\MapTo.Tests\MapTo.Tests.csproj", "{797DA57B-AC7E-468B-8799-44C5A574C0E3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestConsoleApp", "TestConsoleApp\TestConsoleApp.csproj", "{5BE2551A-9EF9-42FA-B6D1-5B5E6A90CC85}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestConsoleApp", "test\TestConsoleApp\TestConsoleApp.csproj", "{5BE2551A-9EF9-42FA-B6D1-5B5E6A90CC85}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

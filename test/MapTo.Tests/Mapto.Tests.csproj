@@ -29,7 +29,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\MapTo\MapTo.csproj" />
+        <ProjectReference Include="..\..\src\MapTo\MapTo.csproj" />
     </ItemGroup>
 
 </Project>
