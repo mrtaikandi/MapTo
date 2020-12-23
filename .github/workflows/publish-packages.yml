@@ -1,0 +1,35 @@
+name: Publish Packages
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: dotnet/nbgv@v0.3.1
+      with:
+        setAllVars: true    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.101
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --configuration Release --no-restore /p:PublicRelease=true
+    - name: Test
+      run: dotnet test --no-build --verbosity normal    
+    - name: Publish MapTo
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+          PROJECT_FILE_PATH: src/MapTo/MapTo.csproj
+          NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+          NUGET_SOURCE: https://api.nuget.org
+          TAG_COMMIT: false
+          INCLUDE_SYMBOLS: true
+          VERSION_STATIC: ${{env.NBGV_Version}} 
