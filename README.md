@@ -1,9 +1,14 @@
 # MapTo
+![Nuget](https://img.shields.io/nuget/v/mapto?logo=nuget)
+![Publish Packages](https://github.com/mrtaikandi/MapTo/workflows/Publish%20Packages/badge.svg)
+
+
+
 An object to object mapping generator using using [Roslyn source generator](https://github.com/dotnet/roslyn/blob/master/docs/features/source-generators.md).
 
 ## Installation
 ```
-dotnet add package MapTo
+dotnet add package MapTo --prerelease
 ```
 
 ## Usage
