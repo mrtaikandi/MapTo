@@ -11,7 +11,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: dotnet/nbgv@v0.3.1
+      with:
+        fetch-depth: 0 # avoid shallow clone so nbgv can do its work.      
+    - uses: dotnet/nbgv@v0.4.0
       with:
         setAllVars: true    
     - name: Setup .NET
