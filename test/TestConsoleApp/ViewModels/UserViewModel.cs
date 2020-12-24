@@ -7,6 +7,7 @@ namespace TestConsoleApp.ViewModels
     {
         public string FirstName { get; }
 
+        // [IgnoreProerty]
         public string LastName { get; }
     }
 }

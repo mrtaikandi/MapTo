@@ -1,5 +1,7 @@
+using System;
 using System.Linq;
 using System.Text;
+using MapTo.Extensions;
 using MapToTests;
 using Microsoft.CodeAnalysis;
 using Shouldly;
@@ -10,6 +12,10 @@ namespace MapTo.Tests
 {
     public class Tests
     {
+        private const int Indent1 = 4;
+        private const int Indent2 = Indent1 * 2;
+        private const int Indent3 = Indent1 * 3;
+        
         public Tests(ITestOutputHelper output)
         {
             _output = output;
@@ -17,54 +23,100 @@ namespace MapTo.Tests
 
         private readonly ITestOutputHelper _output;
 
-        private const string ExpectedAttribute = @"
+        private static readonly string ExpectedAttribute = $@"{SourceBuilder.GeneratedFilesHeader}
 using System;
 
 namespace MapTo
-{
+{{
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
     public sealed class MapFromAttribute : Attribute
-    {
+    {{
         public MapFromAttribute(Type sourceType)
-        {
+        {{
             SourceType = sourceType;
-        }
+        }}
 
-        public Type SourceType { get; }
-    }
-}
-";
+        public Type SourceType {{ get; }}
+    }}
+}}";
 
-        private static string GetSourceText(bool includeAttributeNamespace = false, string sourceClassNamespace = "Test.Models")
+        private record SourceGeneratorOptions(
+            bool UseMapToNamespace = false, 
+            string SourceClassNamespace = "Test.Models", 
+            int ClassPropertiesCount = 3, 
+            int SourceClassPropertiesCount = 3,
+            Action<StringBuilder> PropertyBuilder = null,
+            Action<StringBuilder> SourcePropertyBuilder = null);
+        
+        private static string GetSourceText(SourceGeneratorOptions options = null)
         {
+            const string ns = "Test";
+            options ??= new SourceGeneratorOptions();
+            var hasDifferentSourceNamespace = options.SourceClassNamespace != ns;
             var builder = new StringBuilder();
-            builder.AppendLine($@"
-{(includeAttributeNamespace ? string.Empty : "using MapTo;")}
-namespace Test
-{{
-    {(sourceClassNamespace != "Test" && !includeAttributeNamespace ? $"using {sourceClassNamespace};" : string.Empty)}
+            
+            if (options.UseMapToNamespace)
+            {
+                builder.AppendFormat("using {0};", SourceBuilder.NamespaceName).AppendLine();
+            }
 
-    {(includeAttributeNamespace ? "[MapTo.MapFrom(typeof(Baz))]" : "[MapFrom(typeof(Baz))]")}
-    public partial class Foo
-    {{
-        public int Prop1 {{ get; set; }}
-        public int Prop2 {{ get; }}
-        public int Prop3 {{ get; }}
-    }}
-}}
-");
+            builder
+                .AppendFormat("using {0};", options.SourceClassNamespace)
+                .AppendLine()
+                .AppendLine();
 
-            builder.AppendLine($@"
-namespace {sourceClassNamespace}
-{{
-    public class Baz 
-    {{
-        public int Prop1 {{ get; set; }}
-        public int Prop2 {{ get;  }}
-        public int Prop3 {{ get; set; }}
-    }}
-}}
-");
+            builder
+                .AppendFormat("namespace {0}", ns)
+                .AppendOpeningBracket();
+
+            if (hasDifferentSourceNamespace && options.UseMapToNamespace)
+            {
+                builder
+                    .PadLeft(Indent1)
+                    .AppendFormat("using {0};", options.SourceClassNamespace)
+                    .AppendLine()
+                    .AppendLine();
+            }
+            
+            builder
+                .PadLeft(Indent1)
+                .AppendLine(options.UseMapToNamespace ? "[MapTo.MapFrom(typeof(Baz))]" : "[MapFrom(typeof(Baz))]")
+                .PadLeft(Indent1).Append("public partial class Foo")
+                .AppendOpeningBracket(Indent1);
+
+            for (var i = 1; i <= options.ClassPropertiesCount; i++)
+            {
+                builder
+                    .PadLeft(Indent2)
+                    .AppendLine(i % 2 == 0 ? $"public int Prop{i} {{ get; set; }}" : $"public int Prop{i} {{ get; }}");
+            }
+            
+            options.PropertyBuilder?.Invoke(builder);
+
+            builder
+                .AppendClosingBracket(Indent1, padNewLine: false)
+                .AppendClosingBracket()
+                .AppendLine()
+                .AppendLine();
+            
+            builder
+                .AppendFormat("namespace {0}", options.SourceClassNamespace)
+                .AppendOpeningBracket()
+                .PadLeft(Indent1).Append("public class Baz")
+                .AppendOpeningBracket(Indent1);
+
+            for (var i = 1; i <= options.SourceClassPropertiesCount; i++)
+            {
+                builder
+                    .PadLeft(Indent2)
+                    .AppendLine(i % 2 == 0 ? $"public int Prop{i} {{ get; set; }}" : $"public int Prop{i} {{ get; }}");
+            }
+            
+            options.SourcePropertyBuilder?.Invoke(builder);
+            
+            builder
+                .AppendClosingBracket(Indent1, padNewLine: false)
+                .AppendClosingBracket();
 
             return builder.ToString();
         }
@@ -126,7 +178,6 @@ namespace Test
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.Count().ShouldBe(3);
             compilation.SyntaxTrees.Last().ToString().ShouldStartWith(expectedResult.Trim());
         }
         
@@ -190,7 +241,6 @@ namespace Test
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.Count().ShouldBe(3);
             compilation.SyntaxTrees.Last().ToString().ShouldStartWith(expectedResult.Trim());
         }
 
@@ -205,15 +255,18 @@ namespace Test
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.ShouldContain(s => s.ToString() == ExpectedAttribute);
-            compilation.SyntaxTrees.Select(s => s.ToString()).Where(s => s != string.Empty && s != ExpectedAttribute).ShouldBeEmpty();
+            compilation.SyntaxTrees
+                .Select(s => s.ToString())
+                .Where(s => !string.IsNullOrWhiteSpace(s.ToString()))
+                .All(s => s.Contains(": Attribute"))
+                .ShouldBeTrue();
         }
 
         [Fact]
         public void When_SourceTypeHasDifferentNamespace_Should_NotAddToUsings()
         {
             // Arrange
-            var source = GetSourceText(sourceClassNamespace: "Bazaar");
+            var source = GetSourceText(new SourceGeneratorOptions(SourceClassNamespace: "Bazaar"));
 
             const string expectedResult = @"
 // <auto-generated />
@@ -227,7 +280,6 @@ namespace Test
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.Count().ShouldBe(3);
             compilation.SyntaxTrees.Last().ToString().ShouldStartWith(expectedResult.Trim());
         }
 
@@ -255,7 +307,6 @@ namespace Test
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.Count().ShouldBe(3);
             compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult.Trim());
         }
 
@@ -277,7 +328,6 @@ namespace Test
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.Count().ShouldBe(3);
             compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult.Trim());
         }
 
@@ -302,8 +352,66 @@ namespace Test
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.Count().ShouldBe(3);
             compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult.Trim());
+        }
+        
+        [Fact]
+        public void VerifyIgnorePropertyAttribute()
+        {
+            // Arrange
+            const string source = "";
+            var expectedAttribute = $@"
+{SourceBuilder.GeneratedFilesHeader}
+using System;
+
+namespace MapTo
+{{
+    [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+    public sealed class IgnorePropertyAttribute : Attribute {{ }}
+}}
+".Trim();
+
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source);
+
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+            compilation.SyntaxTrees.ShouldContain(c => c.ToString() == expectedAttribute);
+        }
+
+        [Fact]
+        public void When_IgnorePropertyAttributeIsSpecified_Should_NotGenerateMappingsForThatProperty()
+        {
+            // Arrange
+            var source = GetSourceText(new SourceGeneratorOptions(
+                UseMapToNamespace: true,
+                PropertyBuilder: builder =>
+                {
+                    builder
+                        .PadLeft(Indent2).AppendLine("[IgnoreProperty]")
+                        .PadLeft(Indent2).AppendLine("public int Prop4 { get; set; }");
+                },
+                SourcePropertyBuilder: builder => builder.PadLeft(Indent2).AppendLine("public int Prop4 { get; set; }")));
+
+            var expectedResult = @"
+    public partial class Foo
+    {
+        public Foo(Test.Models.Baz baz)
+        {
+            if (baz == null) throw new ArgumentNullException(nameof(baz));
+
+            Prop1 = baz.Prop1;
+            Prop2 = baz.Prop2;
+            Prop3 = baz.Prop3;
+        }
+".Trim();
+            
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source);
+
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+            compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult);
         }
     }
 }

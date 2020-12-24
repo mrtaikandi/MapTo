@@ -20,8 +20,9 @@ namespace MapTo
         /// <inheritdoc />
         public void Execute(GeneratorExecutionContext context)
         {
-            AddMapFromAttribute(context);
-
+            AddAttribute(context, SourceBuilder.GenerateMapFromAttribute());
+            AddAttribute(context, SourceBuilder.GenerateIgnorePropertyAttribute());
+            
             if (context.SyntaxReceiver is MapToSyntaxReceiver receiver && receiver.CandidateClasses.Any())
             {
                 AddGeneratedMappingsClasses(context, receiver.CandidateClasses);
@@ -44,11 +45,8 @@ namespace MapTo
             }
         }
 
-        private static void AddMapFromAttribute(GeneratorExecutionContext context)
-        {
-            var (source, hintName) = SourceBuilder.GenerateMapFromAttribute();
-            context.AddSource(hintName, source);
-        }
+        private static void AddAttribute(GeneratorExecutionContext context, (string source, string hintName) attribute) 
+            => context.AddSource(attribute.hintName, attribute.source);
 
         private static INamedTypeSymbol? GetSourceTypeSymbol(ClassDeclarationSyntax classSyntax, SemanticModel model)
         {
@@ -104,7 +102,10 @@ namespace MapTo
             return sourceTypeSymbol
                 .GetAllMembersOfType<IPropertySymbol>()
                 .Select(p => p.Name)
-                .Intersect(classSymbol.GetAllMembersOfType<IPropertySymbol>().Select(p => p.Name))
+                .Intersect(classSymbol
+                    .GetAllMembersOfType<IPropertySymbol>()
+                    .Where(p => p.GetAttributes().All(a => a.AttributeClass?.Name != SourceBuilder.IgnorePropertyAttributeName))
+                    .Select(p => p.Name))
                 .ToImmutableArray();
         }
     }
