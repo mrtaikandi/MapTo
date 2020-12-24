@@ -2,8 +2,6 @@
 ![Nuget](https://img.shields.io/nuget/v/mapto?logo=nuget)
 ![Publish Packages](https://github.com/mrtaikandi/MapTo/workflows/Publish%20Packages/badge.svg)
 
-
-
 An object to object mapping generator using using [Roslyn source generator](https://github.com/dotnet/roslyn/blob/master/docs/features/source-generators.md).
 
 ## Installation
@@ -21,6 +19,9 @@ public partial class UserViewModel
     public string FirstName { get; }
 
     public string LastName { get; }
+    
+    [IgnoreProperty]
+    public string FullName { get; set; }
 }
 ```
 
