@@ -6,7 +6,7 @@
         <LangVersion>9</LangVersion>
         
         <AssemblyName>MapTo</AssemblyName>
-        <Description>An object to object mapping generator using using Roslyn code generator.</Description>
+        <Description>An object to object mapping generator using Roslyn source generator.</Description>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <IncludeSymbols>true</IncludeSymbols>
         <PackageId>MapTo</PackageId>
