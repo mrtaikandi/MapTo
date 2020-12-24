@@ -16,7 +16,12 @@ jobs:
       with:
         dotnet-version: 5.0.101
     - name: Restore dependencies
-      run: dotnet restore
+      run: |
+        pwd
+        ls
+        stat -c "%s" test/MapTo.Tests/MapTo.Tests.csproj
+        dotnet --version
+        dotnet restore
     - name: Build
       run: dotnet build --configuration Release --no-restore
     - name: Test
