@@ -2,7 +2,9 @@
 ![Nuget](https://img.shields.io/nuget/v/mapto?logo=nuget)
 ![Publish Packages](https://github.com/mrtaikandi/MapTo/workflows/Publish%20Packages/badge.svg)
 
-An object to object mapping generator using using [Roslyn source generator](https://github.com/dotnet/roslyn/blob/master/docs/features/source-generators.md).
+An object to object mapping generator using [Roslyn source generator](https://github.com/dotnet/roslyn/blob/master/docs/features/source-generators.md).
+
+MapTo creates mappings during compile-time, which eliminates the need for using reflection like other libraries. This makes it super simple to use and way faster than other libraries.
 
 ## Installation
 ```
@@ -10,22 +12,28 @@ dotnet add package MapTo --prerelease
 ```
 
 ## Usage
-MapTo creates mappings during compile-time. To indicate which objects it needs to generate the mappings for, simply declare the class as `partial` and annotate it with `MapFrom` attribute.
+To generate the mappings, simply declare the destination class as `partial` and annotate it with `MapFrom` attribute.
 
 ```c#
-[MapFrom(sourceType: typeof(App.Data.Models.User))]
-public partial class UserViewModel 
-{
-    public string FirstName { get; }
+using MapTo;
 
-    public string LastName { get; }
+namespace App.ViewModels
+{
+    [MapFrom(typeof(App.Data.Models.User))]
+    public partial class UserViewModel 
+    {
+        public string FirstName { get; }
     
-    [IgnoreProperty]
-    public string FullName { get; set; }
+        public string LastName { get; }
+        
+        [IgnoreProperty]
+        public string FullName { get; set; }
+    }
 }
 ```
 
-If `Data.Models.User` class is defined as follow:
+## Generated Source
+In the above example, if `App.Data.Models.User` class is defined as:
 
 ```c#
 namespace App.Data.Models
