@@ -413,5 +413,39 @@ namespace MapTo
             diagnostics.ShouldBeSuccessful();
             compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult);
         }
+
+        [Fact]
+        public void When_FoundMatchingPropertyNameWithDifferentType_Should_Ignore()
+        {
+            // Arrange
+            var source = GetSourceText(new SourceGeneratorOptions(
+                UseMapToNamespace: true,
+                PropertyBuilder: builder =>
+                {
+                    builder
+                        .PadLeft(Indent2).AppendLine("public string Prop4 { get; set; }");
+                },
+                SourcePropertyBuilder: builder => builder.PadLeft(Indent2).AppendLine("public int Prop4 { get; set; }")));
+
+            var expectedResult = @"
+    public partial class Foo
+    {
+        public Foo(Test.Models.Baz baz)
+        {
+            if (baz == null) throw new ArgumentNullException(nameof(baz));
+
+            Prop1 = baz.Prop1;
+            Prop2 = baz.Prop2;
+            Prop3 = baz.Prop3;
+        }
+".Trim();
+            
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source);
+
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+            compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult);
+        }
     }
 }

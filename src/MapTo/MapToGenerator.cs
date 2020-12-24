@@ -101,11 +101,12 @@ namespace MapTo
         {
             return sourceTypeSymbol
                 .GetAllMembersOfType<IPropertySymbol>()
-                .Select(p => p.Name)
+                .Select(p => (p.Name, p.Type.ToString()))
                 .Intersect(classSymbol
                     .GetAllMembersOfType<IPropertySymbol>()
                     .Where(p => p.GetAttributes().All(a => a.AttributeClass?.Name != SourceBuilder.IgnorePropertyAttributeName))
-                    .Select(p => p.Name))
+                    .Select(p => (p.Name, p.Type.ToString())))
+                .Select(p => p.Name)
                 .ToImmutableArray();
         }
     }
