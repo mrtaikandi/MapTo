@@ -2,9 +2,9 @@
 ![Nuget](https://img.shields.io/nuget/v/mapto?logo=nuget)
 ![Publish Packages](https://github.com/mrtaikandi/MapTo/workflows/Publish%20Packages/badge.svg)
 
-An object to object mapping generator using [Roslyn source generator](https://github.com/dotnet/roslyn/blob/master/docs/features/source-generators.md).
+A convention based object to object mapper using [Roslyn source generator](https://github.com/dotnet/roslyn/blob/master/docs/features/source-generators.md).
 
-MapTo creates mappings during compile-time, which eliminates the need for using reflection like other libraries. This makes it super simple to use and way faster than other libraries.
+MapTo creates mappings during compile-time, which eliminates the need for using reflection to create the mappings. This makes it super simple to use and way faster than other libraries.
 
 ## Installation
 ```
