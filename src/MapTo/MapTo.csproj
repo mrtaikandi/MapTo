@@ -4,7 +4,7 @@
         <TargetFramework>netstandard2.0</TargetFramework>
         <Nullable>enable</Nullable>
         <LangVersion>9</LangVersion>
-        
+
         <AssemblyName>MapTo</AssemblyName>
         <Description>An object to object mapping generator using Roslyn source generator.</Description>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -25,7 +25,7 @@
             <_Parameter1>$(AssemblyName).Tests</_Parameter1>
         </AssemblyAttribute>
     </ItemGroup>
-    
+
     <ItemGroup>
         <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.2">
             <PrivateAssets>all</PrivateAssets>
@@ -35,11 +35,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="bin\Debug\netstandard2.0\MapTo.dll" />
-    </ItemGroup>
-
-    <ItemGroup>
         <None Include="..\..\LICENSE" Pack="true" PackagePath="" Visible="false" />
         <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+        <None Include="MapTo.props" Pack="true" PackagePath="build" Visible="false" />
     </ItemGroup>
+    
 </Project>

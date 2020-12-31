@@ -1,0 +1,5 @@
+<Project>
+    <ItemGroup>
+        <CompilerVisibleProperty Include="MapTo_ConstructorAccessModifier" />
+    </ItemGroup>
+</Project>

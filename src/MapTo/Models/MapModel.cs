@@ -1,9 +1,10 @@
 ﻿using System.Collections.Immutable;
+using MapTo.Configuration;
 using Microsoft.CodeAnalysis;
 
 namespace MapTo.Models
 {
-    public class MapModel
+    internal class MapModel
     {
         internal MapModel(
             string? ns,
@@ -12,7 +13,8 @@ namespace MapTo.Models
             string sourceNamespace,
             string sourceClassName,
             string sourceClassFullName,
-            ImmutableArray<string> mappedProperties)
+            ImmutableArray<string> mappedProperties, 
+            AccessModifier constructorAccessModifier)
         {
             Namespace = ns;
             ClassModifiers = classModifiers;
@@ -21,6 +23,7 @@ namespace MapTo.Models
             SourceClassName = sourceClassName;
             SourceClassFullName = sourceClassFullName;
             MappedProperties = mappedProperties;
+            ConstructorAccessModifier = constructorAccessModifier;
         }
 
         public string? Namespace { get; }
@@ -36,5 +39,7 @@ namespace MapTo.Models
         public string SourceClassFullName { get; }
 
         public ImmutableArray<string> MappedProperties { get; }
+        
+        public AccessModifier ConstructorAccessModifier { get; }
     }
 }

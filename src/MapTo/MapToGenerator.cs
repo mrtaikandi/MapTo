@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using MapTo.Configuration;
 using MapTo.Extensions;
 using MapTo.Models;
 using Microsoft.CodeAnalysis;
@@ -31,15 +32,19 @@ namespace MapTo
 
         private static void AddGeneratedMappingsClasses(GeneratorExecutionContext context, IEnumerable<ClassDeclarationSyntax> candidateClasses)
         {
+            var configs = MapToConfigurations.From(context);
+            
             foreach (var classSyntax in candidateClasses)
             {
-                var model = CreateModel(context, classSyntax);
+                
+                var model = CreateModel(context, classSyntax, configs);
                 if (model is null)
                 {
                     continue;
                 }
-
+                
                 var (source, hintName) = SourceBuilder.GenerateSource(model);
+
                 context.AddSource(hintName, source);
                 context.ReportDiagnostic(Diagnostics.ClassMappingsGenerated(classSyntax.GetLocation(), model.ClassName));
             }
@@ -58,8 +63,8 @@ namespace MapTo
 
             return sourceTypeExpressionSyntax is not null ? model.GetTypeInfo(sourceTypeExpressionSyntax.Type).Type as INamedTypeSymbol : null;
         }
-
-        private static MapModel? CreateModel(GeneratorExecutionContext context, ClassDeclarationSyntax classSyntax)
+        
+        private static MapModel? CreateModel(GeneratorExecutionContext context, ClassDeclarationSyntax classSyntax, MapToConfigurations configs)
         {
             var root = classSyntax.GetCompilationUnit();
             var classSemanticModel = context.Compilation.GetSemanticModel(classSyntax.SyntaxTree);
@@ -86,7 +91,7 @@ namespace MapTo
                 context.ReportDiagnostic(Diagnostics.NoMatchingPropertyFoundError(classSyntax.GetLocation(), className, sourceClassName));
                 return null;
             }
-
+            
             return new MapModel(
                 root.GetNamespace(),
                 classSyntax.Modifiers,
@@ -94,7 +99,8 @@ namespace MapTo
                 sourceTypeSymbol.ContainingNamespace.ToString(),
                 sourceClassName,
                 sourceTypeSymbol.ToString(),
-                mappedProperties);
+                mappedProperties,
+                configs.ConstructorAccessModifier);
         }
         
         private static ImmutableArray<string> GetMappedProperties(ITypeSymbol classSymbol, ITypeSymbol sourceTypeSymbol)

@@ -132,7 +132,7 @@ namespace MapTo
                 .PadLeft(Indent2).AppendFormat("/// using the property values from the specified <paramref name=\"{0}\"/>.", sourceClassParameterName).AppendLine()
                 .PadLeft(Indent2).AppendLine("/// </summary>")
                 .PadLeft(Indent2).AppendFormat("/// <exception cref=\"ArgumentNullException\">{0} is null</exception>", sourceClassParameterName).AppendLine()
-                .PadLeft(Indent2).AppendFormat("public {0}({1} {2})", model.ClassName, model.SourceClassFullName, sourceClassParameterName)
+                .PadLeft(Indent2).AppendFormat("{0} {1}({2} {3})", model.ConstructorAccessModifier.ToString().ToLower(), model.ClassName, model.SourceClassFullName, sourceClassParameterName)
                 .AppendOpeningBracket(Indent2)
                 .PadLeft(Indent3).AppendFormat("if ({0} == null) throw new ArgumentNullException(nameof({0}));", sourceClassParameterName).AppendLine()
                 .AppendLine();

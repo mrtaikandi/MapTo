@@ -1,13 +1,5 @@
-﻿using TestConsoleApp.ViewModels;
+﻿using VM = TestConsoleApp.ViewModels;
+using Data = TestConsoleApp.Data.Models;
 
-namespace TestConsoleApp
-{
-    internal class Program
-    {
-        private static void Main(string[] args)
-        {
-            var userViewModel = User.From(new Data.Models.User());
-            var userViewModel2 = UserViewModel.From(new Data.Models.User());
-        }
-    }
-}
+var userViewModel = VM.User.From(new Data.User());
+var userViewModel2 = VM.UserViewModel.From(new Data.User()); 
