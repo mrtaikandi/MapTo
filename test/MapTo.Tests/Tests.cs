@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MapTo.Extensions;
+using MapTo.Models;
 using MapTo.Tests.Infrastructure;
 using Microsoft.CodeAnalysis;
 using Shouldly;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace MapTo.Tests
 {
@@ -445,6 +445,39 @@ namespace MapTo
             // Assert
             diagnostics.ShouldBeSuccessful();
             compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult);
+        }
+
+        [Fact]
+        public void When_MappingsModifierOptionIsSetToInternal_Should_GenerateThoseMethodsWithInternalAccessModifier()
+        {
+            // Arrange
+            var source = GetSourceText();
+            var configOptions = new Dictionary<string, string>
+            {
+                [$"build_property.MapTo_{nameof(SourceGenerationOptions.GeneratedMethodsAccessModifier)}"] = "Internal"
+            };
+
+            var expectedExtension = @"    
+        internal static Foo ToFoo(this Test.Models.Baz baz)
+        {
+            return baz == null ? null : new Foo(baz);
+        }".Trim();
+
+            var expectedFactory = @"
+        internal static Foo From(Test.Models.Baz baz)
+        {
+            return baz == null ? null : new Foo(baz);
+        }".Trim();
+
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: configOptions);
+
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+            
+            var syntaxTree = compilation.SyntaxTrees.Last().ToString();
+            syntaxTree.ShouldContain(expectedFactory);
+            syntaxTree.ShouldContain(expectedExtension);
         }
     }
 }

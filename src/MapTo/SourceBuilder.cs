@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Text;
 using MapTo.Extensions;
 using MapTo.Models;
@@ -26,7 +25,7 @@ namespace MapTo
                 .AppendLine()
                 .AppendFormat("namespace {0}", NamespaceName)
                 .AppendOpeningBracket();
-            
+
             if (options.GenerateXmlDocument)
             {
                 builder
@@ -52,7 +51,7 @@ namespace MapTo
                 .PadLeft(Indent2).AppendFormat("public {0}Attribute(Type sourceType)", MapFromAttributeName)
                 .AppendOpeningBracket(Indent2)
                 .PadLeft(Indent3).AppendLine("SourceType = sourceType;")
-                .AppendClosingBracket(Indent2, padNewLine: false)
+                .AppendClosingBracket(Indent2, false)
                 .AppendLine()
                 .AppendLine();
 
@@ -66,7 +65,7 @@ namespace MapTo
 
             builder
                 .PadLeft(Indent2).AppendLine("public Type SourceType { get; }")
-                .AppendClosingBracket(Indent1, padNewLine: false)
+                .AppendClosingBracket(Indent1, false)
                 .AppendClosingBracket();
 
             return (builder.ToString(), $"{MapFromAttributeName}Attribute.g.cs");
@@ -187,7 +186,7 @@ namespace MapTo
             return builder
                 .AppendLine()
                 .AppendConvertorMethodsXmlDocs(model, sourceClassParameterName)
-                .PadLeft(Indent2).AppendFormat("public static {0} From({1} {2})", model.ClassName, model.SourceClassFullName, sourceClassParameterName)
+                .PadLeft(Indent2).AppendFormat("{0} static {1} From({2} {3})", model.Options.GeneratedMethodsAccessModifier.ToLowercaseString(), model.ClassName, model.SourceClassFullName, sourceClassParameterName)
                 .AppendOpeningBracket(Indent2)
                 .PadLeft(Indent3).AppendFormat("return {0} == null ? null : new {1}({0});", sourceClassParameterName, model.ClassName)
                 .AppendClosingBracket(Indent2);
@@ -199,7 +198,7 @@ namespace MapTo
 
             return builder
                 .AppendConvertorMethodsXmlDocs(model, sourceClassParameterName)
-                .PadLeft(Indent2).AppendFormat("public static {0} To{0}(this {1} {2})", model.ClassName, model.SourceClassFullName, sourceClassParameterName)
+                .PadLeft(Indent2).AppendFormat("{0} static {1} To{1}(this {2} {3})", model.Options.GeneratedMethodsAccessModifier.ToLowercaseString(), model.ClassName, model.SourceClassFullName, sourceClassParameterName)
                 .AppendOpeningBracket(Indent2)
                 .PadLeft(Indent3).AppendFormat("return {0} == null ? null : new {1}({0});", sourceClassParameterName, model.ClassName)
                 .AppendClosingBracket(Indent2);
@@ -214,7 +213,7 @@ namespace MapTo
             {
                 return builder;
             }
-            
+
             return builder
                 .PadLeft(Indent2).AppendLine("/// <summary>")
                 .PadLeft(Indent2).AppendFormat("/// Creates a new instance of <see cref=\"{0}\"/> and sets its participating properties", model.ClassName).AppendLine()

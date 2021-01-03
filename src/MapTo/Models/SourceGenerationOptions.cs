@@ -5,12 +5,12 @@ namespace MapTo.Models
 {
     internal record SourceGenerationOptions(
         AccessModifier ConstructorAccessModifier, 
-        AccessModifier MappingsAccessModifier,
+        AccessModifier GeneratedMethodsAccessModifier,
         bool GenerateXmlDocument)
     {
         internal static SourceGenerationOptions From(GeneratorExecutionContext context) => new(
             context.GetBuildGlobalOption<AccessModifier>(nameof(ConstructorAccessModifier)),
-            context.GetBuildGlobalOption<AccessModifier>(nameof(MappingsAccessModifier)),
+            context.GetBuildGlobalOption<AccessModifier>(nameof(GeneratedMethodsAccessModifier)),
             context.GetBuildGlobalOption(nameof(GenerateXmlDocument), defaultValue: true)
         );
     }
