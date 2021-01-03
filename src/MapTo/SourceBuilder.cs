@@ -17,53 +17,85 @@ namespace MapTo
         private const int Indent2 = Indent1 * 2;
         private const int Indent3 = Indent1 * 3;
 
-        internal static (string source, string hintName) GenerateMapFromAttribute()
+        internal static (string source, string hintName) GenerateMapFromAttribute(SourceGenerationOptions options)
         {
-            var source = $@"{GeneratedFilesHeader}
-using System;
+            var builder = new StringBuilder();
+            builder
+                .AppendFileHeader()
+                .AppendLine("using System;")
+                .AppendLine()
+                .AppendFormat("namespace {0}", NamespaceName)
+                .AppendOpeningBracket();
+            
+            if (options.GenerateXmlDocument)
+            {
+                builder
+                    .PadLeft(Indent1).AppendLine("/// <summary>")
+                    .PadLeft(Indent1).AppendLine("/// Specifies that the annotated class can be mapped from the provided <see cref=\"SourceType\"/>.")
+                    .PadLeft(Indent1).AppendLine("/// </summary>");
+            }
 
-namespace MapTo
-{{
-    /// <summary>
-    /// Specifies that the annotated class can be mapped from the provided <see cref=""SourceType""/>.
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-    public sealed class {MapFromAttributeName}Attribute : Attribute
-    {{
-        /// <summary>
-        /// Initializes a new instance of the <see cref=""{MapFromAttributeName}Attribute""/> class
-        /// with the specified <paramref name=""sourceType""/>.
-        /// </summary>
-        public {MapFromAttributeName}Attribute(Type sourceType)
-        {{
-            SourceType = sourceType;
-        }}
+            builder
+                .PadLeft(Indent1).AppendLine("[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]")
+                .PadLeft(Indent1).AppendFormat("public sealed class {0}Attribute : Attribute", MapFromAttributeName)
+                .AppendOpeningBracket(Indent1);
 
-        /// <summary>
-        /// Gets the type of the class that the annotated class should be able to map from. 
-        /// </summary>
-        public Type SourceType {{ get; }}
-    }}
-}}";
+            if (options.GenerateXmlDocument)
+            {
+                builder
+                    .PadLeft(Indent2).AppendLine("/// <summary>")
+                    .PadLeft(Indent2).AppendFormat("/// Initializes a new instance of the <see cref=\"{0}Attribute\"/> class with the specified <paramref name=\"sourceType\"/>.", MapFromAttributeName).AppendLine()
+                    .PadLeft(Indent2).AppendLine("/// </summary>");
+            }
 
-            return (source, $"{MapFromAttributeName}Attribute.g.cs");
+            builder
+                .PadLeft(Indent2).AppendFormat("public {0}Attribute(Type sourceType)", MapFromAttributeName)
+                .AppendOpeningBracket(Indent2)
+                .PadLeft(Indent3).AppendLine("SourceType = sourceType;")
+                .AppendClosingBracket(Indent2, padNewLine: false)
+                .AppendLine()
+                .AppendLine();
+
+            if (options.GenerateXmlDocument)
+            {
+                builder
+                    .PadLeft(Indent2).AppendLine("/// <summary>")
+                    .PadLeft(Indent2).AppendLine("/// Gets the type of the class that the annotated class should be able to map from.")
+                    .PadLeft(Indent2).AppendLine("/// </summary>");
+            }
+
+            builder
+                .PadLeft(Indent2).AppendLine("public Type SourceType { get; }")
+                .AppendClosingBracket(Indent1, padNewLine: false)
+                .AppendClosingBracket();
+
+            return (builder.ToString(), $"{MapFromAttributeName}Attribute.g.cs");
         }
 
-        internal static (string source, string hintName) GenerateIgnorePropertyAttribute()
+        internal static (string source, string hintName) GenerateIgnorePropertyAttribute(SourceGenerationOptions options)
         {
-            var source = $@"{GeneratedFilesHeader}
-using System;
+            var builder = new StringBuilder();
+            builder
+                .AppendFileHeader()
+                .AppendLine("using System;")
+                .AppendLine()
+                .AppendFormat("namespace {0}", NamespaceName)
+                .AppendOpeningBracket();
 
-namespace MapTo
-{{
-    /// <summary>
-    /// Specified that the annotated property should not be included in the generated mappings. 
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-    public sealed class {IgnorePropertyAttributeName}Attribute : Attribute {{ }}
-}}";
+            if (options.GenerateXmlDocument)
+            {
+                builder
+                    .PadLeft(Indent1).AppendLine("/// <summary>")
+                    .PadLeft(Indent1).AppendLine("/// Specified that the annotated property should not be included in the generated mappings.")
+                    .PadLeft(Indent1).AppendLine("/// </summary>");
+            }
 
-            return (source, $"{IgnorePropertyAttributeName}Attribute.g.cs");
+            builder
+                .PadLeft(Indent1).AppendLine("[AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]")
+                .PadLeft(Indent1).AppendFormat("public sealed class {0}Attribute : Attribute {{ }}", IgnorePropertyAttributeName)
+                .AppendClosingBracket();
+
+            return (builder.ToString(), $"{IgnorePropertyAttributeName}Attribute.g.cs");
         }
 
         internal static (string source, string hintName) GenerateSource(MapModel model)
@@ -116,23 +148,22 @@ namespace MapTo
             return builder.AppendLine();
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="builder"></param>
-        /// <param name="model"></param>
-        /// <returns></returns>
         private static StringBuilder GenerateConstructor(this StringBuilder builder, MapModel model)
         {
             var sourceClassParameterName = model.SourceClassName.ToCamelCase();
 
+            if (model.Options.GenerateXmlDocument)
+            {
+                builder
+                    .PadLeft(Indent2).AppendLine("/// <summary>")
+                    .PadLeft(Indent2).AppendFormat("/// Initializes a new instance of the <see cref=\"{0}\"/> class", model.ClassName).AppendLine()
+                    .PadLeft(Indent2).AppendFormat("/// using the property values from the specified <paramref name=\"{0}\"/>.", sourceClassParameterName).AppendLine()
+                    .PadLeft(Indent2).AppendLine("/// </summary>")
+                    .PadLeft(Indent2).AppendFormat("/// <exception cref=\"ArgumentNullException\">{0} is null</exception>", sourceClassParameterName).AppendLine();
+            }
+
             builder
-                .PadLeft(Indent2).AppendLine("/// <summary>")
-                .PadLeft(Indent2).AppendFormat("/// Initializes a new instance of the <see cref=\"{0}\"/> class", model.ClassName).AppendLine()
-                .PadLeft(Indent2).AppendFormat("/// using the property values from the specified <paramref name=\"{0}\"/>.", sourceClassParameterName).AppendLine()
-                .PadLeft(Indent2).AppendLine("/// </summary>")
-                .PadLeft(Indent2).AppendFormat("/// <exception cref=\"ArgumentNullException\">{0} is null</exception>", sourceClassParameterName).AppendLine()
-                .PadLeft(Indent2).AppendFormat("{0} {1}({2} {3})", model.ConstructorAccessModifier.ToString().ToLower(), model.ClassName, model.SourceClassFullName, sourceClassParameterName)
+                .PadLeft(Indent2).AppendFormat("{0} {1}({2} {3})", model.Options.ConstructorAccessModifier.ToLowercaseString(), model.ClassName, model.SourceClassFullName, sourceClassParameterName)
                 .AppendOpeningBracket(Indent2)
                 .PadLeft(Indent3).AppendFormat("if ({0} == null) throw new ArgumentNullException(nameof({0}));", sourceClassParameterName).AppendLine()
                 .AppendLine();
@@ -149,13 +180,6 @@ namespace MapTo
             return builder.AppendClosingBracket(Indent2, false);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="builder"></param>
-        /// <param name="model"></param>
-        /// <exception cref="ArgumentNullException"></exception>
-        /// <returns></returns>
         private static StringBuilder GenerateFactoryMethod(this StringBuilder builder, MapModel model)
         {
             var sourceClassParameterName = model.SourceClassName.ToCamelCase();
@@ -186,6 +210,11 @@ namespace MapTo
 
         private static StringBuilder AppendConvertorMethodsXmlDocs(this StringBuilder builder, MapModel model, string sourceClassParameterName)
         {
+            if (!model.Options.GenerateXmlDocument)
+            {
+                return builder;
+            }
+            
             return builder
                 .PadLeft(Indent2).AppendLine("/// <summary>")
                 .PadLeft(Indent2).AppendFormat("/// Creates a new instance of <see cref=\"{0}\"/> and sets its participating properties", model.ClassName).AppendLine()

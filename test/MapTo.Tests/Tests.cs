@@ -1,8 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MapTo.Extensions;
-using MapToTests;
+using MapTo.Tests.Infrastructure;
 using Microsoft.CodeAnalysis;
 using Shouldly;
 using Xunit;
@@ -15,14 +16,12 @@ namespace MapTo.Tests
         private const int Indent1 = 4;
         private const int Indent2 = Indent1 * 2;
         private const int Indent3 = Indent1 * 3;
-        
-        public Tests(ITestOutputHelper output)
+
+        private static readonly Dictionary<string, string> DefaultAnalyzerOptions = new()
         {
-            _output = output;
-        }
-
-        private readonly ITestOutputHelper _output;
-
+            ["build_property.MapTo_GenerateXmlDocument"] = "false"
+        };
+        
         private static readonly string ExpectedAttribute = $@"{SourceBuilder.GeneratedFilesHeader}
 using System;
 
@@ -128,7 +127,7 @@ namespace MapTo
             const string source = "";
 
             // Act
-            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source);
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
 
             // Assert
             diagnostics.ShouldBeSuccessful();
@@ -174,7 +173,7 @@ namespace Test
 ";
 
             // Act
-            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source);
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
 
             // Assert
             diagnostics.ShouldBeSuccessful();
@@ -237,7 +236,7 @@ namespace Test
 ";
 
             // Act
-            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source);
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
 
             // Assert
             diagnostics.ShouldBeSuccessful();
@@ -303,7 +302,7 @@ namespace Test
 ";
 
             // Act
-            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source);
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
 
             // Assert
             diagnostics.ShouldBeSuccessful();
@@ -348,7 +347,7 @@ namespace Test
 ";
 
             // Act
-            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source);
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
 
             // Assert
             diagnostics.ShouldBeSuccessful();
@@ -372,7 +371,7 @@ namespace MapTo
 ".Trim();
 
             // Act
-            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source);
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
 
             // Assert
             diagnostics.ShouldBeSuccessful();
@@ -407,7 +406,7 @@ namespace MapTo
 ".Trim();
             
             // Act
-            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source);
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
 
             // Assert
             diagnostics.ShouldBeSuccessful();
@@ -441,7 +440,7 @@ namespace MapTo
 ".Trim();
             
             // Act
-            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source);
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
 
             // Assert
             diagnostics.ShouldBeSuccessful();

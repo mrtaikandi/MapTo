@@ -1,13 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using MapTo;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Xunit;
-using Xunit.Abstractions;
 
-namespace MapToTests
+namespace MapTo.Tests.Infrastructure
 {
     internal static class CSharpGenerator
     {
@@ -16,7 +15,7 @@ namespace MapToTests
             Assert.False(diagnostics.Any(d => d.Severity >= DiagnosticSeverity.Warning), $"Failed: {Environment.NewLine}{string.Join($"{Environment.NewLine}- ", diagnostics.Select(c => c.GetMessage()))}");
         }
 
-        internal static (Compilation compilation, ImmutableArray<Diagnostic> diagnostics) GetOutputCompilation(string source, bool assertCompilation = false)
+        internal static (Compilation compilation, ImmutableArray<Diagnostic> diagnostics) GetOutputCompilation(string source, bool assertCompilation = false, IDictionary<string, string> analyzerConfigOptions = null)
         {
             var syntaxTree = CSharpSyntaxTree.ParseText(source);
             var references = AppDomain.CurrentDomain.GetAssemblies()
@@ -33,10 +32,12 @@ namespace MapToTests
                 Assert.False(compileDiagnostics.Any(d => d.Severity == DiagnosticSeverity.Error), $"Failed: {Environment.NewLine}{string.Join($"{Environment.NewLine}- ", compileDiagnostics.Select(c => c.GetMessage()))}");
             }
 
-            ISourceGenerator generator = new MapToGenerator();
-            var driver = CSharpGeneratorDriver.Create(generator);
-            driver.RunGeneratorsAndUpdateCompilation(compilation, out var outputCompilation, out var generateDiagnostics);
+            var driver = CSharpGeneratorDriver.Create(
+                new[] { new MapToGenerator() },
+                optionsProvider: new TestAnalyzerConfigOptionsProvider(analyzerConfigOptions)
+            );
 
+            driver.RunGeneratorsAndUpdateCompilation(compilation, out var outputCompilation, out var generateDiagnostics);
             return (outputCompilation, generateDiagnostics);
         }
     }

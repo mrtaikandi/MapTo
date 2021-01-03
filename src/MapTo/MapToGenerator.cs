@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using MapTo.Configuration;
 using MapTo.Extensions;
 using MapTo.Models;
 using Microsoft.CodeAnalysis;
@@ -21,23 +20,22 @@ namespace MapTo
         /// <inheritdoc />
         public void Execute(GeneratorExecutionContext context)
         {
-            AddAttribute(context, SourceBuilder.GenerateMapFromAttribute());
-            AddAttribute(context, SourceBuilder.GenerateIgnorePropertyAttribute());
+            var options = SourceGenerationOptions.From(context);
+            
+            AddAttribute(context, SourceBuilder.GenerateMapFromAttribute(options));
+            AddAttribute(context, SourceBuilder.GenerateIgnorePropertyAttribute(options));
             
             if (context.SyntaxReceiver is MapToSyntaxReceiver receiver && receiver.CandidateClasses.Any())
             {
-                AddGeneratedMappingsClasses(context, receiver.CandidateClasses);
+                AddGeneratedMappingsClasses(context, receiver.CandidateClasses, options);
             }
         }
 
-        private static void AddGeneratedMappingsClasses(GeneratorExecutionContext context, IEnumerable<ClassDeclarationSyntax> candidateClasses)
+        private static void AddGeneratedMappingsClasses(GeneratorExecutionContext context, IEnumerable<ClassDeclarationSyntax> candidateClasses, SourceGenerationOptions options)
         {
-            var configs = MapToConfigurations.From(context);
-            
             foreach (var classSyntax in candidateClasses)
             {
-                
-                var model = CreateModel(context, classSyntax, configs);
+                var model = CreateModel(context, classSyntax, options);
                 if (model is null)
                 {
                     continue;
@@ -46,7 +44,6 @@ namespace MapTo
                 var (source, hintName) = SourceBuilder.GenerateSource(model);
 
                 context.AddSource(hintName, source);
-                context.ReportDiagnostic(Diagnostics.ClassMappingsGenerated(classSyntax.GetLocation(), model.ClassName));
             }
         }
 
@@ -64,7 +61,7 @@ namespace MapTo
             return sourceTypeExpressionSyntax is not null ? model.GetTypeInfo(sourceTypeExpressionSyntax.Type).Type as INamedTypeSymbol : null;
         }
         
-        private static MapModel? CreateModel(GeneratorExecutionContext context, ClassDeclarationSyntax classSyntax, MapToConfigurations configs)
+        private static MapModel? CreateModel(GeneratorExecutionContext context, ClassDeclarationSyntax classSyntax, SourceGenerationOptions sourceGenerationOptions)
         {
             var root = classSyntax.GetCompilationUnit();
             var classSemanticModel = context.Compilation.GetSemanticModel(classSyntax.SyntaxTree);
@@ -93,14 +90,14 @@ namespace MapTo
             }
             
             return new MapModel(
+                sourceGenerationOptions,
                 root.GetNamespace(),
                 classSyntax.Modifiers,
                 className,
                 sourceTypeSymbol.ContainingNamespace.ToString(),
                 sourceClassName,
                 sourceTypeSymbol.ToString(),
-                mappedProperties,
-                configs.ConstructorAccessModifier);
+                mappedProperties);
         }
         
         private static ImmutableArray<string> GetMappedProperties(ITypeSymbol classSymbol, ITypeSymbol sourceTypeSymbol)
