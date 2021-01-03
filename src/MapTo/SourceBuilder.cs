@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using System.Text;
+﻿using System.Text;
 using MapTo.Extensions;
 using MapTo.Models;
 
@@ -111,7 +110,7 @@ namespace MapTo
 
                 // Class declaration
                 .PadLeft(Indent1)
-                .AppendFormat("{0} class {1}", model.ClassModifiers.ToFullString().Trim(), model.ClassName)
+                .AppendFormat("partial class {0}", model.ClassName)
                 .AppendOpeningBracket(Indent1)
 
                 // Class body
@@ -126,7 +125,7 @@ namespace MapTo
                 .AppendLine()
                 .AppendLine()
                 .PadLeft(Indent1)
-                .AppendFormat("{0} static partial class {1}To{2}Extensions", model.ClassModifiers.FirstOrDefault().ToFullString().Trim(), model.SourceClassName, model.ClassName)
+                .AppendFormat("{0} static partial class {1}To{2}Extensions", model.Options.GeneratedMethodsAccessModifier.ToLowercaseString(), model.SourceClassName, model.ClassName)
                 .AppendOpeningBracket(Indent1)
 
                 // Extension class body

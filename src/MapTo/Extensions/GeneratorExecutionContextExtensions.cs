@@ -9,7 +9,7 @@ namespace MapTo.Extensions
 
         internal static T GetBuildGlobalOption<T>(this GeneratorExecutionContext context, string propertyName, T defaultValue = default!) where T: notnull
         {
-            if (!context.AnalyzerConfigOptions.GlobalOptions.TryGetValue($"build_property.{PropertyNameSuffix}{propertyName}", out var optionValue))
+            if (!context.AnalyzerConfigOptions.GlobalOptions.TryGetValue(GetBuildPropertyName(propertyName), out var optionValue))
             {
                 return defaultValue;
             }
@@ -31,5 +31,7 @@ namespace MapTo.Extensions
                 return defaultValue;
             }
         }
+
+        internal static string GetBuildPropertyName(string propertyName) => $"build_property.{PropertyNameSuffix}{propertyName}";
     }
 }

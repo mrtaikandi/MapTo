@@ -8,6 +8,7 @@ using MapTo.Tests.Infrastructure;
 using Microsoft.CodeAnalysis;
 using Shouldly;
 using Xunit;
+using static MapTo.Extensions.GeneratorExecutionContextExtensions;
 
 namespace MapTo.Tests
 {
@@ -19,9 +20,9 @@ namespace MapTo.Tests
 
         private static readonly Dictionary<string, string> DefaultAnalyzerOptions = new()
         {
-            ["build_property.MapTo_GenerateXmlDocument"] = "false"
+            [GetBuildPropertyName(nameof(SourceGenerationOptions.GenerateXmlDocument))] = "false"
         };
-        
+
         private static readonly string ExpectedAttribute = $@"{SourceBuilder.GeneratedFilesHeader}
 using System;
 
@@ -40,20 +41,20 @@ namespace MapTo
 }}";
 
         private record SourceGeneratorOptions(
-            bool UseMapToNamespace = false, 
-            string SourceClassNamespace = "Test.Models", 
-            int ClassPropertiesCount = 3, 
+            bool UseMapToNamespace = false,
+            string SourceClassNamespace = "Test.Models",
+            int ClassPropertiesCount = 3,
             int SourceClassPropertiesCount = 3,
             Action<StringBuilder> PropertyBuilder = null,
             Action<StringBuilder> SourcePropertyBuilder = null);
-        
+
         private static string GetSourceText(SourceGeneratorOptions options = null)
         {
             const string ns = "Test";
             options ??= new SourceGeneratorOptions();
             var hasDifferentSourceNamespace = options.SourceClassNamespace != ns;
             var builder = new StringBuilder();
-            
+
             if (options.UseMapToNamespace)
             {
                 builder.AppendFormat("using {0};", SourceBuilder.NamespaceName).AppendLine();
@@ -76,7 +77,7 @@ namespace MapTo
                     .AppendLine()
                     .AppendLine();
             }
-            
+
             builder
                 .PadLeft(Indent1)
                 .AppendLine(options.UseMapToNamespace ? "[MapTo.MapFrom(typeof(Baz))]" : "[MapFrom(typeof(Baz))]")
@@ -89,15 +90,15 @@ namespace MapTo
                     .PadLeft(Indent2)
                     .AppendLine(i % 2 == 0 ? $"public int Prop{i} {{ get; set; }}" : $"public int Prop{i} {{ get; }}");
             }
-            
+
             options.PropertyBuilder?.Invoke(builder);
 
             builder
-                .AppendClosingBracket(Indent1, padNewLine: false)
+                .AppendClosingBracket(Indent1, false)
                 .AppendClosingBracket()
                 .AppendLine()
                 .AppendLine();
-            
+
             builder
                 .AppendFormat("namespace {0}", options.SourceClassNamespace)
                 .AppendOpeningBracket()
@@ -110,14 +111,38 @@ namespace MapTo
                     .PadLeft(Indent2)
                     .AppendLine(i % 2 == 0 ? $"public int Prop{i} {{ get; set; }}" : $"public int Prop{i} {{ get; }}");
             }
-            
+
             options.SourcePropertyBuilder?.Invoke(builder);
-            
+
             builder
-                .AppendClosingBracket(Indent1, padNewLine: false)
+                .AppendClosingBracket(Indent1, false)
                 .AppendClosingBracket();
 
             return builder.ToString();
+        }
+
+        [Fact]
+        public void VerifyIgnorePropertyAttribute()
+        {
+            // Arrange
+            const string source = "";
+            var expectedAttribute = $@"
+{SourceBuilder.GeneratedFilesHeader}
+using System;
+
+namespace MapTo
+{{
+    [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+    public sealed class IgnorePropertyAttribute : Attribute {{ }}
+}}
+".Trim();
+
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
+
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+            compilation.SyntaxTrees.ShouldContain(c => c.ToString() == expectedAttribute);
         }
 
         [Fact]
@@ -132,6 +157,112 @@ namespace MapTo
             // Assert
             diagnostics.ShouldBeSuccessful();
             compilation.SyntaxTrees.ShouldContain(c => c.ToString() == ExpectedAttribute);
+        }
+
+        [Fact]
+        public void When_FoundMatchingPropertyNameWithDifferentType_Should_Ignore()
+        {
+            // Arrange
+            var source = GetSourceText(new SourceGeneratorOptions(
+                true,
+                PropertyBuilder: builder =>
+                {
+                    builder
+                        .PadLeft(Indent2).AppendLine("public string Prop4 { get; set; }");
+                },
+                SourcePropertyBuilder: builder => builder.PadLeft(Indent2).AppendLine("public int Prop4 { get; set; }")));
+
+            var expectedResult = @"
+    partial class Foo
+    {
+        public Foo(Test.Models.Baz baz)
+        {
+            if (baz == null) throw new ArgumentNullException(nameof(baz));
+
+            Prop1 = baz.Prop1;
+            Prop2 = baz.Prop2;
+            Prop3 = baz.Prop3;
+        }
+".Trim();
+
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
+
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+            compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult);
+        }
+
+        [Fact]
+        public void When_IgnorePropertyAttributeIsSpecified_Should_NotGenerateMappingsForThatProperty()
+        {
+            // Arrange
+            var source = GetSourceText(new SourceGeneratorOptions(
+                true,
+                PropertyBuilder: builder =>
+                {
+                    builder
+                        .PadLeft(Indent2).AppendLine("[IgnoreProperty]")
+                        .PadLeft(Indent2).AppendLine("public int Prop4 { get; set; }");
+                },
+                SourcePropertyBuilder: builder => builder.PadLeft(Indent2).AppendLine("public int Prop4 { get; set; }")));
+
+            var expectedResult = @"
+    partial class Foo
+    {
+        public Foo(Test.Models.Baz baz)
+        {
+            if (baz == null) throw new ArgumentNullException(nameof(baz));
+
+            Prop1 = baz.Prop1;
+            Prop2 = baz.Prop2;
+            Prop3 = baz.Prop3;
+        }
+".Trim();
+
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
+
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+            compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult);
+        }
+
+        [Fact]
+        public void When_MappingsModifierOptionIsSetToInternal_Should_GenerateThoseMethodsWithInternalAccessModifier()
+        {
+            // Arrange
+            var source = GetSourceText();
+            var configOptions = new Dictionary<string, string>
+            {
+                [GetBuildPropertyName(nameof(SourceGenerationOptions.GeneratedMethodsAccessModifier))] = "Internal",
+                [GetBuildPropertyName(nameof(SourceGenerationOptions.GenerateXmlDocument))] = "false"
+            };
+
+            var expectedExtension = @"    
+    internal static partial class BazToFooExtensions
+    {
+        internal static Foo ToFoo(this Test.Models.Baz baz)
+        {
+            return baz == null ? null : new Foo(baz);
+        }
+    }".Trim();
+
+            var expectedFactory = @"
+        internal static Foo From(Test.Models.Baz baz)
+        {
+            return baz == null ? null : new Foo(baz);
+        }".Trim();
+
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: configOptions);
+
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+
+            var syntaxTree = compilation.SyntaxTrees.Last().ToString();
+            syntaxTree.ShouldContain(expectedFactory);
+            syntaxTree.ShouldContain(expectedExtension);
         }
 
         [Fact]
@@ -162,7 +293,7 @@ using System;
 
 namespace Test
 {
-    public partial class Foo
+    partial class Foo
     {
         public Foo(Test.Baz baz)
         {
@@ -179,7 +310,7 @@ namespace Test
             diagnostics.ShouldBeSuccessful();
             compilation.SyntaxTrees.Last().ToString().ShouldStartWith(expectedResult.Trim());
         }
-        
+
         [Fact]
         public void When_MapToAttributeFoundWithoutMatchingProperties_Should_ReportError()
         {
@@ -225,7 +356,7 @@ using System;
 
 namespace Test
 {
-    public partial class Foo
+    partial class Foo
     {
         public Foo(Test.Baz baz)
         {
@@ -289,7 +420,7 @@ namespace Test
             var source = GetSourceText();
 
             const string expectedResult = @"
-    public partial class Foo
+    partial class Foo
     {
         public Foo(Test.Models.Baz baz)
         {
@@ -352,132 +483,6 @@ namespace Test
             // Assert
             diagnostics.ShouldBeSuccessful();
             compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult.Trim());
-        }
-        
-        [Fact]
-        public void VerifyIgnorePropertyAttribute()
-        {
-            // Arrange
-            const string source = "";
-            var expectedAttribute = $@"
-{SourceBuilder.GeneratedFilesHeader}
-using System;
-
-namespace MapTo
-{{
-    [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-    public sealed class IgnorePropertyAttribute : Attribute {{ }}
-}}
-".Trim();
-
-            // Act
-            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
-
-            // Assert
-            diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.ShouldContain(c => c.ToString() == expectedAttribute);
-        }
-
-        [Fact]
-        public void When_IgnorePropertyAttributeIsSpecified_Should_NotGenerateMappingsForThatProperty()
-        {
-            // Arrange
-            var source = GetSourceText(new SourceGeneratorOptions(
-                UseMapToNamespace: true,
-                PropertyBuilder: builder =>
-                {
-                    builder
-                        .PadLeft(Indent2).AppendLine("[IgnoreProperty]")
-                        .PadLeft(Indent2).AppendLine("public int Prop4 { get; set; }");
-                },
-                SourcePropertyBuilder: builder => builder.PadLeft(Indent2).AppendLine("public int Prop4 { get; set; }")));
-
-            var expectedResult = @"
-    public partial class Foo
-    {
-        public Foo(Test.Models.Baz baz)
-        {
-            if (baz == null) throw new ArgumentNullException(nameof(baz));
-
-            Prop1 = baz.Prop1;
-            Prop2 = baz.Prop2;
-            Prop3 = baz.Prop3;
-        }
-".Trim();
-            
-            // Act
-            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
-
-            // Assert
-            diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult);
-        }
-
-        [Fact]
-        public void When_FoundMatchingPropertyNameWithDifferentType_Should_Ignore()
-        {
-            // Arrange
-            var source = GetSourceText(new SourceGeneratorOptions(
-                UseMapToNamespace: true,
-                PropertyBuilder: builder =>
-                {
-                    builder
-                        .PadLeft(Indent2).AppendLine("public string Prop4 { get; set; }");
-                },
-                SourcePropertyBuilder: builder => builder.PadLeft(Indent2).AppendLine("public int Prop4 { get; set; }")));
-
-            var expectedResult = @"
-    public partial class Foo
-    {
-        public Foo(Test.Models.Baz baz)
-        {
-            if (baz == null) throw new ArgumentNullException(nameof(baz));
-
-            Prop1 = baz.Prop1;
-            Prop2 = baz.Prop2;
-            Prop3 = baz.Prop3;
-        }
-".Trim();
-            
-            // Act
-            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
-
-            // Assert
-            diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult);
-        }
-
-        [Fact]
-        public void When_MappingsModifierOptionIsSetToInternal_Should_GenerateThoseMethodsWithInternalAccessModifier()
-        {
-            // Arrange
-            var source = GetSourceText();
-            var configOptions = new Dictionary<string, string>
-            {
-                [$"build_property.MapTo_{nameof(SourceGenerationOptions.GeneratedMethodsAccessModifier)}"] = "Internal"
-            };
-
-            var expectedExtension = @"    
-        internal static Foo ToFoo(this Test.Models.Baz baz)
-        {
-            return baz == null ? null : new Foo(baz);
-        }".Trim();
-
-            var expectedFactory = @"
-        internal static Foo From(Test.Models.Baz baz)
-        {
-            return baz == null ? null : new Foo(baz);
-        }".Trim();
-
-            // Act
-            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: configOptions);
-
-            // Assert
-            diagnostics.ShouldBeSuccessful();
-            
-            var syntaxTree = compilation.SyntaxTrees.Last().ToString();
-            syntaxTree.ShouldContain(expectedFactory);
-            syntaxTree.ShouldContain(expectedExtension);
         }
     }
 }
