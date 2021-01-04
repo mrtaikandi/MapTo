@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using MapTo.Extensions;
 using MapTo.Models;
+using MapTo.Sources;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -22,8 +22,8 @@ namespace MapTo
         {
             var options = SourceGenerationOptions.From(context);
             
-            AddAttribute(context, SourceBuilder.GenerateMapFromAttribute(options));
-            AddAttribute(context, SourceBuilder.GenerateIgnorePropertyAttribute(options));
+            AddAttribute(context, MapFromAttributeSource.Generate(options));
+            AddAttribute(context, IgnorePropertyAttributeSource.Generate(options));
             
             if (context.SyntaxReceiver is MapToSyntaxReceiver receiver && receiver.CandidateClasses.Any())
             {
@@ -48,7 +48,7 @@ namespace MapTo
                     continue;
                 }
                 
-                var (source, hintName) = SourceBuilder.GenerateSource(model);
+                var (source, hintName) = MapClassSource.Generate(model);
                 context.AddSource(hintName, source);
             }
         }

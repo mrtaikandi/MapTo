@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using MapTo.Sources;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -20,12 +21,12 @@ namespace MapTo
             var attributeSyntax = attributes
                 .SelectMany(a => a.Attributes)
                 .SingleOrDefault(a => a.Name is
-                    IdentifierNameSyntax { Identifier: { ValueText: SourceBuilder.MapFromAttributeName } } // For: [MapFrom] 
+                    IdentifierNameSyntax { Identifier: { ValueText: MapFromAttributeSource.AttributeName } } // For: [MapFrom] 
                     or
                     QualifiedNameSyntax // For: [MapTo.MapFrom]
                     {
-                        Left: IdentifierNameSyntax { Identifier: { ValueText: SourceBuilder.NamespaceName } },
-                        Right: IdentifierNameSyntax { Identifier: { ValueText: SourceBuilder.MapFromAttributeName } }
+                        Left: IdentifierNameSyntax { Identifier: { ValueText: Constants.RootNamespace } },
+                        Right: IdentifierNameSyntax { Identifier: { ValueText: MapFromAttributeSource.AttributeName } }
                     }
                 );
 

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using MapTo.Extensions;
 using MapTo.Models;
+using MapTo.Sources;
 using MapTo.Tests.Infrastructure;
 using Microsoft.CodeAnalysis;
 using Shouldly;
@@ -23,7 +24,7 @@ namespace MapTo.Tests
             [GetBuildPropertyName(nameof(SourceGenerationOptions.GenerateXmlDocument))] = "false"
         };
 
-        private static readonly string ExpectedAttribute = $@"{SourceBuilder.GeneratedFilesHeader}
+        private static readonly string ExpectedAttribute = $@"{Constants.GeneratedFilesHeader}
 using System;
 
 namespace MapTo
@@ -57,7 +58,7 @@ namespace MapTo
 
             if (options.UseMapToNamespace)
             {
-                builder.AppendFormat("using {0};", SourceBuilder.NamespaceName).AppendLine();
+                builder.AppendFormat("using {0};", Constants.RootNamespace).AppendLine();
             }
 
             builder
@@ -127,7 +128,7 @@ namespace MapTo
             // Arrange
             const string source = "";
             var expectedAttribute = $@"
-{SourceBuilder.GeneratedFilesHeader}
+{Constants.GeneratedFilesHeader}
 using System;
 
 namespace MapTo
@@ -142,7 +143,9 @@ namespace MapTo
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.ShouldContain(c => c.ToString() == expectedAttribute);
+            var attributeSyntax = compilation.SyntaxTrees.Select(s => s.ToString().Trim()).SingleOrDefault(s => s.Contains(IgnorePropertyAttributeSource.AttributeName));
+            attributeSyntax.ShouldNotBeNullOrWhiteSpace();
+            attributeSyntax.ShouldBe(expectedAttribute);
         }
 
         [Fact]
@@ -156,7 +159,10 @@ namespace MapTo
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.ShouldContain(c => c.ToString() == ExpectedAttribute);
+
+            var attributeSyntax = compilation.SyntaxTrees.Select(s => s.ToString().Trim()).SingleOrDefault(s => s.Contains(MapFromAttributeSource.AttributeName));
+            attributeSyntax.ShouldNotBeNullOrWhiteSpace();
+            attributeSyntax.ShouldBe(ExpectedAttribute);
         }
 
         [Fact]

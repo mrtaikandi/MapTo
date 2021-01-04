@@ -2,6 +2,7 @@
 using System.Collections.Immutable;
 using System.Linq;
 using MapTo.Extensions;
+using MapTo.Sources;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -65,7 +66,7 @@ namespace MapTo.Models
         private static INamedTypeSymbol? GetSourceTypeSymbol(ClassDeclarationSyntax classSyntax, SemanticModel model)
         {
             var sourceTypeExpressionSyntax = classSyntax
-                .GetAttribute(SourceBuilder.MapFromAttributeName)
+                .GetAttribute(MapFromAttributeSource.AttributeName)
                 ?.DescendantNodes()
                 .OfType<TypeOfExpressionSyntax>()
                 .SingleOrDefault();
@@ -80,7 +81,7 @@ namespace MapTo.Models
                 .Select(p => (p.Name, p.Type.ToString()))
                 .Intersect(classSymbol
                     .GetAllMembersOfType<IPropertySymbol>()
-                    .Where(p => p.GetAttributes().All(a => a.AttributeClass?.Name != SourceBuilder.IgnorePropertyAttributeName))
+                    .Where(p => p.GetAttributes().All(a => a.AttributeClass?.Name != IgnorePropertyAttributeSource.AttributeName))
                     .Select(p => (p.Name, p.Type.ToString())))
                 .Select(p => p.Name)
                 .ToImmutableArray();

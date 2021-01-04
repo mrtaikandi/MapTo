@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using MapTo.Sources;
+using Microsoft.CodeAnalysis;
 
 namespace MapTo
 {
@@ -13,7 +14,7 @@ namespace MapTo
             Create($"{ErrorId}001", "Symbol not found.", $"Unable to find any symbols for {syntaxName}", location);
 
         internal static Diagnostic MapFromAttributeNotFoundError(Location location) =>
-            Create($"{ErrorId}002", "Attribute Not Available", $"Unable to find {SourceBuilder.MapFromAttributeName} type.", location);
+            Create($"{ErrorId}002", "Attribute Not Available", $"Unable to find {MapFromAttributeSource.AttributeName} type.", location);
 
         internal static Diagnostic NoMatchingPropertyFoundError(Location location, string className, string sourceTypeName) =>
             Create($"{ErrorId}003", "Property Not Found", $"No matching properties found between '{className}' and '{sourceTypeName}' types.", location);
