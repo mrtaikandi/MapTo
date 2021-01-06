@@ -6,7 +6,7 @@ namespace MapTo.Sources
 {
     internal static class MapClassSource
     {
-        internal static (string source, string hintName) Generate(MapModel model)
+        internal static Source Generate(MapModel model)
         {
             using var builder = new SourceBuilder()
                 .WriteLine(GeneratedFilesHeader)
@@ -36,7 +36,7 @@ namespace MapTo.Sources
                 // End namespace declaration
                 .WriteClosingBracket();
             
-            return (builder.ToString(), $"{model.ClassName}.g.cs");
+            return new(builder.ToString(), $"{model.ClassName}.g.cs");
         }
 
         private static SourceBuilder WriteUsings(this SourceBuilder builder, MapModel model)

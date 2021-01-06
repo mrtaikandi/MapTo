@@ -5,6 +5,7 @@ using System.Text;
 using MapTo.Extensions;
 using MapTo.Models;
 using MapTo.Sources;
+using MapTo.Tests.Extensions;
 using MapTo.Tests.Infrastructure;
 using Microsoft.CodeAnalysis;
 using Shouldly;
@@ -143,9 +144,7 @@ namespace MapTo
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-            var attributeSyntax = compilation.SyntaxTrees.Select(s => s.ToString().Trim()).SingleOrDefault(s => s.Contains(IgnorePropertyAttributeSource.AttributeName));
-            attributeSyntax.ShouldNotBeNullOrWhiteSpace();
-            attributeSyntax.ShouldBe(expectedAttribute);
+            compilation.SyntaxTrees.ShouldContainSource(IgnorePropertyAttributeSource.AttributeName, expectedAttribute);
         }
 
         [Fact]
@@ -159,10 +158,7 @@ namespace MapTo
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-
-            var attributeSyntax = compilation.SyntaxTrees.Select(s => s.ToString().Trim()).SingleOrDefault(s => s.Contains(MapFromAttributeSource.AttributeName));
-            attributeSyntax.ShouldNotBeNullOrWhiteSpace();
-            attributeSyntax.ShouldBe(ExpectedAttribute);
+            compilation.SyntaxTrees.ShouldContainSource(MapFromAttributeSource.AttributeName, ExpectedAttribute);
         }
 
         [Fact]
@@ -385,6 +381,7 @@ namespace Test
         {
             // Arrange
             const string source = "";
+            var expectedTypes = new[] { IgnorePropertyAttributeSource.AttributeName, MapFromAttributeSource.AttributeName, TypeConverterSource.InterfaceName };
 
             // Act
             var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source);
@@ -394,7 +391,7 @@ namespace Test
             compilation.SyntaxTrees
                 .Select(s => s.ToString())
                 .Where(s => !string.IsNullOrWhiteSpace(s.ToString()))
-                .All(s => s.Contains(": Attribute"))
+                .All(s => expectedTypes.Any(s.Contains))
                 .ShouldBeTrue();
         }
 
@@ -489,6 +486,31 @@ namespace Test
             // Assert
             diagnostics.ShouldBeSuccessful();
             compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult.Trim());
+        }
+        
+        [Fact]
+        public void VerifyTypeConverterInterface()
+        {
+            // Arrange
+            const string source = "";
+            var expectedInterface = $@"
+{Constants.GeneratedFilesHeader}
+
+namespace MapTo
+{{
+    public interface ITypeConverter<in TSource, out TDestination>
+    {{
+        TDestination Convert(TSource source);
+    }}
+}}
+".Trim();
+
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
+
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+            compilation.SyntaxTrees.ShouldContainSource(TypeConverterSource.InterfaceName, expectedInterface);
         }
     }
 }

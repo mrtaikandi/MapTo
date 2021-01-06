@@ -22,17 +22,15 @@ namespace MapTo
         {
             var options = SourceGenerationOptions.From(context);
             
-            AddAttribute(context, MapFromAttributeSource.Generate(options));
-            AddAttribute(context, IgnorePropertyAttributeSource.Generate(options));
+            context.AddSource(MapFromAttributeSource.Generate(options));
+            context.AddSource(IgnorePropertyAttributeSource.Generate(options));
+            context.AddSource(TypeConverterSource.Generate(options));
             
             if (context.SyntaxReceiver is MapToSyntaxReceiver receiver && receiver.CandidateClasses.Any())
             {
                 AddGeneratedMappingsClasses(context, receiver.CandidateClasses, options);
             }
         }
-        
-        private static void AddAttribute(GeneratorExecutionContext context, (string source, string hintName) attribute) 
-            => context.AddSource(attribute.hintName, attribute.source);
 
         private static void AddGeneratedMappingsClasses(GeneratorExecutionContext context, IEnumerable<ClassDeclarationSyntax> candidateClasses, SourceGenerationOptions options)
         {
@@ -42,14 +40,11 @@ namespace MapTo
                 var (model, diagnostics) = MapModel.CreateModel(classSemanticModel, classSyntax, options);
                 
                 diagnostics.ForEach(context.ReportDiagnostic);
-                
-                if (model is null)
+
+                if (model is not null)
                 {
-                    continue;
+                    context.AddSource(MapClassSource.Generate(model));
                 }
-                
-                var (source, hintName) = MapClassSource.Generate(model);
-                context.AddSource(hintName, source);
             }
         }
     }

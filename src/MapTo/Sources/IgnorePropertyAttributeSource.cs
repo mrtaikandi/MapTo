@@ -7,7 +7,7 @@ namespace MapTo.Sources
     {
         internal const string AttributeName = "IgnoreProperty";
 
-        internal static (string source, string hintName) Generate(SourceGenerationOptions options)
+        internal static Source Generate(SourceGenerationOptions options)
         {
             var builder = new SourceBuilder()
                 .WriteLine(GeneratedFilesHeader)
@@ -29,7 +29,7 @@ namespace MapTo.Sources
                 .WriteLine($"public sealed class {AttributeName}Attribute : Attribute {{ }}")
                 .WriteClosingBracket();
 
-            return (builder.ToString(), $"{AttributeName}Attribute.g.cs");
+            return new(builder.ToString(), $"{AttributeName}Attribute.g.cs");
         }
     }
 }

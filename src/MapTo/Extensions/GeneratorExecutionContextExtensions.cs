@@ -1,4 +1,5 @@
 ﻿using System;
+using MapTo.Sources;
 using Microsoft.CodeAnalysis;
 
 namespace MapTo.Extensions
@@ -33,5 +34,8 @@ namespace MapTo.Extensions
         }
 
         internal static string GetBuildPropertyName(string propertyName) => $"build_property.{PropertyNameSuffix}{propertyName}";
+
+        internal static void AddSource(this GeneratorExecutionContext context, Source source) =>
+            context.AddSource(source.HintName, source.Code);
     }
 }
