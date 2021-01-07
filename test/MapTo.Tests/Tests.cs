@@ -512,5 +512,37 @@ namespace MapTo
             diagnostics.ShouldBeSuccessful();
             compilation.SyntaxTrees.ShouldContainSource(TypeConverterSource.InterfaceName, expectedInterface);
         }
+        
+        [Fact]
+        public void VerifyMapPropertyAttribute()
+        {
+            // Arrange
+            const string source = "";
+            var expectedInterface = $@"
+{Constants.GeneratedFilesHeader}
+using System;
+
+namespace MapTo
+{{
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
+    public sealed class MapPropertyAttribute : Attribute
+    {{
+        public MapPropertyAttribute(Type converter = null)
+        {{
+            Converter = converter;
+        }}
+
+        public Type Converter {{ get; }}
+    }}
+}}
+".Trim();
+
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
+
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+            compilation.SyntaxTrees.ShouldContainSource(MapPropertyAttributeSource.AttributeName, expectedInterface);
+        }
     }
 }

@@ -6,7 +6,7 @@ namespace MapTo.Sources
 {
     internal static class MapClassSource
     {
-        internal static Source Generate(MapModel model)
+        internal static SourceCode Generate(MapModel model)
         {
             using var builder = new SourceBuilder()
                 .WriteLine(GeneratedFilesHeader)

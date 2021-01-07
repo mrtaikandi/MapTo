@@ -7,7 +7,7 @@ namespace MapTo.Sources
     {
         internal const string AttributeName = "IgnoreProperty";
 
-        internal static Source Generate(SourceGenerationOptions options)
+        internal static SourceCode Generate(SourceGenerationOptions options)
         {
             var builder = new SourceBuilder()
                 .WriteLine(GeneratedFilesHeader)

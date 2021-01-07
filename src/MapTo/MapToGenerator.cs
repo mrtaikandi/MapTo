@@ -25,6 +25,7 @@ namespace MapTo
             context.AddSource(MapFromAttributeSource.Generate(options));
             context.AddSource(IgnorePropertyAttributeSource.Generate(options));
             context.AddSource(TypeConverterSource.Generate(options));
+            context.AddSource(MapPropertyAttributeSource.Generate(options));
             
             if (context.SyntaxReceiver is MapToSyntaxReceiver receiver && receiver.CandidateClasses.Any())
             {

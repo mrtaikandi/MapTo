@@ -35,7 +35,7 @@ namespace MapTo.Extensions
 
         internal static string GetBuildPropertyName(string propertyName) => $"build_property.{PropertyNameSuffix}{propertyName}";
 
-        internal static void AddSource(this GeneratorExecutionContext context, Source source) =>
-            context.AddSource(source.HintName, source.Code);
+        internal static void AddSource(this GeneratorExecutionContext context, SourceCode sourceCode) =>
+            context.AddSource(sourceCode.HintName, sourceCode.Text);
     }
 }

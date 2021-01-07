@@ -7,7 +7,7 @@ namespace MapTo.Sources
     {
         internal const string InterfaceName = "ITypeConverter";
 
-        internal static Source Generate(SourceGenerationOptions options)
+        internal static SourceCode Generate(SourceGenerationOptions options)
         {
             using var builder = new SourceBuilder()
                 .WriteLine(GeneratedFilesHeader)

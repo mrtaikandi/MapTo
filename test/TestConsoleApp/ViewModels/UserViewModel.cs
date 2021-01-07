@@ -7,7 +7,16 @@ namespace TestConsoleApp.ViewModels
     {
         public string FirstName { get; }
 
-        // [IgnoreProerty]
+        [IgnoreProperty]
         public string LastName { get; }
+        
+        [MapProperty(converter: typeof(LastNameConverter))]
+        public string Key { get; }
+
+        private class LastNameConverter : ITypeConverter<int, string>
+        {
+            /// <inheritdoc />
+            public string Convert(int source) => $"{source} :: With Type Converter";
+        }
     }
 }

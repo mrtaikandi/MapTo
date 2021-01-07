@@ -3,10 +3,10 @@ using static MapTo.Sources.Constants;
 
 namespace MapTo.Sources
 {
-    internal static class MapFromAttributeSource
+    internal static class MapPropertyAttributeSource
     {
-        internal const string AttributeName = "MapFrom";
-        
+        internal const string AttributeName = "MapProperty";
+
         internal static SourceCode Generate(SourceGenerationOptions options)
         {
             using var builder = new SourceBuilder()
@@ -20,12 +20,12 @@ namespace MapTo.Sources
             {
                 builder
                     .WriteLine("/// <summary>")
-                    .WriteLine("/// Specifies that the annotated class can be mapped from the provided <see cref=\"SourceType\"/>.")
+                    .WriteLine("/// Maps a property to property of another object.")
                     .WriteLine("/// </summary>");
             }
 
             builder
-                .WriteLine("[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]")
+                .WriteLine("[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]")
                 .WriteLine($"public sealed class {AttributeName}Attribute : Attribute")
                 .WriteOpeningBracket();
 
@@ -33,14 +33,15 @@ namespace MapTo.Sources
             {
                 builder
                     .WriteLine("/// <summary>")
-                    .WriteLine($"/// Initializes a new instance of the <see cref=\"{AttributeName}Attribute\"/> class with the specified <paramref name=\"sourceType\"/>.")
-                    .WriteLine("/// </summary>");
+                    .WriteLine("/// Initializes a new instance of <see cref=\"MapPropertyAttribute\"/>.")
+                    .WriteLine("/// </summary>")
+                    .WriteLine("/// <param name=\"converter\">The <see cref=\"ITypeConverter{TSource,TDestination}\" /> to convert the value of the annotated property.</param>");
             }
 
             builder
-                .WriteLine($"public {AttributeName}Attribute(Type sourceType)")
+                .WriteLine($"public {AttributeName}Attribute(Type converter = null)")
                 .WriteOpeningBracket()
-                .WriteLine("SourceType = sourceType;")
+                .WriteLine("Converter = converter;")
                 .WriteClosingBracket()
                 .WriteLine();
 
@@ -48,14 +49,14 @@ namespace MapTo.Sources
             {
                 builder
                     .WriteLine("/// <summary>")
-                    .WriteLine("/// Gets the type of the class that the annotated class should be able to map from.")
+                    .WriteLine("/// Gets the <see cref=\"ITypeConverter{TSource,TDestination}\" /> to convert the value of the annotated property.")
                     .WriteLine("/// </summary>");
             }
 
             builder
-                .WriteLine("public Type SourceType { get; }")
-                .WriteClosingBracket() // class
-                .WriteClosingBracket(); // namespace
+                .WriteLine("public Type Converter { get; }")
+                .WriteClosingBracket()
+                .WriteClosingBracket();
 
             return new(builder.ToString(), $"{AttributeName}Attribute.g.cs");
         }
