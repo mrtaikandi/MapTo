@@ -42,6 +42,9 @@ namespace MapTo.Extensions
         public static IEnumerable<AttributeData> GetAttributes(this ISymbol symbol, ITypeSymbol attributeSymbol) =>
             symbol.GetAttributes().Where(a => a.AttributeClass?.Equals(attributeSymbol, SymbolEqualityComparer.Default) == true);
 
+        public static AttributeData? GetAttribute(this ISymbol symbol, ITypeSymbol attributeSymbol) =>
+            symbol.GetAttributes(attributeSymbol).FirstOrDefault();
+        
         public static string? GetNamespace(this ClassDeclarationSyntax classDeclarationSyntax)
         {
             return classDeclarationSyntax.Ancestors()

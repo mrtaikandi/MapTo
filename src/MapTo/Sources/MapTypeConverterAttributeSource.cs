@@ -3,10 +3,11 @@ using static MapTo.Sources.Constants;
 
 namespace MapTo.Sources
 {
-    internal static class MapPropertyAttributeSource
+    internal static class MapTypeConverterAttributeSource
     {
-        internal const string AttributeName = "MapProperty";
-        internal const string FullyQualifiedName = RootNamespace + "." + AttributeName + "Attribute";
+        internal const string AttributeName = "MapTypeConverter";
+        internal const string AttributeClassName = AttributeName + "Attribute";
+        internal const string FullyQualifiedName = RootNamespace + "." + AttributeClassName;
         internal const string ConverterPropertyName = "Converter";
 
         internal static SourceCode Generate(SourceGenerationOptions options)
@@ -28,19 +29,22 @@ namespace MapTo.Sources
 
             builder
                 .WriteLine("[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]")
-                .WriteLine($"public sealed class {AttributeName}Attribute : Attribute")
+                .WriteLine($"public sealed class {AttributeClassName} : Attribute")
                 .WriteOpeningBracket();
 
             if (options.GenerateXmlDocument)
             {
                 builder
                     .WriteLine("/// <summary>")
-                    .WriteLine("/// Initializes a new instance of <see cref=\"MapPropertyAttribute\"/>.")
+                    .WriteLine($"/// Initializes a new instance of <see cref=\"{AttributeClassName}\"/>.")
                     .WriteLine("/// </summary>");
             }
 
             builder
-                .WriteLine($"public {AttributeName}Attribute() {{ }}")
+                .WriteLine($"public {AttributeClassName}(Type converter)")
+                .WriteOpeningBracket()
+                .WriteLine($"{ConverterPropertyName} = converter;")
+                .WriteClosingBracket()
                 .WriteLine();
 
             if (options.GenerateXmlDocument)
@@ -52,11 +56,11 @@ namespace MapTo.Sources
             }
 
             builder
-                .WriteLine($"public Type {ConverterPropertyName} {{ get; set; }}")
+                .WriteLine($"public Type {ConverterPropertyName} {{ get; }}")
                 .WriteClosingBracket()
                 .WriteClosingBracket();
 
-            return new(builder.ToString(), $"{AttributeName}Attribute.g.cs");
+            return new(builder.ToString(), $"{AttributeClassName}.g.cs");
         }
     }
 }

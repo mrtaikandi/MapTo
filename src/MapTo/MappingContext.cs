@@ -21,14 +21,14 @@ namespace MapTo
             IgnorePropertyAttributeTypeSymbol = compilation.GetTypeByMetadataName(IgnorePropertyAttributeSource.FullyQualifiedName)
                                                 ?? throw new TypeLoadException($"Unable to find '{IgnorePropertyAttributeSource.FullyQualifiedName}' type.");
 
-            MapPropertyAttributeTypeSymbol = compilation.GetTypeByMetadataName(MapPropertyAttributeSource.FullyQualifiedName)
-                                             ?? throw new TypeLoadException($"Unable to find '{MapPropertyAttributeSource.FullyQualifiedName}' type.");
+            MapTypeConverterAttributeTypeSymbol = compilation.GetTypeByMetadataName(MapTypeConverterAttributeSource.FullyQualifiedName)
+                                                  ?? throw new TypeLoadException($"Unable to find '{MapTypeConverterAttributeSource.FullyQualifiedName}' type.");
 
             TypeConverterInterfaceTypeSymbol = compilation.GetTypeByMetadataName(TypeConverterSource.FullyQualifiedName)
                                                ?? throw new TypeLoadException($"Unable to find '{TypeConverterSource.FullyQualifiedName}' type.");
         }
 
-        public INamedTypeSymbol MapPropertyAttributeTypeSymbol { get; }
+        public INamedTypeSymbol MapTypeConverterAttributeTypeSymbol { get; }
 
         public INamedTypeSymbol TypeConverterInterfaceTypeSymbol { get; }
 
@@ -90,7 +90,7 @@ namespace MapTo
                 ?.DescendantNodes()
                 .OfType<TypeOfExpressionSyntax>()
                 .SingleOrDefault();
-            
+
             return sourceTypeExpressionSyntax is not null ? semanticModel.GetTypeInfo(sourceTypeExpressionSyntax.Type).Type as INamedTypeSymbol : null;
         }
 
@@ -114,37 +114,28 @@ namespace MapTo
                 }
 
                 string? converterFullyQualifiedName = null;
-                if (!SymbolEqualityComparer.Default.Equals(property.Type, sourceProperty.Type))
+                if (!SymbolEqualityComparer.Default.Equals(property.Type, sourceProperty.Type) && !context.Compilation.HasImplicitConversion(sourceProperty.Type, property.Type))
                 {
-                    var conversionClassification = context.Compilation.ClassifyCommonConversion(sourceProperty.Type, property.Type);
-                    if (!conversionClassification.Exists || !conversionClassification.IsImplicit)
+                    var converterTypeSymbol = property.GetAttribute(context.MapTypeConverterAttributeTypeSymbol)?.ConstructorArguments.First().Value as INamedTypeSymbol;
+                    if (converterTypeSymbol is null)
                     {
-                        var mapPropertyAttribute = property.GetAttributes(context.MapPropertyAttributeTypeSymbol)
-                            .FirstOrDefault(a => a.NamedArguments.Any(na => na.Key == MapPropertyAttributeSource.ConverterPropertyName));
-
-                        var converterTypeSymbol = mapPropertyAttribute?.NamedArguments
-                            .SingleOrDefault(na => na.Key == MapPropertyAttributeSource.ConverterPropertyName).Value.Value as INamedTypeSymbol;
-
-                        if (mapPropertyAttribute  is null || converterTypeSymbol is null)
-                        {
-                            context.ReportDiagnostic(DiagnosticProvider.NoMatchingPropertyTypeFoundError(property));
-                            continue;
-                        }
-
-                        var baseInterface = converterTypeSymbol.AllInterfaces
-                            .SingleOrDefault(i => SymbolEqualityComparer.Default.Equals(i.ConstructedFrom, context.TypeConverterInterfaceTypeSymbol) &&
-                                                  i.TypeArguments.Length == 2 &&
-                                                  SymbolEqualityComparer.Default.Equals(sourceProperty.Type, i.TypeArguments[0]) &&
-                                                  SymbolEqualityComparer.Default.Equals(property.Type, i.TypeArguments[1]));
-
-                        if (baseInterface is null)
-                        {
-                            context.ReportDiagnostic(DiagnosticProvider.InvalidTypeConverterGenericTypesError(property, sourceProperty));
-                            continue;
-                        }
-
-                        converterFullyQualifiedName = converterTypeSymbol.ToDisplayString();
+                        context.ReportDiagnostic(DiagnosticProvider.NoMatchingPropertyTypeFoundError(property));
+                        continue;
                     }
+
+                    var baseInterface = converterTypeSymbol.AllInterfaces
+                        .SingleOrDefault(i => SymbolEqualityComparer.Default.Equals(i.ConstructedFrom, context.TypeConverterInterfaceTypeSymbol) &&
+                                              i.TypeArguments.Length == 2 &&
+                                              SymbolEqualityComparer.Default.Equals(sourceProperty.Type, i.TypeArguments[0]) &&
+                                              SymbolEqualityComparer.Default.Equals(property.Type, i.TypeArguments[1]));
+
+                    if (baseInterface is null)
+                    {
+                        context.ReportDiagnostic(DiagnosticProvider.InvalidTypeConverterGenericTypesError(property, sourceProperty));
+                        continue;
+                    }
+
+                    converterFullyQualifiedName = converterTypeSymbol.ToDisplayString();
                 }
 
                 mappedProperties.Add(new MappedProperty(property.Name, converterFullyQualifiedName));

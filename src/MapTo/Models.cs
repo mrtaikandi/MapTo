@@ -16,7 +16,7 @@ namespace MapTo
         );
     }
 
-    internal record MappedProperty(string Name, string? ConverterFullyQualifiedName);
+    internal record MappedProperty(string Name, string? TypeConverter);
 
     internal record MappingModel (
         SourceGenerationOptions Options,

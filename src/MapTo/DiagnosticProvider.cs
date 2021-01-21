@@ -23,7 +23,7 @@ namespace MapTo
             Create($"{ErrorId}030", location, "Type Mismatch", $"No matching properties found between '{classType.ToDisplayString()}' and '{sourceType.ToDisplayString()}' types.");
 
         internal static Diagnostic NoMatchingPropertyTypeFoundError(IPropertySymbol property) =>
-            Create($"{ErrorId}031", property.Locations.FirstOrDefault(), "Type Mismatch", $"Cannot create a map for '{property.ToDisplayString()}' property because source and destination types are not implicitly convertible. Consider using '{RootNamespace}.{MapPropertyAttributeSource.AttributeName}Attribute' to provide a type converter or ignore the property using '{RootNamespace}.{IgnorePropertyAttributeSource.AttributeName}Attribute'.");
+            Create($"{ErrorId}031", property.Locations.FirstOrDefault(), "Type Mismatch", $"Cannot create a map for '{property.ToDisplayString()}' property because source and destination types are not implicitly convertible. Consider using '{MapTypeConverterAttributeSource.FullyQualifiedName}' to provide a type converter or ignore the property using '{RootNamespace}.{IgnorePropertyAttributeSource.AttributeName}Attribute'.");
 
         internal static Diagnostic InvalidTypeConverterGenericTypesError(IPropertySymbol property, IPropertySymbol sourceProperty) =>
             Create($"{ErrorId}032", property.Locations.FirstOrDefault(), "Type Mismatch", $"Cannot map '{property.ToDisplayString()}' property because the annotated converter does not implement '{RootNamespace}.{TypeConverterSource.InterfaceName}<{sourceProperty.Type.ToDisplayString()}, {property.Type.ToDisplayString()}>'.");

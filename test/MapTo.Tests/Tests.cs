@@ -517,7 +517,7 @@ namespace MapTo
         }
         
         [Fact]
-        public void VerifyMapPropertyAttribute()
+        public void VerifyMapTypeConverterAttribute()
         {
             // Arrange
             const string source = "";
@@ -528,11 +528,14 @@ using System;
 namespace MapTo
 {{
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
-    public sealed class MapPropertyAttribute : Attribute
+    public sealed class MapTypeConverterAttribute : Attribute
     {{
-        public MapPropertyAttribute() {{ }}
+        public MapTypeConverterAttribute(Type converter)
+        {{
+            Converter = converter;
+        }}
 
-        public Type Converter {{ get; set; }}
+        public Type Converter {{ get; }}
     }}
 }}
 ".Trim();
@@ -542,7 +545,7 @@ namespace MapTo
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.ShouldContainSource(MapPropertyAttributeSource.AttributeName, expectedInterface);
+            compilation.SyntaxTrees.ShouldContainSource(MapTypeConverterAttributeSource.AttributeName, expectedInterface);
         }
         
         [Fact]
@@ -591,8 +594,7 @@ namespace MapTo
                     builder
                         .PadLeft(Indent2).AppendLine("[IgnoreProperty]")
                         .PadLeft(Indent2).AppendLine("public long IgnoreMe { get; set; }")
-                        .PadLeft(Indent2).AppendLine("[MapProperty]")
-                        .PadLeft(Indent2).AppendLine("[MapProperty(Converter = typeof(Prop4Converter))]")
+                        .PadLeft(Indent2).AppendLine("[MapTypeConverter(typeof(Prop4Converter))]")
                         .PadLeft(Indent2).AppendLine("public long Prop4 { get; set; }");
                 },
                 SourcePropertyBuilder: builder => builder.PadLeft(Indent2).AppendLine("public string Prop4 { get; set; }")));
@@ -626,7 +628,7 @@ namespace Test
                 PropertyBuilder: builder =>
                 {
                     builder
-                        .PadLeft(Indent2).AppendLine("[MapProperty(Converter = typeof(Prop4Converter))]")
+                        .PadLeft(Indent2).AppendLine("[MapTypeConverter(typeof(Prop4Converter))]")
                         .PadLeft(Indent2).AppendLine("public long Prop4 { get; set; }");
                 },
                 SourcePropertyBuilder: builder => builder.PadLeft(Indent2).AppendLine("public string Prop4 { get; set; }")));

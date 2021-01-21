@@ -66,9 +66,9 @@ namespace MapTo.Sources
 
             foreach (var property in model.MappedProperties)
             {
-                if (property.ConverterFullyQualifiedName is not null)
+                if (property.TypeConverter is not null)
                 {
-                    builder.WriteLine($"{property.Name} = new {property.ConverterFullyQualifiedName}().Convert({sourceClassParameterName}.{property.Name});");
+                    builder.WriteLine($"{property.Name} = new {property.TypeConverter}().Convert({sourceClassParameterName}.{property.Name});");
                 }
                 else
                 {
