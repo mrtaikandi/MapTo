@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using MapTo.Extensions;
-using MapTo.Models;
 using MapTo.Sources;
 using MapTo.Tests.Extensions;
 using MapTo.Tests.Infrastructure;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 using Shouldly;
 using Xunit;
 using static MapTo.Extensions.GeneratorExecutionContextExtensions;
@@ -19,6 +22,7 @@ namespace MapTo.Tests
         private const int Indent1 = 4;
         private const int Indent2 = Indent1 * 2;
         private const int Indent3 = Indent1 * 3;
+        private static readonly Location IgnoreLocation = Location.None;
 
         private static readonly Dictionary<string, string> DefaultAnalyzerOptions = new()
         {
@@ -57,6 +61,11 @@ namespace MapTo
             var hasDifferentSourceNamespace = options.SourceClassNamespace != ns;
             var builder = new StringBuilder();
 
+            builder.AppendLine("//");
+            builder.AppendLine("// Test source code.");
+            builder.AppendLine("//");
+            builder.AppendLine();
+            
             if (options.UseMapToNamespace)
             {
                 builder.AppendFormat("using {0};", Constants.RootNamespace).AppendLine();
@@ -82,7 +91,7 @@ namespace MapTo
 
             builder
                 .PadLeft(Indent1)
-                .AppendLine(options.UseMapToNamespace ? "[MapTo.MapFrom(typeof(Baz))]" : "[MapFrom(typeof(Baz))]")
+                .AppendLine(options.UseMapToNamespace ? "[MapFrom(typeof(Baz))]": "[MapTo.MapFrom(typeof(Baz))]")
                 .PadLeft(Indent1).Append("public partial class Foo")
                 .AppendOpeningBracket(Indent1);
 
@@ -162,7 +171,7 @@ namespace MapTo
         }
 
         [Fact]
-        public void When_FoundMatchingPropertyNameWithDifferentType_Should_Ignore()
+        public void When_FoundMatchingPropertyNameWithDifferentTypes_Should_ReportError()
         {
             // Arrange
             var source = GetSourceText(new SourceGeneratorOptions(
@@ -173,26 +182,14 @@ namespace MapTo
                         .PadLeft(Indent2).AppendLine("public string Prop4 { get; set; }");
                 },
                 SourcePropertyBuilder: builder => builder.PadLeft(Indent2).AppendLine("public int Prop4 { get; set; }")));
-
-            var expectedResult = @"
-    partial class Foo
-    {
-        public Foo(Test.Models.Baz baz)
-        {
-            if (baz == null) throw new ArgumentNullException(nameof(baz));
-
-            Prop1 = baz.Prop1;
-            Prop2 = baz.Prop2;
-            Prop3 = baz.Prop3;
-        }
-".Trim();
-
+            
             // Act
             var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
-
+            
             // Assert
-            diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult);
+            var expectedError = DiagnosticProvider.NoMatchingPropertyTypeFoundError(GetSourcePropertySymbol("Prop4", compilation));
+
+            diagnostics.ShouldBeUnsuccessful(expectedError);
         }
 
         [Fact]
@@ -224,7 +221,7 @@ namespace MapTo
 
             // Act
             var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
-
+                
             // Assert
             diagnostics.ShouldBeSuccessful();
             compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult);
@@ -317,7 +314,6 @@ namespace Test
         public void When_MapToAttributeFoundWithoutMatchingProperties_Should_ReportError()
         {
             // Arrange
-            var expectedDiagnostic = Diagnostics.NoMatchingPropertyFoundError(Location.None, "Foo", "Baz");
             const string source = @"
 using MapTo;
 
@@ -331,9 +327,16 @@ namespace Test
 ";
 
             // Act
-            var (_, diagnostics) = CSharpGenerator.GetOutputCompilation(source);
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source);
 
             // Assert
+            var fooType = compilation.GetTypeByMetadataName("Test.Foo");
+            fooType.ShouldNotBeNull();
+            
+            var bazType = compilation.GetTypeByMetadataName("Test.Baz");
+            bazType.ShouldNotBeNull();
+
+            var expectedDiagnostic = DiagnosticProvider.NoMatchingPropertyFoundError(fooType.Locations.Single(), fooType, bazType);
             var error = diagnostics.FirstOrDefault(d => d.Id == expectedDiagnostic.Id);
             error.ShouldNotBeNull();
         }
@@ -527,12 +530,9 @@ namespace MapTo
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
     public sealed class MapPropertyAttribute : Attribute
     {{
-        public MapPropertyAttribute(Type converter = null)
-        {{
-            Converter = converter;
-        }}
+        public MapPropertyAttribute() {{ }}
 
-        public Type Converter {{ get; }}
+        public Type Converter {{ get; set; }}
     }}
 }}
 ".Trim();
@@ -543,6 +543,134 @@ namespace MapTo
             // Assert
             diagnostics.ShouldBeSuccessful();
             compilation.SyntaxTrees.ShouldContainSource(MapPropertyAttributeSource.AttributeName, expectedInterface);
+        }
+        
+        [Fact]
+        public void When_FoundMatchingPropertyNameWithDifferentImplicitlyConvertibleType_Should_GenerateTheProperty()
+        {
+            // Arrange
+            var source = GetSourceText(new SourceGeneratorOptions(
+                true,
+                PropertyBuilder: builder =>
+                {
+                    builder
+                        .PadLeft(Indent2).AppendLine("public long Prop4 { get; set; }");
+                },
+                SourcePropertyBuilder: builder => builder.PadLeft(Indent2).AppendLine("public int Prop4 { get; set; }")));
+
+            var expectedResult = @"
+    partial class Foo
+    {
+        public Foo(Test.Models.Baz baz)
+        {
+            if (baz == null) throw new ArgumentNullException(nameof(baz));
+
+            Prop1 = baz.Prop1;
+            Prop2 = baz.Prop2;
+            Prop3 = baz.Prop3;
+            Prop4 = baz.Prop4;
+        }
+".Trim();
+
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
+
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+            compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult);
+        }
+        
+        [Fact]
+        public void When_FoundMatchingPropertyNameWithIncorrectConverterType_ShouldReportError()
+        {
+            // Arrange
+            var source = GetSourceText(new SourceGeneratorOptions(
+                true,
+                PropertyBuilder: builder =>
+                {
+                    builder
+                        .PadLeft(Indent2).AppendLine("[IgnoreProperty]")
+                        .PadLeft(Indent2).AppendLine("public long IgnoreMe { get; set; }")
+                        .PadLeft(Indent2).AppendLine("[MapProperty]")
+                        .PadLeft(Indent2).AppendLine("[MapProperty(Converter = typeof(Prop4Converter))]")
+                        .PadLeft(Indent2).AppendLine("public long Prop4 { get; set; }");
+                },
+                SourcePropertyBuilder: builder => builder.PadLeft(Indent2).AppendLine("public string Prop4 { get; set; }")));
+
+            source += @"
+namespace Test
+{
+    using MapTo;
+
+    public class Prop4Converter: ITypeConverter<string, int>
+    {
+        public int Convert(string source) => int.Parse(source);
+    }
+}
+";
+
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
+            
+            // Assert
+            var expectedError = DiagnosticProvider.InvalidTypeConverterGenericTypesError(GetSourcePropertySymbol("Prop4", compilation), GetSourcePropertySymbol("Prop4", compilation, "Baz"));
+            diagnostics.ShouldBeUnsuccessful(expectedError);
+        }
+        
+        [Fact]
+        public void When_FoundMatchingPropertyNameWithConverterType_ShouldUseTheConverterToAssignProperties()
+        {
+            // Arrange
+            var source = GetSourceText(new SourceGeneratorOptions(
+                true,
+                PropertyBuilder: builder =>
+                {
+                    builder
+                        .PadLeft(Indent2).AppendLine("[MapProperty(Converter = typeof(Prop4Converter))]")
+                        .PadLeft(Indent2).AppendLine("public long Prop4 { get; set; }");
+                },
+                SourcePropertyBuilder: builder => builder.PadLeft(Indent2).AppendLine("public string Prop4 { get; set; }")));
+
+            source += @"
+namespace Test
+{
+    using MapTo;
+
+    public class Prop4Converter: ITypeConverter<string, long>
+    {
+        public long Convert(string source) => long.Parse(source);
+    }
+}
+";
+
+            const string expectedSyntax = "Prop4 = new Test.Prop4Converter().Convert(baz.Prop4);";
+
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
+            
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+            compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedSyntax);
+        }
+
+        private static PropertyDeclarationSyntax GetPropertyDeclarationSyntax(SyntaxTree syntaxTree, string targetPropertyName, string targetClass = "Foo")
+        {
+            return syntaxTree.GetRoot()
+                .DescendantNodes()
+                .OfType<ClassDeclarationSyntax>()
+                .Single(c => c.Identifier.ValueText == targetClass)
+                .DescendantNodes()
+                .OfType<PropertyDeclarationSyntax>()
+                .Single(p => p.Identifier.ValueText == targetPropertyName);
+        }
+        
+        private static IPropertySymbol GetSourcePropertySymbol(string propertyName, Compilation compilation, string targetClass = "Foo")
+        {
+            var syntaxTree = compilation.SyntaxTrees.First();
+            var propSyntax = GetPropertyDeclarationSyntax(syntaxTree, propertyName, targetClass);
+            
+            var semanticModel = compilation.GetSemanticModel(syntaxTree);
+            return semanticModel.GetDeclaredSymbol(propSyntax);
         }
     }
 }

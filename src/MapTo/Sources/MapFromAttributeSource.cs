@@ -1,5 +1,4 @@
-﻿using MapTo.Models;
-using static MapTo.Sources.Constants;
+﻿using static MapTo.Sources.Constants;
 
 namespace MapTo.Sources
 {

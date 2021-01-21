@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MapTo.Extensions
 {
@@ -11,6 +12,8 @@ namespace MapTo.Extensions
             {
                 action(item);
             }
-        }    
+        }
+
+        internal static bool IsEmpty<T>(this IEnumerable<T> enumerable) => !enumerable.Any();
     }
 }

@@ -1,12 +1,11 @@
 ﻿using MapTo.Extensions;
-using MapTo.Models;
 using static MapTo.Sources.Constants;
 
 namespace MapTo.Sources
 {
     internal static class MapClassSource
     {
-        internal static SourceCode Generate(MapModel model)
+        internal static SourceCode Generate(MappingModel model)
         {
             using var builder = new SourceBuilder()
                 .WriteLine(GeneratedFilesHeader)
@@ -39,13 +38,13 @@ namespace MapTo.Sources
             return new(builder.ToString(), $"{model.ClassName}.g.cs");
         }
 
-        private static SourceBuilder WriteUsings(this SourceBuilder builder, MapModel model)
+        private static SourceBuilder WriteUsings(this SourceBuilder builder, MappingModel model)
         {
             return builder
                 .WriteLine("using System;");
         }
         
-        private static SourceBuilder GenerateConstructor(this SourceBuilder builder, MapModel model)
+        private static SourceBuilder GenerateConstructor(this SourceBuilder builder, MappingModel model)
         {
             var sourceClassParameterName = model.SourceClassName.ToCamelCase();
 
@@ -67,14 +66,21 @@ namespace MapTo.Sources
 
             foreach (var property in model.MappedProperties)
             {
-                builder.WriteLine($"{property} = {sourceClassParameterName}.{property};");
+                if (property.ConverterFullyQualifiedName is not null)
+                {
+                    builder.WriteLine($"{property.Name} = new {property.ConverterFullyQualifiedName}().Convert({sourceClassParameterName}.{property.Name});");
+                }
+                else
+                {
+                    builder.WriteLine($"{property.Name} = {sourceClassParameterName}.{property.Name};");
+                }
             }
 
             // End constructor declaration
             return builder.WriteClosingBracket();
         }
         
-        private static SourceBuilder GenerateFactoryMethod(this SourceBuilder builder, MapModel model)
+        private static SourceBuilder GenerateFactoryMethod(this SourceBuilder builder, MappingModel model)
         {
             var sourceClassParameterName = model.SourceClassName.ToCamelCase();
 
@@ -86,7 +92,7 @@ namespace MapTo.Sources
                 .WriteClosingBracket();
         }
         
-        private static SourceBuilder GenerateConvertorMethodsXmlDocs(this SourceBuilder builder, MapModel model, string sourceClassParameterName)
+        private static SourceBuilder GenerateConvertorMethodsXmlDocs(this SourceBuilder builder, MappingModel model, string sourceClassParameterName)
         {
             if (!model.Options.GenerateXmlDocument)
             {
@@ -102,7 +108,7 @@ namespace MapTo.Sources
                 .WriteLine($"/// <returns>A new instance of <see cred=\"{model.ClassName}\"/> -or- <c>null</c> if <paramref name=\"{sourceClassParameterName}\"/> is <c>null</c>.</returns>");
         }
 
-        private static SourceBuilder GenerateSourceTypeExtensionClass(this SourceBuilder builder, MapModel model)
+        private static SourceBuilder GenerateSourceTypeExtensionClass(this SourceBuilder builder, MappingModel model)
         {
             return builder
                 .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static partial class {model.SourceClassName}To{model.ClassName}Extensions")
@@ -111,7 +117,7 @@ namespace MapTo.Sources
                 .WriteClosingBracket();
         }
         
-        private static SourceBuilder GenerateSourceTypeExtensionMethod(this SourceBuilder builder, MapModel model)
+        private static SourceBuilder GenerateSourceTypeExtensionMethod(this SourceBuilder builder, MappingModel model)
         {
             var sourceClassParameterName = model.SourceClassName.ToCamelCase();
 

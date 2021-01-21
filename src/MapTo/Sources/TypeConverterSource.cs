@@ -1,4 +1,4 @@
-﻿using MapTo.Models;
+﻿using Microsoft.CodeAnalysis;
 using static MapTo.Sources.Constants;
 
 namespace MapTo.Sources
@@ -6,7 +6,8 @@ namespace MapTo.Sources
     internal class TypeConverterSource
     {
         internal const string InterfaceName = "ITypeConverter";
-
+        internal const string FullyQualifiedName = RootNamespace + "." + InterfaceName + "`2";
+        
         internal static SourceCode Generate(SourceGenerationOptions options)
         {
             using var builder = new SourceBuilder()
@@ -46,5 +47,8 @@ namespace MapTo.Sources
 
             return new(builder.ToString(), $"{InterfaceName}.g.cs");
         }
+
+        internal static string GetFullyQualifiedName(ITypeSymbol sourceType, ITypeSymbol destinationType) =>
+            $"{RootNamespace}.{InterfaceName}<{sourceType.ToDisplayString()}, {destinationType.ToDisplayString()}>";
     }
 }

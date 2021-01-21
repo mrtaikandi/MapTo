@@ -10,13 +10,13 @@ namespace TestConsoleApp.ViewModels
         [IgnoreProperty]
         public string LastName { get; }
         
-        [MapProperty(converter: typeof(LastNameConverter))]
+        [MapProperty(Converter = typeof(LastNameConverter))]
         public string Key { get; }
 
-        private class LastNameConverter : ITypeConverter<int, string>
+        private class LastNameConverter : ITypeConverter<long, string>
         {
             /// <inheritdoc />
-            public string Convert(int source) => $"{source} :: With Type Converter";
+            public string Convert(long source) => $"{source} :: With Type Converter";
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using MapTo.Models;
+﻿using System;
 using static MapTo.Sources.Constants;
 
 namespace MapTo.Sources
@@ -6,6 +6,8 @@ namespace MapTo.Sources
     internal static class MapPropertyAttributeSource
     {
         internal const string AttributeName = "MapProperty";
+        internal const string FullyQualifiedName = RootNamespace + "." + AttributeName + "Attribute";
+        internal const string ConverterPropertyName = "Converter";
 
         internal static SourceCode Generate(SourceGenerationOptions options)
         {
@@ -34,27 +36,23 @@ namespace MapTo.Sources
                 builder
                     .WriteLine("/// <summary>")
                     .WriteLine("/// Initializes a new instance of <see cref=\"MapPropertyAttribute\"/>.")
-                    .WriteLine("/// </summary>")
-                    .WriteLine("/// <param name=\"converter\">The <see cref=\"ITypeConverter{TSource,TDestination}\" /> to convert the value of the annotated property.</param>");
+                    .WriteLine("/// </summary>");
             }
 
             builder
-                .WriteLine($"public {AttributeName}Attribute(Type converter = null)")
-                .WriteOpeningBracket()
-                .WriteLine("Converter = converter;")
-                .WriteClosingBracket()
+                .WriteLine($"public {AttributeName}Attribute() {{ }}")
                 .WriteLine();
 
             if (options.GenerateXmlDocument)
             {
                 builder
                     .WriteLine("/// <summary>")
-                    .WriteLine("/// Gets the <see cref=\"ITypeConverter{TSource,TDestination}\" /> to convert the value of the annotated property.")
+                    .WriteLine("/// Gets or sets the <see cref=\"ITypeConverter{TSource,TDestination}\" /> to be used to convert the source type.")
                     .WriteLine("/// </summary>");
             }
 
             builder
-                .WriteLine("public Type Converter { get; }")
+                .WriteLine($"public Type {ConverterPropertyName} {{ get; set; }}")
                 .WriteClosingBracket()
                 .WriteClosingBracket();
 

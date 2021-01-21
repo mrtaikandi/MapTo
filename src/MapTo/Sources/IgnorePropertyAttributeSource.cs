@@ -1,11 +1,11 @@
-﻿using MapTo.Models;
-using static MapTo.Sources.Constants;
+﻿using static MapTo.Sources.Constants;
 
 namespace MapTo.Sources
 {
     internal static class IgnorePropertyAttributeSource
     {
         internal const string AttributeName = "IgnoreProperty";
+        internal const string FullyQualifiedName = RootNamespace + "." + AttributeName + "Attribute";
 
         internal static SourceCode Generate(SourceGenerationOptions options)
         {

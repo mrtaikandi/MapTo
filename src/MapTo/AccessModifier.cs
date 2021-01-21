@@ -1,4 +1,4 @@
-﻿namespace MapTo.Models
+﻿namespace MapTo
 {
     internal enum AccessModifier
     {
