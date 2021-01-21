@@ -5,7 +5,8 @@ namespace MapTo.Sources
     internal static class IgnorePropertyAttributeSource
     {
         internal const string AttributeName = "IgnoreProperty";
-        internal const string FullyQualifiedName = RootNamespace + "." + AttributeName + "Attribute";
+        internal const string AttributeClassName = AttributeName + "Attribute";
+        internal const string FullyQualifiedName = RootNamespace + "." + AttributeClassName;
 
         internal static SourceCode Generate(SourceGenerationOptions options)
         {
@@ -26,10 +27,10 @@ namespace MapTo.Sources
 
             builder
                 .WriteLine("[AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]")
-                .WriteLine($"public sealed class {AttributeName}Attribute : Attribute {{ }}")
+                .WriteLine($"public sealed class {AttributeClassName} : Attribute {{ }}")
                 .WriteClosingBracket();
 
-            return new(builder.ToString(), $"{AttributeName}Attribute.g.cs");
+            return new(builder.ToString(), $"{AttributeClassName}.g.cs");
         }
     }
 }

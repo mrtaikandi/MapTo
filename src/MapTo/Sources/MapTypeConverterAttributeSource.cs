@@ -23,12 +23,12 @@ namespace MapTo.Sources
             {
                 builder
                     .WriteLine("/// <summary>")
-                    .WriteLine("/// Maps a property to property of another object.")
+                    .WriteLine("/// Specifies what type to use as a converter for the property this attribute is bound to.")
                     .WriteLine("/// </summary>");
             }
 
             builder
-                .WriteLine("[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]")
+                .WriteLine("[AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]")
                 .WriteLine($"public sealed class {AttributeClassName} : Attribute")
                 .WriteOpeningBracket();
 
@@ -51,7 +51,7 @@ namespace MapTo.Sources
             {
                 builder
                     .WriteLine("/// <summary>")
-                    .WriteLine("/// Gets or sets the <see cref=\"ITypeConverter{TSource,TDestination}\" /> to be used to convert the source type.")
+                    .WriteLine($"/// Gets or sets the <see cref=\"{TypeConverterSource.InterfaceName}{{TSource,TDestination}}\" /> to be used to convert the source type.")
                     .WriteLine("/// </summary>");
             }
 

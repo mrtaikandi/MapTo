@@ -527,7 +527,7 @@ using System;
 
 namespace MapTo
 {{
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
     public sealed class MapTypeConverterAttribute : Attribute
     {{
         public MapTypeConverterAttribute(Type converter)

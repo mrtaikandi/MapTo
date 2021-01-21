@@ -5,6 +5,8 @@ namespace MapTo.Sources
     internal static class MapFromAttributeSource
     {
         internal const string AttributeName = "MapFrom";
+        internal const string AttributeClassName = AttributeName + "Attribute";
+        internal const string FullyQualifiedName = RootNamespace + "." + AttributeClassName;
         
         internal static SourceCode Generate(SourceGenerationOptions options)
         {

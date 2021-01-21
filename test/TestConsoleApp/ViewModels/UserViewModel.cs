@@ -10,7 +10,7 @@ namespace TestConsoleApp.ViewModels
         [IgnoreProperty]
         public string LastName { get; }
         
-        [MapProperty(Converter = typeof(LastNameConverter))]
+        [MapTypeConverter(typeof(LastNameConverter))]
         public string Key { get; }
 
         private class LastNameConverter : ITypeConverter<long, string>
