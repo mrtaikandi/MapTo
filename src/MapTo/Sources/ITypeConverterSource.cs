@@ -1,9 +1,11 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 using static MapTo.Sources.Constants;
 
 namespace MapTo.Sources
 {
-    internal class TypeConverterSource
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
+    internal static class ITypeConverterSource
     {
         internal const string InterfaceName = "ITypeConverter";
         internal const string FullyQualifiedName = RootNamespace + "." + InterfaceName + "`2";
@@ -34,14 +36,15 @@ namespace MapTo.Sources
             {
                 builder
                     .WriteLine("/// <summary>")
-                    .WriteLine("/// Converts the value of <paramref name=\"value\"/> object to <typeparamref name=\"TDestination\"/>.")
+                    .WriteLine("/// Converts the value of <paramref name=\"source\"/> object to <typeparamref name=\"TDestination\"/>.")
                     .WriteLine("/// </summary>")
-                    .WriteLine("/// <param name=\"value\">The object to convert.</param>")
+                    .WriteLine("/// <param name=\"source\">The <see cref=\"TSource\"/> to convert.</param>")
+                    .WriteLine($"/// <param name=\"converterParameters\">The parameter list passed to the <see cref=\"{MapTypeConverterAttributeSource.AttributeClassName}\"/></param>")
                     .WriteLine("/// <returns><typeparamref name=\"TDestination\"/> object.</returns>");
             }
 
             builder
-                .WriteLine("TDestination Convert(TSource source);")
+                .WriteLine("TDestination Convert(TSource source, object[] converterParameters);")
                 .WriteClosingBracket()
                 .WriteClosingBracket();
 

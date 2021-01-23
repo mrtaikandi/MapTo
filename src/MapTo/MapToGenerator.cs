@@ -24,7 +24,7 @@ namespace MapTo
             var compilation = context.Compilation
                 .AddSource(ref context, MapFromAttributeSource.Generate(options))
                 .AddSource(ref context, IgnorePropertyAttributeSource.Generate(options))
-                .AddSource(ref context, TypeConverterSource.Generate(options))
+                .AddSource(ref context, ITypeConverterSource.Generate(options))
                 .AddSource(ref context, MapTypeConverterAttributeSource.Generate(options));
 
             if (context.SyntaxReceiver is MapToSyntaxReceiver receiver && receiver.CandidateClasses.Any())

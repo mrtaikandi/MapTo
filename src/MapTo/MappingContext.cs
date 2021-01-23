@@ -24,8 +24,8 @@ namespace MapTo
             MapTypeConverterAttributeTypeSymbol = compilation.GetTypeByMetadataName(MapTypeConverterAttributeSource.FullyQualifiedName)
                                                   ?? throw new TypeLoadException($"Unable to find '{MapTypeConverterAttributeSource.FullyQualifiedName}' type.");
 
-            TypeConverterInterfaceTypeSymbol = compilation.GetTypeByMetadataName(TypeConverterSource.FullyQualifiedName)
-                                               ?? throw new TypeLoadException($"Unable to find '{TypeConverterSource.FullyQualifiedName}' type.");
+            TypeConverterInterfaceTypeSymbol = compilation.GetTypeByMetadataName(ITypeConverterSource.FullyQualifiedName)
+                                               ?? throw new TypeLoadException($"Unable to find '{ITypeConverterSource.FullyQualifiedName}' type.");
         }
 
         public INamedTypeSymbol MapTypeConverterAttributeTypeSymbol { get; }
@@ -114,9 +114,17 @@ namespace MapTo
                 }
 
                 string? converterFullyQualifiedName = null;
+                var converterParameters = new List<string>();
                 if (!SymbolEqualityComparer.Default.Equals(property.Type, sourceProperty.Type) && !context.Compilation.HasImplicitConversion(sourceProperty.Type, property.Type))
                 {
-                    var converterTypeSymbol = property.GetAttribute(context.MapTypeConverterAttributeTypeSymbol)?.ConstructorArguments.First().Value as INamedTypeSymbol;
+                    var typeConverterAttribute = property.GetAttribute(context.MapTypeConverterAttributeTypeSymbol);
+                    if (typeConverterAttribute is null)
+                    {
+                        context.ReportDiagnostic(DiagnosticProvider.NoMatchingPropertyTypeFoundError(property));
+                        continue;
+                    }
+                    
+                    var converterTypeSymbol = typeConverterAttribute.ConstructorArguments.First().Value as INamedTypeSymbol;
                     if (converterTypeSymbol is null)
                     {
                         context.ReportDiagnostic(DiagnosticProvider.NoMatchingPropertyTypeFoundError(property));
@@ -136,9 +144,15 @@ namespace MapTo
                     }
 
                     converterFullyQualifiedName = converterTypeSymbol.ToDisplayString();
+
+                    var converterParameter = typeConverterAttribute.ConstructorArguments.Skip(1).FirstOrDefault();
+                    if (!converterParameter.IsNull )
+                    {
+                        converterParameters.AddRange(converterParameter.Values.Where(v => v.Value is not null).Select(v => v.Value!.ToSourceCodeString()));
+                    }
                 }
 
-                mappedProperties.Add(new MappedProperty(property.Name, converterFullyQualifiedName));
+                mappedProperties.Add(new MappedProperty(property.Name, converterFullyQualifiedName, converterParameters.ToImmutableArray()));
             }
 
             return mappedProperties.ToImmutableArray();

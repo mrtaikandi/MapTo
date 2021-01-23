@@ -66,13 +66,17 @@ namespace MapTo.Sources
 
             foreach (var property in model.MappedProperties)
             {
-                if (property.TypeConverter is not null)
+                if (property.TypeConverter is null)
                 {
-                    builder.WriteLine($"{property.Name} = new {property.TypeConverter}().Convert({sourceClassParameterName}.{property.Name});");
+                    builder.WriteLine($"{property.Name} = {sourceClassParameterName}.{property.Name};");
                 }
                 else
                 {
-                    builder.WriteLine($"{property.Name} = {sourceClassParameterName}.{property.Name};");
+                    var parameters = property.TypeConverterParameters.IsEmpty
+                        ? "null"
+                        : $"new object[] {{ {string.Join(", ", property.TypeConverterParameters)} }}";
+
+                    builder.WriteLine($"{property.Name} = new {property.TypeConverter}().Convert({sourceClassParameterName}.{property.Name}, {parameters});");
                 }
             }
 

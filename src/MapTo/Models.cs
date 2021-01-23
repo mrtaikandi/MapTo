@@ -16,7 +16,7 @@ namespace MapTo
         );
     }
 
-    internal record MappedProperty(string Name, string? TypeConverter);
+    internal record MappedProperty(string Name, string? TypeConverter, ImmutableArray<string> TypeConverterParameters);
 
     internal record MappingModel (
         SourceGenerationOptions Options,
