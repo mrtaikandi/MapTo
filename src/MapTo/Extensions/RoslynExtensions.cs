@@ -36,22 +36,32 @@ namespace MapTo.Extensions
                     ((a.Name as QualifiedNameSyntax)?.Right as IdentifierNameSyntax)?.Identifier.ValueText == attributeName);
         }
 
-        public static bool HasAttribute(this ISymbol symbol, ITypeSymbol attributeSymbol) => 
+        public static bool HasAttribute(this ISymbol symbol, ITypeSymbol attributeSymbol) =>
             symbol.GetAttributes().Any(a => a.AttributeClass?.Equals(attributeSymbol, SymbolEqualityComparer.Default) == true);
-        
+
         public static IEnumerable<AttributeData> GetAttributes(this ISymbol symbol, ITypeSymbol attributeSymbol) =>
             symbol.GetAttributes().Where(a => a.AttributeClass?.Equals(attributeSymbol, SymbolEqualityComparer.Default) == true);
 
         public static AttributeData? GetAttribute(this ISymbol symbol, ITypeSymbol attributeSymbol) =>
             symbol.GetAttributes(attributeSymbol).FirstOrDefault();
-        
-        public static string? GetNamespace(this ClassDeclarationSyntax classDeclarationSyntax)
-        {
-            return classDeclarationSyntax.Ancestors()
+
+        public static string? GetNamespace(this ClassDeclarationSyntax classDeclarationSyntax) =>
+            classDeclarationSyntax.Ancestors()
                 .OfType<NamespaceDeclarationSyntax>()
                 .FirstOrDefault()
                 ?.Name
                 .ToString();
+
+        public static bool HasCompatibleTypes(this Compilation compilation, IPropertySymbol sourceProperty, IPropertySymbol destinationProperty) =>
+            SymbolEqualityComparer.Default.Equals(destinationProperty.Type, sourceProperty.Type) || compilation.HasImplicitConversion(sourceProperty.Type, destinationProperty.Type);
+
+        public static IPropertySymbol? FindProperty(this IEnumerable<IPropertySymbol> properties, IPropertySymbol targetProperty)
+        {
+            return properties.SingleOrDefault(p =>
+                p.Name == targetProperty.Name &&
+                (p.NullableAnnotation != NullableAnnotation.Annotated ||
+                 p.NullableAnnotation == NullableAnnotation.Annotated &&
+                 targetProperty.NullableAnnotation == NullableAnnotation.Annotated));
         }
     }
 }

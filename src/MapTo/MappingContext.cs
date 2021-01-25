@@ -11,8 +11,6 @@ namespace MapTo
 {
     internal class MappingContext
     {
-        private Compilation Compilation { get; }
-
         private MappingContext(Compilation compilation)
         {
             Diagnostics = ImmutableArray<Diagnostic>.Empty;
@@ -28,6 +26,8 @@ namespace MapTo
                                                ?? throw new TypeLoadException($"Unable to find '{ITypeConverterSource.FullyQualifiedName}' type.");
         }
 
+        private Compilation Compilation { get; }
+
         public INamedTypeSymbol MapTypeConverterAttributeTypeSymbol { get; }
 
         public INamedTypeSymbol TypeConverterInterfaceTypeSymbol { get; }
@@ -37,12 +37,6 @@ namespace MapTo
         public ImmutableArray<Diagnostic> Diagnostics { get; private set; }
 
         public INamedTypeSymbol IgnorePropertyAttributeTypeSymbol { get; }
-
-        private MappingContext ReportDiagnostic(Diagnostic diagnostic)
-        {
-            Diagnostics = Diagnostics.Add(diagnostic);
-            return this;
-        }
 
         internal static MappingContext Create(Compilation compilation, ClassDeclarationSyntax classSyntax, SourceGenerationOptions sourceGenerationOptions)
         {
@@ -83,6 +77,12 @@ namespace MapTo
             return context;
         }
 
+        private MappingContext ReportDiagnostic(Diagnostic diagnostic)
+        {
+            Diagnostics = Diagnostics.Add(diagnostic);
+            return this;
+        }
+
         private static INamedTypeSymbol? GetSourceTypeSymbol(SemanticModel semanticModel, ClassDeclarationSyntax classSyntax)
         {
             var sourceTypeExpressionSyntax = classSyntax
@@ -102,12 +102,7 @@ namespace MapTo
 
             foreach (var property in classProperties)
             {
-                var sourceProperty = sourceProperties.SingleOrDefault(p =>
-                    p.Name == property.Name &&
-                    (p.NullableAnnotation != NullableAnnotation.Annotated ||
-                     p.NullableAnnotation == NullableAnnotation.Annotated &&
-                     property.NullableAnnotation == NullableAnnotation.Annotated));
-
+                var sourceProperty = sourceProperties.FindProperty(property);
                 if (sourceProperty is null)
                 {
                     continue;
@@ -115,7 +110,8 @@ namespace MapTo
 
                 string? converterFullyQualifiedName = null;
                 var converterParameters = new List<string>();
-                if (!SymbolEqualityComparer.Default.Equals(property.Type, sourceProperty.Type) && !context.Compilation.HasImplicitConversion(sourceProperty.Type, property.Type))
+
+                if (!context.Compilation.HasCompatibleTypes(sourceProperty, property))
                 {
                     var typeConverterAttribute = property.GetAttribute(context.MapTypeConverterAttributeTypeSymbol);
                     if (typeConverterAttribute is null)
@@ -123,7 +119,7 @@ namespace MapTo
                         context.ReportDiagnostic(DiagnosticProvider.NoMatchingPropertyTypeFoundError(property));
                         continue;
                     }
-                    
+
                     var converterTypeSymbol = typeConverterAttribute.ConstructorArguments.First().Value as INamedTypeSymbol;
                     if (converterTypeSymbol is null)
                     {
@@ -131,12 +127,7 @@ namespace MapTo
                         continue;
                     }
 
-                    var baseInterface = converterTypeSymbol.AllInterfaces
-                        .SingleOrDefault(i => SymbolEqualityComparer.Default.Equals(i.ConstructedFrom, context.TypeConverterInterfaceTypeSymbol) &&
-                                              i.TypeArguments.Length == 2 &&
-                                              SymbolEqualityComparer.Default.Equals(sourceProperty.Type, i.TypeArguments[0]) &&
-                                              SymbolEqualityComparer.Default.Equals(property.Type, i.TypeArguments[1]));
-
+                    var baseInterface = GetTypeConverterBaseInterface(context, converterTypeSymbol, property, sourceProperty);
                     if (baseInterface is null)
                     {
                         context.ReportDiagnostic(DiagnosticProvider.InvalidTypeConverterGenericTypesError(property, sourceProperty));
@@ -144,18 +135,31 @@ namespace MapTo
                     }
 
                     converterFullyQualifiedName = converterTypeSymbol.ToDisplayString();
-
-                    var converterParameter = typeConverterAttribute.ConstructorArguments.Skip(1).FirstOrDefault();
-                    if (!converterParameter.IsNull )
-                    {
-                        converterParameters.AddRange(converterParameter.Values.Where(v => v.Value is not null).Select(v => v.Value!.ToSourceCodeString()));
-                    }
+                    converterParameters.AddRange(GetTypeConverterParameters(typeConverterAttribute));
                 }
 
                 mappedProperties.Add(new MappedProperty(property.Name, converterFullyQualifiedName, converterParameters.ToImmutableArray()));
             }
 
             return mappedProperties.ToImmutableArray();
+        }
+
+        private static INamedTypeSymbol? GetTypeConverterBaseInterface(MappingContext context, ITypeSymbol converterTypeSymbol, IPropertySymbol property, IPropertySymbol sourceProperty)
+        {
+            return converterTypeSymbol.AllInterfaces
+                .SingleOrDefault(i =>
+                    i.TypeArguments.Length == 2 &&
+                    SymbolEqualityComparer.Default.Equals(i.ConstructedFrom, context.TypeConverterInterfaceTypeSymbol) &&
+                    SymbolEqualityComparer.Default.Equals(sourceProperty.Type, i.TypeArguments[0]) &&
+                    SymbolEqualityComparer.Default.Equals(property.Type, i.TypeArguments[1]));
+        }
+
+        private static IEnumerable<string> GetTypeConverterParameters(AttributeData typeConverterAttribute)
+        {
+            var converterParameter = typeConverterAttribute.ConstructorArguments.Skip(1).FirstOrDefault();
+            return converterParameter.IsNull
+                ? Enumerable.Empty<string>()
+                : converterParameter.Values.Where(v => v.Value is not null).Select(v => v.Value!.ToSourceCodeString());
         }
     }
 }
