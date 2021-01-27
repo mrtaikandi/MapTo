@@ -12,9 +12,11 @@ namespace MapTo.Sources
         internal const string ConverterParametersPropertyName = "ConverterParameters";
 
         internal static SourceCode Generate(SourceGenerationOptions options)
-        {
+        {   
             using var builder = new SourceBuilder()
                 .WriteLine(GeneratedFilesHeader)
+                .WriteNullableContextOptionIf(options.SupportNullableReferenceTypes)
+                .WriteLine()
                 .WriteLine("using System;")
                 .WriteLine()
                 .WriteLine($"namespace {RootNamespace}")
@@ -44,7 +46,7 @@ namespace MapTo.Sources
             }
 
             builder
-                .WriteLine($"public {AttributeClassName}(Type converter, object[] converterParameters = null)")
+                .WriteLine($"public {AttributeClassName}(Type converter, object[]{options.NullableReferenceSyntax} converterParameters = null)")
                 .WriteOpeningBracket()
                 .WriteLine($"{ConverterPropertyName} = converter;")
                 .WriteLine($"{ConverterParametersPropertyName} = converterParameters;")
@@ -72,7 +74,7 @@ namespace MapTo.Sources
             }
 
             builder
-                .WriteLine($"public object[] {ConverterParametersPropertyName} {{ get; }}")
+                .WriteLine($"public object[]{options.NullableReferenceSyntax} {ConverterParametersPropertyName} {{ get; }}")
                 .WriteClosingBracket()
                 .WriteClosingBracket();
 

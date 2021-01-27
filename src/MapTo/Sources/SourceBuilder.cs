@@ -22,17 +22,31 @@ namespace MapTo.Sources
             _indentedWriter.Dispose();
         }
         
-        public SourceBuilder WriteLine(string value)
+        public SourceBuilder WriteLine(string? value = null)
         {
-            _indentedWriter.WriteLine(value);
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                _indentedWriter.WriteLineNoTabs(string.Empty);    
+            }
+            else
+            {
+                _indentedWriter.WriteLine(value);
+            }
+
             return this;
         }
-        
-        public SourceBuilder WriteLine()
+
+        public SourceBuilder WriteLineIf(bool condition, string? value)
         {
-            _indentedWriter.WriteLineNoTabs(string.Empty);
+            if (condition)
+            {
+                WriteLine(value);
+            }
+
             return this;
         }
+
+        public SourceBuilder WriteNullableContextOptionIf(bool enabled) => WriteLineIf(enabled, "#nullable enable");
 
         public SourceBuilder WriteOpeningBracket()
         {

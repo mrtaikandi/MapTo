@@ -9,6 +9,8 @@ namespace MapTo.Sources
         {
             using var builder = new SourceBuilder()
                 .WriteLine(GeneratedFilesHeader)
+                .WriteNullableContextOptionIf(model.Options.SupportNullableReferenceTypes)
+                .WriteLine()
                 .WriteUsings(model)
                 .WriteLine()
 
@@ -90,7 +92,7 @@ namespace MapTo.Sources
 
             return builder
                 .GenerateConvertorMethodsXmlDocs(model, sourceClassParameterName)
-                .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static {model.ClassName} From({model.SourceClassFullName} {sourceClassParameterName})")
+                .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static {model.ClassName} From({model.SourceClassFullName}{model.Options.NullableReferenceSyntax} {sourceClassParameterName})")
                 .WriteOpeningBracket()
                 .WriteLine($"return {sourceClassParameterName} == null ? null : new {model.ClassName}({sourceClassParameterName});")
                 .WriteClosingBracket();
@@ -127,7 +129,7 @@ namespace MapTo.Sources
 
             return builder
                 .GenerateConvertorMethodsXmlDocs(model, sourceClassParameterName)
-                .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static {model.ClassName} To{model.ClassName}(this {model.SourceClassFullName} {sourceClassParameterName})")
+                .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static {model.ClassName} To{model.ClassName}(this {model.SourceClassFullName}{model.Options.NullableReferenceSyntax} {sourceClassParameterName})")
                 .WriteOpeningBracket()
                 .WriteLine($"return {sourceClassParameterName} == null ? null : new {model.ClassName}({sourceClassParameterName});")
                 .WriteClosingBracket();

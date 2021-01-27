@@ -14,6 +14,7 @@ namespace MapTo.Sources
         {
             using var builder = new SourceBuilder()
                 .WriteLine(GeneratedFilesHeader)
+                .WriteNullableContextOptionIf(options.SupportNullableReferenceTypes)
                 .WriteLine()
                 .WriteLine($"namespace {RootNamespace}")
                 .WriteOpeningBracket();
@@ -44,7 +45,7 @@ namespace MapTo.Sources
             }
 
             builder
-                .WriteLine("TDestination Convert(TSource source, object[] converterParameters);")
+                .WriteLine($"TDestination Convert(TSource source, object[]{options.NullableReferenceSyntax} converterParameters);")
                 .WriteClosingBracket()
                 .WriteClosingBracket();
 

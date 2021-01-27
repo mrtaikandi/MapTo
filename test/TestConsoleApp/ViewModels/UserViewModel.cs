@@ -16,7 +16,7 @@ namespace TestConsoleApp.ViewModels
         private class LastNameConverter : ITypeConverter<long, string>
         {
             /// <inheritdoc />
-            public string Convert(long source, object[] converterParameters) => $"{source} :: With Type Converter";
+            public string Convert(long source, object[]? converterParameters) => $"{source} :: With Type Converter";
         }
     }
 }

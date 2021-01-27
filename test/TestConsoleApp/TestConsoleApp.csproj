@@ -2,14 +2,16 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net5.0</TargetFramework>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <LangVersion>8</LangVersion>
+        <Nullable>annotations</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\MapTo\MapTo.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+        <ProjectReference Include="..\..\src\MapTo\MapTo.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
 
-    <Import Project="..\..\src\MapTo\MapTo.props"/>
+    <Import Project="..\..\src\MapTo\MapTo.props" />
     <PropertyGroup>
         <MapTo_ConstructorAccessModifier>Internal</MapTo_ConstructorAccessModifier>
     </PropertyGroup>
