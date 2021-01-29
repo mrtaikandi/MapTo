@@ -24,19 +24,24 @@ namespace MapTo
 
             TypeConverterInterfaceTypeSymbol = compilation.GetTypeByMetadataName(ITypeConverterSource.FullyQualifiedName)
                                                ?? throw new TypeLoadException($"Unable to find '{ITypeConverterSource.FullyQualifiedName}' type.");
+            
+            MapPropertyAttributeTypeSymbol = compilation.GetTypeByMetadataName(MapPropertyAttributeSource.FullyQualifiedName)
+                                               ?? throw new TypeLoadException($"Unable to find '{MapPropertyAttributeSource.FullyQualifiedName}' type.");
         }
 
         private Compilation Compilation { get; }
-
-        public INamedTypeSymbol MapTypeConverterAttributeTypeSymbol { get; }
-
-        public INamedTypeSymbol TypeConverterInterfaceTypeSymbol { get; }
 
         public MappingModel? Model { get; private set; }
 
         public ImmutableArray<Diagnostic> Diagnostics { get; private set; }
 
         public INamedTypeSymbol IgnorePropertyAttributeTypeSymbol { get; }
+        
+        public INamedTypeSymbol MapTypeConverterAttributeTypeSymbol { get; }
+
+        public INamedTypeSymbol TypeConverterInterfaceTypeSymbol { get; }
+        
+        public INamedTypeSymbol MapPropertyAttributeTypeSymbol { get; }
 
         internal static MappingContext Create(Compilation compilation, ClassDeclarationSyntax classSyntax, SourceGenerationOptions sourceGenerationOptions)
         {
@@ -102,7 +107,7 @@ namespace MapTo
 
             foreach (var property in classProperties)
             {
-                var sourceProperty = sourceProperties.FindProperty(property);
+                var sourceProperty = FindSourceProperty(context, sourceProperties, property);
                 if (sourceProperty is null)
                 {
                     continue;
@@ -138,10 +143,21 @@ namespace MapTo
                     converterParameters.AddRange(GetTypeConverterParameters(typeConverterAttribute));
                 }
 
-                mappedProperties.Add(new MappedProperty(property.Name, converterFullyQualifiedName, converterParameters.ToImmutableArray()));
+                mappedProperties.Add(new MappedProperty(property.Name, converterFullyQualifiedName, converterParameters.ToImmutableArray(), sourceProperty.Name));
             }
 
             return mappedProperties.ToImmutableArray();
+        }
+
+        private static IPropertySymbol? FindSourceProperty(MappingContext context, IEnumerable<IPropertySymbol> sourceProperties, IPropertySymbol property)
+        {
+            var propertyName = property
+                .GetAttribute(context.MapPropertyAttributeTypeSymbol)
+                ?.NamedArguments
+                .SingleOrDefault(a => a.Key == MapPropertyAttributeSource.SourcePropertyNamePropertyName)
+                .Value.Value as string ?? property.Name;
+
+            return sourceProperties.SingleOrDefault(p => p.Name == propertyName);
         }
 
         private static INamedTypeSymbol? GetTypeConverterBaseInterface(MappingContext context, ITypeSymbol converterTypeSymbol, IPropertySymbol property, IPropertySymbol sourceProperty)

@@ -70,7 +70,7 @@ namespace MapTo.Sources
             {
                 if (property.TypeConverter is null)
                 {
-                    builder.WriteLine($"{property.Name} = {sourceClassParameterName}.{property.Name};");
+                    builder.WriteLine($"{property.Name} = {sourceClassParameterName}.{property.SourcePropertyName};");
                 }
                 else
                 {

@@ -7,7 +7,11 @@ namespace MapTo
 {
     internal record SourceCode(string Text, string HintName);
 
-    internal record MappedProperty(string Name, string? TypeConverter, ImmutableArray<string> TypeConverterParameters);
+    internal record MappedProperty(
+        string Name, 
+        string? TypeConverter, 
+        ImmutableArray<string> TypeConverterParameters,
+        string SourcePropertyName);
 
     internal record MappingModel (
         SourceGenerationOptions Options,
