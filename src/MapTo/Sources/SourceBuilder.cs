@@ -4,7 +4,7 @@ using System.IO;
 
 namespace MapTo.Sources
 {
-    public sealed class SourceBuilder : IDisposable
+    internal sealed class SourceBuilder : IDisposable
     {
         private readonly StringWriter _writer;
         private readonly IndentedTextWriter _indentedWriter;

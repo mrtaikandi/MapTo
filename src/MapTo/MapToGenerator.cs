@@ -7,6 +7,9 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MapTo
 {
+    /// <summary>
+    /// MapTo source generator.
+    /// </summary>
     [Generator]
     public class MapToGenerator : ISourceGenerator
     {
