@@ -27,75 +27,69 @@ namespace MapTo.Tests
             const string ns = "Test";
             options ??= new SourceGeneratorOptions();
             var hasDifferentSourceNamespace = options.SourceClassNamespace != ns;
-            var builder = new StringBuilder();
+            var builder = new SourceBuilder();
 
-            builder.AppendLine("//");
-            builder.AppendLine("// Test source code.");
-            builder.AppendLine("//");
-            builder.AppendLine();
+            builder.WriteLine("//");
+            builder.WriteLine("// Test source code.");
+            builder.WriteLine("//");
+            builder.WriteLine();
 
             if (options.UseMapToNamespace)
             {
-                builder.AppendFormat("using {0};", Constants.RootNamespace).AppendLine();
+                builder.WriteLine($"using {Constants.RootNamespace};");
             }
 
             builder
-                .AppendFormat("using {0};", options.SourceClassNamespace)
-                .AppendLine()
-                .AppendLine();
+                .WriteLine($"using {options.SourceClassNamespace};")
+                .WriteLine()
+                .WriteLine();
 
             builder
-                .AppendFormat("namespace {0}", ns)
-                .AppendOpeningBracket();
+                .WriteLine($"namespace {ns}")
+                .WriteOpeningBracket();
 
             if (hasDifferentSourceNamespace && options.UseMapToNamespace)
             {
                 builder
-                    .PadLeft(Indent1)
-                    .AppendFormat("using {0};", options.SourceClassNamespace)
-                    .AppendLine()
-                    .AppendLine();
+                    .WriteLine($"using {options.SourceClassNamespace};")
+                    .WriteLine()
+                    .WriteLine();
             }
 
             builder
-                .PadLeft(Indent1)
-                .AppendLine(options.UseMapToNamespace ? "[MapFrom(typeof(Baz))]" : "[MapTo.MapFrom(typeof(Baz))]")
-                .PadLeft(Indent1).Append("public partial class Foo")
-                .AppendOpeningBracket(Indent1);
+                .WriteLine(options.UseMapToNamespace ? "[MapFrom(typeof(Baz))]" : "[MapTo.MapFrom(typeof(Baz))]")
+                .WriteLine("public partial class Foo")
+                .WriteOpeningBracket();
 
             for (var i = 1; i <= options.ClassPropertiesCount; i++)
             {
-                builder
-                    .PadLeft(Indent2)
-                    .AppendLine(i % 2 == 0 ? $"public int Prop{i} {{ get; set; }}" : $"public int Prop{i} {{ get; }}");
+                builder.WriteLine(i % 2 == 0 ? $"public int Prop{i} {{ get; set; }}" : $"public int Prop{i} {{ get; }}");
             }
 
             options.PropertyBuilder?.Invoke(builder);
 
             builder
-                .AppendClosingBracket(Indent1, false)
-                .AppendClosingBracket()
-                .AppendLine()
-                .AppendLine();
+                .WriteClosingBracket()
+                .WriteClosingBracket()
+                .WriteLine()
+                .WriteLine();
 
             builder
-                .AppendFormat("namespace {0}", options.SourceClassNamespace)
-                .AppendOpeningBracket()
-                .PadLeft(Indent1).Append("public class Baz")
-                .AppendOpeningBracket(Indent1);
+                .WriteLine($"namespace {options.SourceClassNamespace}")
+                .WriteOpeningBracket()
+                .WriteLine("public class Baz")
+                .WriteOpeningBracket();
 
             for (var i = 1; i <= options.SourceClassPropertiesCount; i++)
             {
-                builder
-                    .PadLeft(Indent2)
-                    .AppendLine(i % 2 == 0 ? $"public int Prop{i} {{ get; set; }}" : $"public int Prop{i} {{ get; }}");
+                builder.WriteLine(i % 2 == 0 ? $"public int Prop{i} {{ get; set; }}" : $"public int Prop{i} {{ get; }}");
             }
 
             options.SourcePropertyBuilder?.Invoke(builder);
 
             builder
-                .AppendClosingBracket(Indent1, false)
-                .AppendClosingBracket();
+                .WriteClosingBracket()
+                .WriteClosingBracket();
 
             return builder.ToString();
         }
@@ -125,7 +119,7 @@ namespace MapTo.Tests
             string SourceClassNamespace = "Test.Models",
             int ClassPropertiesCount = 3,
             int SourceClassPropertiesCount = 3,
-            Action<StringBuilder> PropertyBuilder = null,
-            Action<StringBuilder> SourcePropertyBuilder = null);
+            Action<SourceBuilder> PropertyBuilder = null,
+            Action<SourceBuilder> SourcePropertyBuilder = null);
     }
 }

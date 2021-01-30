@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using MapTo.Extensions;
 using MapTo.Sources;
 using MapTo.Tests.Extensions;
 using MapTo.Tests.Infrastructure;
@@ -53,10 +52,10 @@ namespace MapTo
                 PropertyBuilder: builder =>
                 {
                     builder
-                        .PadLeft(Indent2).AppendLine("[MapProperty(SourcePropertyName = nameof(Baz.Prop3))]")
-                        .PadLeft(Indent2).AppendLine("public int Prop4 { get; set; }");
+                        .WriteLine("[MapProperty(SourcePropertyName = nameof(Baz.Prop3))]")
+                        .WriteLine("public int Prop4 { get; set; }");
                 },
-                SourcePropertyBuilder: builder => builder.PadLeft(Indent2).AppendLine("public int Prop4 { get; set; }")));
+                SourcePropertyBuilder: builder => builder.WriteLine("public int Prop4 { get; set; }")));
 
             var expectedResult = @"
     partial class Foo

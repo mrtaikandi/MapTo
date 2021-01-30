@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using MapTo.Extensions;
 using MapTo.Sources;
 using MapTo.Tests.Extensions;
 using MapTo.Tests.Infrastructure;
@@ -50,12 +49,8 @@ namespace MapTo
             // Arrange
             var source = GetSourceText(new SourceGeneratorOptions(
                 true,
-                PropertyBuilder: builder =>
-                {
-                    builder
-                        .PadLeft(Indent2).AppendLine("public string Prop4 { get; set; }");
-                },
-                SourcePropertyBuilder: builder => builder.PadLeft(Indent2).AppendLine("public int Prop4 { get; set; }")));
+                PropertyBuilder: builder => { builder.WriteLine("public string Prop4 { get; set; }"); },
+                SourcePropertyBuilder: builder => builder.WriteLine("public int Prop4 { get; set; }")));
 
             // Act
             var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);

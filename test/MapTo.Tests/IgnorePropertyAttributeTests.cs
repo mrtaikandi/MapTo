@@ -44,10 +44,10 @@ namespace MapTo
                 PropertyBuilder: builder =>
                 {
                     builder
-                        .PadLeft(Indent2).AppendLine("[IgnoreProperty]")
-                        .PadLeft(Indent2).AppendLine("public int Prop4 { get; set; }");
+                        .WriteLine("[IgnoreProperty]")
+                        .WriteLine("public int Prop4 { get; set; }");
                 },
-                SourcePropertyBuilder: builder => builder.PadLeft(Indent2).AppendLine("public int Prop4 { get; set; }")));
+                SourcePropertyBuilder: builder => builder.WriteLine("public int Prop4 { get; set; }")));
 
             var expectedResult = @"
     partial class Foo
