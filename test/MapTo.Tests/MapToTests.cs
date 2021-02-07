@@ -363,7 +363,7 @@ namespace Test
             Prop1 = baz.Prop1;
             Prop2 = baz.Prop2;
             Prop3 = baz.Prop3;
-            InnerProp1 = new B(baz.InnerProp1);
+            InnerProp1 = baz.InnerProp1.ToB();
         }
 ".Trim();
 

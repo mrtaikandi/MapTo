@@ -71,8 +71,8 @@ namespace MapTo.Sources
                 if (property.TypeConverter is null)
                 {
                     builder.WriteLine(property.MappedSourcePropertyTypeName is null 
-                        ? $"{property.Name} = {sourceClassParameterName}.{property.SourcePropertyName};" 
-                        : $"{property.Name} = new {property.Type}({sourceClassParameterName}.{property.SourcePropertyName});");
+                        ? $"{property.Name} = {sourceClassParameterName}.{property.SourcePropertyName};"
+                        : $"{property.Name} = {sourceClassParameterName}.{property.SourcePropertyName}.To{property.Type}();");
                 }
                 else
                 {
