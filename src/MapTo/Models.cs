@@ -9,9 +9,11 @@ namespace MapTo
 
     internal record MappedProperty(
         string Name, 
+        string Type,
         string? TypeConverter, 
         ImmutableArray<string> TypeConverterParameters,
-        string SourcePropertyName);
+        string SourcePropertyName,
+        string? MappedSourcePropertyTypeName);
 
     internal record MappingModel (
         SourceGenerationOptions Options,

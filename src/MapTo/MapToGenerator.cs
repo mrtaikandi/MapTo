@@ -41,7 +41,7 @@ namespace MapTo
         {
             foreach (var classSyntax in candidateClasses)
             {
-                var mappingContext = MappingContext.Create(compilation, classSyntax, options);
+                var mappingContext = new MappingContext(compilation, options, classSyntax);
                 mappingContext.Diagnostics.ForEach(context.ReportDiagnostic);
                 
                 if (mappingContext.Model is not null)

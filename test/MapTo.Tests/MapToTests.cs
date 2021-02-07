@@ -333,5 +333,101 @@ namespace Test
             diagnostics.ShouldBeSuccessful();
             compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult.Trim());
         }
+
+        [Fact]
+        public void When_HasNestedObjectPropertyTypeHasMapFromAttribute_Should_UseContinueToMap()
+        {
+            // Arrange
+            var source = GetSourceText(new SourceGeneratorOptions(
+                SourceClassNamespace: "Test",
+                PropertyBuilder: b => b.WriteLine("public B InnerProp1 { get; }"),
+                SourcePropertyBuilder: b => b.WriteLine("public A InnerProp1 { get; }")));
+
+            source += @"
+namespace Test
+{
+    public class A { public int Prop1 { get; } }
+
+    [MapTo.MapFrom(typeof(A))]
+    public partial class B { public int Prop1 { get; }}
+}
+".Trim();
+            
+            var expectedResult = @"
+    partial class Foo
+    {
+        public Foo(Test.Baz baz)
+        {
+            if (baz == null) throw new ArgumentNullException(nameof(baz));
+
+            Prop1 = baz.Prop1;
+            Prop2 = baz.Prop2;
+            Prop3 = baz.Prop3;
+            InnerProp1 = new B(baz.InnerProp1);
+        }
+".Trim();
+
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
+
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+            compilation.SyntaxTrees.ToArray()[^2].ToString().ShouldContain(expectedResult);
+        }
+        
+        [Fact]
+        public void When_HasNestedObjectPropertyTypeDoesNotHaveMapFromAttribute_Should_ReportError()
+        {
+            // Arrange
+            var source = GetSourceText(new SourceGeneratorOptions(
+                SourceClassNamespace: "Test",
+                PropertyBuilder: b => b.WriteLine("public FooInner1 InnerProp1 { get; }"),
+                SourcePropertyBuilder: b => b.WriteLine("public BazInner1 InnerProp1 { get; }")));
+
+            source += @"
+namespace Test
+{
+    public class FooInner1 { public int Prop1 { get; } }
+    
+    public partial class BazInner1 { public int Prop1 { get; }}
+}
+".Trim();
+
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
+
+            // Assert
+            var expectedError = DiagnosticProvider.NoMatchingPropertyTypeFoundError(GetSourcePropertySymbol("InnerProp1", compilation));
+            diagnostics.ShouldBeUnsuccessful(expectedError);
+        }
+        
+        [Fact]
+        public void When_HasNestedObjectPropertyTypeHasMapFromAttributeToDifferentType_Should_ReportError()
+        {
+            // Arrange
+            var source = GetSourceText(new SourceGeneratorOptions(
+                SourceClassNamespace: "Test",
+                PropertyBuilder: b => b.WriteLine("public FooInner1 InnerProp1 { get; }"),
+                SourcePropertyBuilder: b => b.WriteLine("public BazInner1 InnerProp1 { get; }")));
+
+            source += @"
+namespace Test
+{
+    public class FooInner1 { public int Prop1 { get; } }
+
+    public class FooInner2 { public int Prop1 { get; } }
+
+    [MapTo.MapFrom(typeof(FooInner2))]
+    public partial class BazInner1 { public int Prop1 { get; }}
+}
+".Trim();
+
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
+
+            // Assert
+            var expectedError = DiagnosticProvider.NoMatchingPropertyTypeFoundError(GetSourcePropertySymbol("InnerProp1", compilation));
+            diagnostics.ShouldBeUnsuccessful(expectedError);
+        }
     }
 }

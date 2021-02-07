@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using MapTo.Sources;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -63,5 +65,8 @@ namespace MapTo.Extensions
                  p.NullableAnnotation == NullableAnnotation.Annotated &&
                  targetProperty.NullableAnnotation == NullableAnnotation.Annotated));
         }
+
+        public static INamedTypeSymbol GetTypeByMetadataNameOrThrow(this Compilation compilation, string fullyQualifiedMetadataName) => 
+            compilation.GetTypeByMetadataName(fullyQualifiedMetadataName) ?? throw new TypeLoadException($"Unable to find '{fullyQualifiedMetadataName}' type.");
     }
 }
