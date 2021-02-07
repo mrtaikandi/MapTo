@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Shouldly;
 using Xunit;
@@ -20,10 +21,32 @@ namespace MapTo.Tests.Extensions
             syntax.ShouldBe(expectedSource, customMessage);
         }
         
-        internal static void ShouldBeSuccessful(this IEnumerable<Diagnostic> diagnostics, DiagnosticSeverity severity = DiagnosticSeverity.Warning)
+        internal static void ShouldBeSuccessful(this IEnumerable<Diagnostic> diagnostics, Compilation compilation = null)
         {
-            var actual = diagnostics.Where(d => d.Severity >= severity).Select(c => $"{c.Severity}: {c.Location.GetLineSpan().StartLinePosition} - {c.GetMessage()}").ToArray();
-            Assert.False(actual.Any(), $"Failed: {Environment.NewLine}{string.Join(Environment.NewLine, actual.Select(c => $"- {c}"))}");
+            var actual = diagnostics
+                .Where(d => !d.Id.StartsWith("MT") && (d.Severity == DiagnosticSeverity.Warning || d.Severity == DiagnosticSeverity.Error))
+                .Select(c => $"{c.Severity}: {c.Location.GetLineSpan()} - {c.GetMessage()}").ToArray();
+
+            if (!actual.Any())
+            {
+                return;
+            }
+
+            var builder = new StringBuilder();
+            builder.AppendLine("Failed");
+
+            foreach (var d in actual)
+            {
+                builder.AppendFormat("- {0}", d).AppendLine();
+            }
+
+            if (compilation is not null)
+            {
+                builder.AppendLine("Generated Sources:");
+                builder.AppendLine(compilation.PrintSyntaxTree());
+            }
+            
+            Assert.False(true, builder.ToString());
         }
 
         internal static void ShouldBeUnsuccessful(this ImmutableArray<Diagnostic> diagnostics, Diagnostic expectedError)
