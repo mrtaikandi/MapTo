@@ -1,22 +1,24 @@
-﻿using MapTo;
+﻿using System;
+using MapTo;
+using TestConsoleApp.Data.Models;
 
 namespace TestConsoleApp.ViewModels
 {
-    [MapFrom(typeof(Data.Models.User))]
+    [MapFrom(typeof(User))]
     public partial class UserViewModel
     {
-        public string FirstName { get; }
-
-        [IgnoreProperty]
-        public string LastName { get; }
-        
-        [MapTypeConverter(typeof(LastNameConverter))]
+        [MapProperty(SourcePropertyName = nameof(User.Id))]
+        [MapTypeConverter(typeof(IdConverter))]
         public string Key { get; }
 
-        private class LastNameConverter : ITypeConverter<long, string>
+        public DateTimeOffset RegisteredAt { get; set; }
+        
+        // [IgnoreProperty]
+        public ProfileViewModel Profile { get; set; }
+
+        private class IdConverter : ITypeConverter<int, string>
         {
-            /// <inheritdoc />
-            public string Convert(long source, object[]? converterParameters) => $"{source} :: With Type Converter";
+            public string Convert(int source, object[] converterParameters) => $"{source:X}";
         }
     }
 }
