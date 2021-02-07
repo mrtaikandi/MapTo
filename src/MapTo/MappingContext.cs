@@ -16,7 +16,6 @@ namespace MapTo
         private readonly INamedTypeSymbol _mapFromAttributeTypeSymbol;
         private readonly INamedTypeSymbol _mapPropertyAttributeTypeSymbol;
         private readonly INamedTypeSymbol _mapTypeConverterAttributeTypeSymbol;
-        private readonly SemanticModel _semanticModel;
         private readonly SourceGenerationOptions _sourceGenerationOptions;
         private readonly INamedTypeSymbol _typeConverterInterfaceTypeSymbol;
 
@@ -26,7 +25,6 @@ namespace MapTo
             _sourceGenerationOptions = sourceGenerationOptions;
             _classSyntax = classSyntax;
             _compilation = compilation;
-            _semanticModel = _compilation.GetSemanticModel(_classSyntax.SyntaxTree);
 
             _ignorePropertyAttributeTypeSymbol = compilation.GetTypeByMetadataNameOrThrow(IgnorePropertyAttributeSource.FullyQualifiedName);
             _mapTypeConverterAttributeTypeSymbol = compilation.GetTypeByMetadataNameOrThrow(MapTypeConverterAttributeSource.FullyQualifiedName);
@@ -43,13 +41,14 @@ namespace MapTo
 
         private void Initialize()
         {
-            if (!(_semanticModel.GetDeclaredSymbol(_classSyntax) is INamedTypeSymbol classTypeSymbol))
+            var semanticModel = _compilation.GetSemanticModel(_classSyntax.SyntaxTree);
+            if (!(semanticModel.GetDeclaredSymbol(_classSyntax) is INamedTypeSymbol classTypeSymbol))
             {
                 ReportDiagnostic(DiagnosticProvider.TypeNotFoundError(_classSyntax.GetLocation(), _classSyntax.Identifier.ValueText));
                 return;
             }
 
-            var sourceTypeSymbol = GetSourceTypeSymbol(_classSyntax);
+            var sourceTypeSymbol = GetSourceTypeSymbol(_classSyntax, semanticModel);
             if (sourceTypeSymbol is null)
             {
                 ReportDiagnostic(DiagnosticProvider.MapFromAttributeNotFoundError(_classSyntax.GetLocation()));
@@ -132,8 +131,7 @@ namespace MapTo
                 return false;
             }
 
-            var nestedAttributeSyntax = nestedSourceMapFromAttribute.ApplicationSyntaxReference?.GetSyntax() as AttributeSyntax;
-            if (nestedAttributeSyntax is null)
+            if (!(nestedSourceMapFromAttribute.ApplicationSyntaxReference?.GetSyntax() is AttributeSyntax nestedAttributeSyntax))
             {
                 ReportDiagnostic(DiagnosticProvider.NoMatchingPropertyTypeFoundError(property));
                 return false;
@@ -212,17 +210,23 @@ namespace MapTo
             Diagnostics = Diagnostics.Add(diagnostic);
         }
 
-        private INamedTypeSymbol? GetSourceTypeSymbol(ClassDeclarationSyntax classDeclarationSyntax) =>
-            GetSourceTypeSymbol(classDeclarationSyntax.GetAttribute(MapFromAttributeSource.AttributeName));
+        private INamedTypeSymbol? GetSourceTypeSymbol(ClassDeclarationSyntax classDeclarationSyntax, SemanticModel? semanticModel = null) =>
+            GetSourceTypeSymbol(classDeclarationSyntax.GetAttribute(MapFromAttributeSource.AttributeName), semanticModel);
 
-        private INamedTypeSymbol? GetSourceTypeSymbol(AttributeSyntax? attributeSyntax)
+        private INamedTypeSymbol? GetSourceTypeSymbol(AttributeSyntax? attributeSyntax, SemanticModel? semanticModel = null)
         {
+            if (attributeSyntax is null)
+            {
+                return null;
+            }
+            
+            semanticModel ??= _compilation.GetSemanticModel(attributeSyntax.SyntaxTree);
             var sourceTypeExpressionSyntax = attributeSyntax
-                ?.DescendantNodes()
+                .DescendantNodes()
                 .OfType<TypeOfExpressionSyntax>()
                 .SingleOrDefault();
 
-            return sourceTypeExpressionSyntax is not null ? _semanticModel.GetTypeInfo(sourceTypeExpressionSyntax.Type).Type as INamedTypeSymbol : null;
+            return sourceTypeExpressionSyntax is not null ? semanticModel.GetTypeInfo(sourceTypeExpressionSyntax.Type).Type as INamedTypeSymbol : null;
         }
     }
 }

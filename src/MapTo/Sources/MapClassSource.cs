@@ -80,7 +80,7 @@ namespace MapTo.Sources
                         ? "null"
                         : $"new object[] {{ {string.Join(", ", property.TypeConverterParameters)} }}";
 
-                    builder.WriteLine($"{property.Name} = new {property.TypeConverter}().Convert({sourceClassParameterName}.{property.Name}, {parameters});");
+                    builder.WriteLine($"{property.Name} = new {property.TypeConverter}().Convert({sourceClassParameterName}.{property.SourcePropertyName}, {parameters});");
                 }
             }
 
