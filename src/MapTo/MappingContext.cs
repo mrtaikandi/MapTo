@@ -57,8 +57,9 @@ namespace MapTo
 
             var className = _classSyntax.GetClassName();
             var sourceClassName = sourceTypeSymbol.Name;
+            var isClassInheritFromMappedBaseClass = IsClassInheritFromMappedBaseClass(semanticModel);
 
-            var mappedProperties = GetMappedProperties(classTypeSymbol, sourceTypeSymbol);
+            var mappedProperties = GetMappedProperties(classTypeSymbol, sourceTypeSymbol, isClassInheritFromMappedBaseClass);
             if (!mappedProperties.Any())
             {
                 ReportDiagnostic(DiagnosticProvider.NoMatchingPropertyFoundError(_classSyntax.GetLocation(), classTypeSymbol, sourceTypeSymbol));
@@ -73,14 +74,24 @@ namespace MapTo
                 sourceTypeSymbol.ContainingNamespace.ToString(),
                 sourceClassName,
                 sourceTypeSymbol.ToString(),
-                mappedProperties.ToImmutableArray());
+                mappedProperties.ToImmutableArray(),
+                isClassInheritFromMappedBaseClass);
         }
 
-        private ImmutableArray<MappedProperty> GetMappedProperties(ITypeSymbol classSymbol, ITypeSymbol sourceTypeSymbol)
+        private bool IsClassInheritFromMappedBaseClass(SemanticModel semanticModel)
+        {
+            return _classSyntax.BaseList is not null && _classSyntax.BaseList.Types
+                .Select(t => semanticModel.GetTypeInfo(t.Type).Type)
+                .Any(t => t?.GetAttribute(_mapFromAttributeTypeSymbol) != null);
+        }
+
+        private ImmutableArray<MappedProperty> GetMappedProperties(ITypeSymbol classSymbol, ITypeSymbol sourceTypeSymbol, bool isClassInheritFromMappedBaseClass)
         {
             var mappedProperties = new List<MappedProperty>();
             var sourceProperties = sourceTypeSymbol.GetAllMembers().OfType<IPropertySymbol>().ToArray();
-            var classProperties = classSymbol.GetAllMembers().OfType<IPropertySymbol>().Where(p => !p.HasAttribute(_ignorePropertyAttributeTypeSymbol));
+            var classProperties = classSymbol.GetAllMembers(!isClassInheritFromMappedBaseClass)
+                .OfType<IPropertySymbol>()
+                .Where(p => !p.HasAttribute(_ignorePropertyAttributeTypeSymbol));
 
             foreach (var property in classProperties)
             {
@@ -96,7 +107,7 @@ namespace MapTo
 
                 if (!_compilation.HasCompatibleTypes(sourceProperty, property))
                 {
-                    if (!TryGetMapTypeConverter(property, sourceProperty, out converterFullyQualifiedName, out converterParameters) && 
+                    if (!TryGetMapTypeConverter(property, sourceProperty, out converterFullyQualifiedName, out converterParameters) &&
                         !TryGetNestedObjectMappings(property, out mappedSourcePropertyType))
                     {
                         continue;
@@ -104,11 +115,11 @@ namespace MapTo
                 }
 
                 mappedProperties.Add(new MappedProperty(
-                    property.Name, 
+                    property.Name,
                     property.Type.Name,
-                    converterFullyQualifiedName, 
-                    converterParameters.ToImmutableArray(), 
-                    sourceProperty.Name, 
+                    converterFullyQualifiedName,
+                    converterParameters.ToImmutableArray(),
+                    sourceProperty.Name,
                     mappedSourcePropertyType));
             }
 
@@ -118,12 +129,12 @@ namespace MapTo
         private bool TryGetNestedObjectMappings(IPropertySymbol property, out string? mappedSourcePropertyType)
         {
             mappedSourcePropertyType = null;
-            
+
             if (!Diagnostics.IsEmpty)
             {
                 return false;
             }
-            
+
             var nestedSourceMapFromAttribute = property.Type.GetAttribute(_mapFromAttributeTypeSymbol);
             if (nestedSourceMapFromAttribute is null)
             {
@@ -152,7 +163,7 @@ namespace MapTo
         {
             converterFullyQualifiedName = null;
             converterParameters = ImmutableArray<string>.Empty;
-            
+
             if (!Diagnostics.IsEmpty)
             {
                 return false;
@@ -204,7 +215,7 @@ namespace MapTo
                 ? ImmutableArray<string>.Empty
                 : converterParameter.Values.Where(v => v.Value is not null).Select(v => v.Value!.ToSourceCodeString()).ToImmutableArray();
         }
-        
+
         private void ReportDiagnostic(Diagnostic diagnostic)
         {
             Diagnostics = Diagnostics.Add(diagnostic);
@@ -219,7 +230,7 @@ namespace MapTo
             {
                 return null;
             }
-            
+
             semanticModel ??= _compilation.GetSemanticModel(attributeSyntax.SyntaxTree);
             var sourceTypeExpressionSyntax = attributeSyntax
                 .DescendantNodes()

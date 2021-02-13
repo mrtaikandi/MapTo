@@ -168,7 +168,7 @@ namespace Test
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedSyntax);
+            compilation.SyntaxTrees.Last().ShouldContainPartialSource(expectedSyntax);
         }
 
         [Fact]
@@ -204,7 +204,7 @@ namespace Test
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedSyntax);
+            compilation.SyntaxTrees.Last().ShouldContainPartialSource(expectedSyntax);
         }
 
         [Fact]
@@ -235,7 +235,7 @@ namespace Test
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult);
+            compilation.SyntaxTrees.Last().ShouldContainPartialSource(expectedResult);
         }
 
         [Fact]

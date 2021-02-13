@@ -34,6 +34,8 @@ namespace MapTo.Tests
             builder.WriteLine("//");
             builder.WriteLine();
 
+            options.Usings?.ForEach(s => builder.WriteLine($"using {s};"));
+
             if (options.UseMapToNamespace)
             {
                 builder.WriteLine($"using {Constants.RootNamespace};");
@@ -94,6 +96,76 @@ namespace MapTo.Tests
             return builder.ToString();
         }
 
+        internal static string[] GetEmployeeManagerSourceText(Func<string> employeeClassSource = null, Func<string> managerClassSource = null, Func<string> employeeViewModelSource = null, Func<string> managerViewModelSource = null)
+        {
+            return new[]
+            {
+                employeeClassSource?.Invoke() ?? @"
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Test.Data.Models
+{
+    public class Employee
+    {
+        public int Id { get; set; }
+
+        public string EmployeeCode { get; set; }
+
+        public Manager Manager { get; set; }
+    }
+}".Trim(),
+                managerClassSource?.Invoke() ?? @"using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Test.Data.Models
+{
+    public class Manager: Employee
+    {
+        public int Level { get; set; }
+
+        public IEnumerable<Employee> Employees { get; set; } = Array.Empty<Employee>();
+    }
+}
+".Trim(),
+                employeeViewModelSource?.Invoke() ?? @"
+using MapTo;
+using Test.Data.Models;
+
+namespace Test.ViewModels
+{
+    [MapFrom(typeof(Employee))]
+    public partial class EmployeeViewModel
+    {
+        public int Id { get; set; }
+
+        public string EmployeeCode { get; set; }
+
+        public ManagerViewModel Manager { get; set; }
+    }
+}
+".Trim(),
+                managerViewModelSource?.Invoke() ?? @"
+using System;
+using System.Collections.Generic;
+using MapTo;
+using Test.Data.Models;
+
+namespace Test.ViewModels
+{
+    [MapFrom(typeof(Manager))]
+    public partial class ManagerViewModel : EmployeeViewModel
+    {
+        public int Level { get; set; }
+
+        public IEnumerable<EmployeeViewModel> Employees { get; set; } = Array.Empty<EmployeeViewModel>();
+    }
+}".Trim()
+            };
+        }
+
         internal static PropertyDeclarationSyntax GetPropertyDeclarationSyntax(SyntaxTree syntaxTree, string targetPropertyName, string targetClass = "Foo")
         {
             return syntaxTree.GetRoot()
@@ -120,6 +192,7 @@ namespace MapTo.Tests
             int ClassPropertiesCount = 3,
             int SourceClassPropertiesCount = 3,
             Action<SourceBuilder> PropertyBuilder = null,
-            Action<SourceBuilder> SourcePropertyBuilder = null);
+            Action<SourceBuilder> SourcePropertyBuilder = null,
+            IEnumerable<string> Usings = null);
     }
 }

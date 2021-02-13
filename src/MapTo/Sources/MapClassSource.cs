@@ -61,8 +61,10 @@ namespace MapTo.Sources
                     .WriteLine($"/// <exception cref=\"ArgumentNullException\">{sourceClassParameterName} is null</exception>");
             }
 
+            var baseConstructor = model.HasMappedBaseClass ? $" : base({sourceClassParameterName})" : string.Empty;
+            
             builder
-                .WriteLine($"{model.Options.ConstructorAccessModifier.ToLowercaseString()} {model.ClassName}({model.SourceClassFullName} {sourceClassParameterName})")
+                .WriteLine($"{model.Options.ConstructorAccessModifier.ToLowercaseString()} {model.ClassName}({model.SourceClassFullName} {sourceClassParameterName}){baseConstructor}")
                 .WriteOpeningBracket()
                 .WriteLine($"if ({sourceClassParameterName} == null) throw new ArgumentNullException(nameof({sourceClassParameterName}));")
                 .WriteLine();

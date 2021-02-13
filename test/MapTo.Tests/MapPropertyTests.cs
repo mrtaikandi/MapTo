@@ -76,7 +76,7 @@ namespace MapTo
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult);
+            compilation.SyntaxTrees.Last().ShouldContainPartialSource(expectedResult);
         }
     }
 }

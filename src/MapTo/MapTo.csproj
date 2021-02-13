@@ -20,10 +20,6 @@
         <RootNamespace>MapTo</RootNamespace>
     </PropertyGroup>
 
-    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <DocumentationFile>bin\Debug\MapTo.xml</DocumentationFile>
-    </PropertyGroup>
-
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <DocumentationFile>bin\Release\MapTo.xml</DocumentationFile>
     </PropertyGroup>

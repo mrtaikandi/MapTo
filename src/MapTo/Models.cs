@@ -23,7 +23,8 @@ namespace MapTo
         string SourceNamespace,
         string SourceClassName,
         string SourceClassFullName,
-        ImmutableArray<MappedProperty> MappedProperties
+        ImmutableArray<MappedProperty> MappedProperties,
+        bool HasMappedBaseClass
     );
 
     internal record SourceGenerationOptions(

@@ -21,10 +21,17 @@ namespace MapTo.Tests.Extensions
             syntax.ShouldBe(expectedSource, customMessage);
         }
         
-        internal static void ShouldBeSuccessful(this IEnumerable<Diagnostic> diagnostics, Compilation compilation = null)
+        internal static void ShouldContainPartialSource(this SyntaxTree syntaxTree, string expectedSource, string customMessage = null)
+        {
+            var syntax = syntaxTree.ToString();
+            syntax.ShouldNotBeNullOrWhiteSpace();
+            syntax.ShouldContainWithoutWhitespace(expectedSource, customMessage);
+        }
+        
+        internal static void ShouldBeSuccessful(this IEnumerable<Diagnostic> diagnostics, Compilation compilation = null, IEnumerable<string> ignoreDiagnosticsIds = null)
         {
             var actual = diagnostics
-                .Where(d => !d.Id.StartsWith("MT") && (d.Severity == DiagnosticSeverity.Warning || d.Severity == DiagnosticSeverity.Error))
+                .Where(d => (ignoreDiagnosticsIds is null || ignoreDiagnosticsIds.All(i => !d.Id.StartsWith(i) )) && (d.Severity == DiagnosticSeverity.Warning || d.Severity == DiagnosticSeverity.Error))
                 .Select(c => $"{c.Severity}: {c.Location.GetLineSpan()} - {c.GetMessage()}").ToArray();
 
             if (!actual.Any())

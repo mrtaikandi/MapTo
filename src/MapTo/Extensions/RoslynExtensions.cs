@@ -20,9 +20,11 @@ namespace MapTo.Extensions
             }
         }
 
-        public static IEnumerable<ISymbol> GetAllMembers(this ITypeSymbol type)
+        public static IEnumerable<ISymbol> GetAllMembers(this ITypeSymbol type, bool includeBaseTypeMembers = true)
         {
-            return type.GetBaseTypesAndThis().SelectMany(n => n.GetMembers());
+            return includeBaseTypeMembers
+                ? type.GetBaseTypesAndThis().SelectMany(t => t.GetMembers())
+                : type.GetMembers();
         }
 
         public static CompilationUnitSyntax GetCompilationUnit(this SyntaxNode syntaxNode) => syntaxNode.Ancestors().OfType<CompilationUnitSyntax>().Single();

@@ -286,7 +286,7 @@ namespace Test
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult.Trim());
+            compilation.SyntaxTrees.Last().ShouldContainPartialSource(expectedResult.Trim());
         }
 
         [Fact]
@@ -307,7 +307,7 @@ namespace Test
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult.Trim());
+            compilation.SyntaxTrees.Last().ShouldContainPartialSource(expectedResult.Trim());
         }
 
         [Fact]
@@ -331,7 +331,7 @@ namespace Test
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.Last().ToString().ShouldContain(expectedResult.Trim());
+            compilation.SyntaxTrees.Last().ShouldContainPartialSource(expectedResult.Trim());
         }
 
         [Fact]
@@ -372,7 +372,7 @@ namespace Test
 
             // Assert
             diagnostics.ShouldBeSuccessful();
-            compilation.SyntaxTrees.ToArray()[^2].ToString().ShouldContain(expectedResult);
+            compilation.SyntaxTrees.ToArray()[^2].ShouldContainPartialSource(expectedResult);
         }
         
         [Fact]
@@ -428,6 +428,60 @@ namespace Test
             // Assert
             var expectedError = DiagnosticProvider.NoMatchingPropertyTypeFoundError(GetSourcePropertySymbol("InnerProp1", compilation));
             diagnostics.ShouldBeUnsuccessful(expectedError);
+        }
+        
+        [Fact]
+        public void When_SourceTypeEnumerableProperties_Should_CreateConstructorAndAssignSrcToDest()
+        {
+            // Arrange
+            var source = GetSourceText(new SourceGeneratorOptions(
+                Usings: new[] { "System.Collections.Generic"}, 
+                PropertyBuilder: builder => builder.WriteLine("public IEnumerable<int> Prop4 { get; }"),
+                SourcePropertyBuilder: builder => builder.WriteLine("public IEnumerable<int> Prop4 { get; }")));
+
+            const string expectedResult = @"
+    partial class Foo
+    {
+        public Foo(Test.Models.Baz baz)
+        {
+            if (baz == null) throw new ArgumentNullException(nameof(baz));
+
+            Prop1 = baz.Prop1;
+            Prop2 = baz.Prop2;
+            Prop3 = baz.Prop3;
+            Prop4 = baz.Prop4;
+        }
+";
+
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
+
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+            compilation.SyntaxTrees.Last().ShouldContainPartialSource(expectedResult.Trim());
+        }
+        
+        [Fact]
+        public void When_DestinationTypeHasBaseClass_Should_CallBaseConstructor()
+        {
+            // Arrange
+            var sources = GetEmployeeManagerSourceText();
+
+            const string expectedResult = @"
+public ManagerViewModel(Test.Data.Models.Manager manager) : base(manager)
+{
+    if (manager == null) throw new ArgumentNullException(nameof(manager));
+
+    Level = manager.Level;
+}
+";
+
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(sources, analyzerConfigOptions: DefaultAnalyzerOptions);
+
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+            compilation.SyntaxTrees.Last().ShouldContainPartialSource(expectedResult);
         }
     }
 }
