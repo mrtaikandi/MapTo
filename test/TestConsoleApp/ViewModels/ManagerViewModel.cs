@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using MapTo;
 using TestConsoleApp.Data.Models;
+using TestConsoleApp.ViewModels;
 
-namespace TestConsoleApp.ViewModels
+namespace TestConsoleApp.ViewModels2
 {
     [MapFrom(typeof(Manager))]
     public partial class ManagerViewModel : EmployeeViewModel

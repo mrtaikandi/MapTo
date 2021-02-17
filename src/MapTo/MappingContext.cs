@@ -12,16 +12,19 @@ namespace MapTo
     {
         private readonly ClassDeclarationSyntax _classSyntax;
         private readonly Compilation _compilation;
+        private readonly List<Diagnostic> _diagnostics;
         private readonly INamedTypeSymbol _ignorePropertyAttributeTypeSymbol;
         private readonly INamedTypeSymbol _mapFromAttributeTypeSymbol;
         private readonly INamedTypeSymbol _mapPropertyAttributeTypeSymbol;
         private readonly INamedTypeSymbol _mapTypeConverterAttributeTypeSymbol;
         private readonly SourceGenerationOptions _sourceGenerationOptions;
         private readonly INamedTypeSymbol _typeConverterInterfaceTypeSymbol;
+        private readonly List<string> _usings;
 
         internal MappingContext(Compilation compilation, SourceGenerationOptions sourceGenerationOptions, ClassDeclarationSyntax classSyntax)
         {
-            Diagnostics = ImmutableArray<Diagnostic>.Empty;
+            _diagnostics = new List<Diagnostic>();
+            _usings = new List<string> { "System" };
             _sourceGenerationOptions = sourceGenerationOptions;
             _classSyntax = classSyntax;
             _compilation = compilation;
@@ -32,26 +35,28 @@ namespace MapTo
             _mapPropertyAttributeTypeSymbol = compilation.GetTypeByMetadataNameOrThrow(MapPropertyAttributeSource.FullyQualifiedName);
             _mapFromAttributeTypeSymbol = compilation.GetTypeByMetadataNameOrThrow(MapFromAttributeSource.FullyQualifiedName);
 
+            AddUsingIfRequired(sourceGenerationOptions.SupportNullableReferenceTypes, "System.Diagnostics.CodeAnalysis");
+
             Initialize();
         }
 
         public MappingModel? Model { get; private set; }
 
-        public ImmutableArray<Diagnostic> Diagnostics { get; private set; }
+        public IEnumerable<Diagnostic> Diagnostics => _diagnostics;
 
         private void Initialize()
         {
             var semanticModel = _compilation.GetSemanticModel(_classSyntax.SyntaxTree);
             if (!(semanticModel.GetDeclaredSymbol(_classSyntax) is INamedTypeSymbol classTypeSymbol))
             {
-                ReportDiagnostic(DiagnosticProvider.TypeNotFoundError(_classSyntax.GetLocation(), _classSyntax.Identifier.ValueText));
+                _diagnostics.Add(DiagnosticProvider.TypeNotFoundError(_classSyntax.GetLocation(), _classSyntax.Identifier.ValueText));
                 return;
             }
 
             var sourceTypeSymbol = GetSourceTypeSymbol(_classSyntax, semanticModel);
             if (sourceTypeSymbol is null)
             {
-                ReportDiagnostic(DiagnosticProvider.MapFromAttributeNotFoundError(_classSyntax.GetLocation()));
+                _diagnostics.Add(DiagnosticProvider.MapFromAttributeNotFoundError(_classSyntax.GetLocation()));
                 return;
             }
 
@@ -62,9 +67,12 @@ namespace MapTo
             var mappedProperties = GetMappedProperties(classTypeSymbol, sourceTypeSymbol, isClassInheritFromMappedBaseClass);
             if (!mappedProperties.Any())
             {
-                ReportDiagnostic(DiagnosticProvider.NoMatchingPropertyFoundError(_classSyntax.GetLocation(), classTypeSymbol, sourceTypeSymbol));
+                _diagnostics.Add(DiagnosticProvider.NoMatchingPropertyFoundError(_classSyntax.GetLocation(), classTypeSymbol, sourceTypeSymbol));
                 return;
             }
+
+            AddUsingIfRequired(sourceTypeSymbol);
+            AddUsingIfRequired(mappedProperties.Any(p => p.IsEnumerable), "System.Linq");
 
             Model = new MappingModel(
                 _sourceGenerationOptions,
@@ -75,7 +83,8 @@ namespace MapTo
                 sourceClassName,
                 sourceTypeSymbol.ToString(),
                 mappedProperties.ToImmutableArray(),
-                isClassInheritFromMappedBaseClass);
+                isClassInheritFromMappedBaseClass,
+                _usings.ToImmutableArray());
         }
 
         private bool IsClassInheritFromMappedBaseClass(SemanticModel semanticModel)
@@ -103,60 +112,73 @@ namespace MapTo
 
                 string? converterFullyQualifiedName = null;
                 var converterParameters = ImmutableArray<string>.Empty;
-                string? mappedSourcePropertyType = null;
+                ITypeSymbol? mappedSourcePropertyType = null;
+                ITypeSymbol? enumerableTypeArgumentType = null;
 
                 if (!_compilation.HasCompatibleTypes(sourceProperty, property))
                 {
                     if (!TryGetMapTypeConverter(property, sourceProperty, out converterFullyQualifiedName, out converterParameters) &&
-                        !TryGetNestedObjectMappings(property, out mappedSourcePropertyType))
+                        !TryGetNestedObjectMappings(property, out mappedSourcePropertyType, out enumerableTypeArgumentType))
                     {
                         continue;
                     }
                 }
 
-                mappedProperties.Add(new MappedProperty(
-                    property.Name,
-                    property.Type.Name,
-                    converterFullyQualifiedName,
-                    converterParameters.ToImmutableArray(),
-                    sourceProperty.Name,
-                    mappedSourcePropertyType));
+                AddUsingIfRequired(property.Type);
+                AddUsingIfRequired(sourceTypeSymbol);
+                AddUsingIfRequired(enumerableTypeArgumentType);
+                AddUsingIfRequired(mappedSourcePropertyType);
+
+                mappedProperties.Add(
+                    new MappedProperty(
+                        property.Name,
+                        property.Type.Name,
+                        converterFullyQualifiedName,
+                        converterParameters.ToImmutableArray(),
+                        sourceProperty.Name,
+                        mappedSourcePropertyType?.Name,
+                        enumerableTypeArgumentType?.Name));
             }
 
             return mappedProperties.ToImmutableArray();
         }
 
-        private bool TryGetNestedObjectMappings(IPropertySymbol property, out string? mappedSourcePropertyType)
+        private bool TryGetNestedObjectMappings(IPropertySymbol property, out ITypeSymbol? mappedSourcePropertyType, out ITypeSymbol? enumerableTypeArgument)
         {
             mappedSourcePropertyType = null;
+            enumerableTypeArgument = null;
 
-            if (!Diagnostics.IsEmpty)
+            if (!_diagnostics.IsEmpty())
             {
                 return false;
             }
 
-            var nestedSourceMapFromAttribute = property.Type.GetAttribute(_mapFromAttributeTypeSymbol);
-            if (nestedSourceMapFromAttribute is null)
+            var mapFromAttribute = property.Type.GetAttribute(_mapFromAttributeTypeSymbol);
+            if (mapFromAttribute is null && property.Type is INamedTypeSymbol namedTypeSymbol && _compilation.IsGenericEnumerable(property.Type))
             {
-                ReportDiagnostic(DiagnosticProvider.NoMatchingPropertyTypeFoundError(property));
-                return false;
+                enumerableTypeArgument = namedTypeSymbol.TypeArguments.First();
+                mapFromAttribute = enumerableTypeArgument.GetAttribute(_mapFromAttributeTypeSymbol);
             }
 
-            if (!(nestedSourceMapFromAttribute.ApplicationSyntaxReference?.GetSyntax() is AttributeSyntax nestedAttributeSyntax))
+            mappedSourcePropertyType = mapFromAttribute?.ConstructorArguments.First().Value as INamedTypeSymbol;
+
+            if (mappedSourcePropertyType is null && enumerableTypeArgument is null)
             {
-                ReportDiagnostic(DiagnosticProvider.NoMatchingPropertyTypeFoundError(property));
-                return false;
+                _diagnostics.Add(DiagnosticProvider.NoMatchingPropertyTypeFoundError(property));
             }
 
-            var nestedSourceTypeSymbol = GetSourceTypeSymbol(nestedAttributeSyntax);
-            if (nestedSourceTypeSymbol is null)
-            {
-                ReportDiagnostic(DiagnosticProvider.NoMatchingPropertyTypeFoundError(property));
-                return false;
-            }
+            return _diagnostics.IsEmpty();
+        }
 
-            mappedSourcePropertyType = nestedSourceTypeSymbol.Name;
-            return true;
+        private void AddUsingIfRequired(ISymbol? namedTypeSymbol) =>
+            AddUsingIfRequired(namedTypeSymbol?.ContainingNamespace.IsGlobalNamespace == false, namedTypeSymbol?.ContainingNamespace.ToDisplayString());
+
+        private void AddUsingIfRequired(bool condition, string? ns)
+        {
+            if (condition && ns is not null && ns != _classSyntax.GetNamespace() && !_usings.Contains(ns))
+            {
+                _usings.Add(ns);
+            }
         }
 
         private bool TryGetMapTypeConverter(IPropertySymbol property, IPropertySymbol sourceProperty, out string? converterFullyQualifiedName, out ImmutableArray<string> converterParameters)
@@ -164,7 +186,7 @@ namespace MapTo
             converterFullyQualifiedName = null;
             converterParameters = ImmutableArray<string>.Empty;
 
-            if (!Diagnostics.IsEmpty)
+            if (!_diagnostics.IsEmpty())
             {
                 return false;
             }
@@ -178,7 +200,7 @@ namespace MapTo
             var baseInterface = GetTypeConverterBaseInterface(converterTypeSymbol, property, sourceProperty);
             if (baseInterface is null)
             {
-                ReportDiagnostic(DiagnosticProvider.InvalidTypeConverterGenericTypesError(property, sourceProperty));
+                _diagnostics.Add(DiagnosticProvider.InvalidTypeConverterGenericTypesError(property, sourceProperty));
                 return false;
             }
 
@@ -214,11 +236,6 @@ namespace MapTo
             return converterParameter.IsNull
                 ? ImmutableArray<string>.Empty
                 : converterParameter.Values.Where(v => v.Value is not null).Select(v => v.Value!.ToSourceCodeString()).ToImmutableArray();
-        }
-
-        private void ReportDiagnostic(Diagnostic diagnostic)
-        {
-            Diagnostics = Diagnostics.Add(diagnostic);
         }
 
         private INamedTypeSymbol? GetSourceTypeSymbol(ClassDeclarationSyntax classDeclarationSyntax, SemanticModel? semanticModel = null) =>

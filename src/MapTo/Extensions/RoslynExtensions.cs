@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using MapTo.Sources;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -68,7 +67,13 @@ namespace MapTo.Extensions
                  targetProperty.NullableAnnotation == NullableAnnotation.Annotated));
         }
 
-        public static INamedTypeSymbol GetTypeByMetadataNameOrThrow(this Compilation compilation, string fullyQualifiedMetadataName) => 
+        public static INamedTypeSymbol GetTypeByMetadataNameOrThrow(this Compilation compilation, string fullyQualifiedMetadataName) =>
             compilation.GetTypeByMetadataName(fullyQualifiedMetadataName) ?? throw new TypeLoadException($"Unable to find '{fullyQualifiedMetadataName}' type.");
+
+        public static bool IsGenericEnumerable(this Compilation compilation, ITypeSymbol typeSymbol) =>
+            typeSymbol is INamedTypeSymbol { IsGenericType: true } &&
+            compilation.GetSpecialType(SpecialType.System_Collections_Generic_IEnumerable_T).Equals(typeSymbol.OriginalDefinition, SymbolEqualityComparer.Default);
+
+        public static bool IsArray(this Compilation compilation, ITypeSymbol typeSymbol) => typeSymbol is IArrayTypeSymbol;
     }
 }

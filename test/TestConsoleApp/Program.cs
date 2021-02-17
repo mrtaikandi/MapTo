@@ -1,6 +1,7 @@
 ﻿using System;
 using TestConsoleApp.Data.Models;
 using TestConsoleApp.ViewModels;
+using TestConsoleApp.ViewModels2;
 
 namespace TestConsoleApp
 {
@@ -41,8 +42,8 @@ namespace TestConsoleApp
             manager1.Employees = new[] { employee1, manager2 };
             manager2.Employees = new[] { employee2 };
 
-            var manager1ViewModel = manager1.ToManagerViewModel();
-            int a = 0;
+            manager1.ToManagerViewModel();
+            employee1.ToEmployeeViewModel();
         }
 
         private static void UserTest()

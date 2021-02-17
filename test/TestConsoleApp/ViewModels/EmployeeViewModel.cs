@@ -1,5 +1,6 @@
 ﻿using MapTo;
 using TestConsoleApp.Data.Models;
+using TestConsoleApp.ViewModels2;
 
 namespace TestConsoleApp.ViewModels
 {

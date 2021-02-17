@@ -1,4 +1,5 @@
-﻿using MapTo.Extensions;
+﻿using System.Linq;
+using MapTo.Extensions;
 using static MapTo.Sources.Constants;
 
 namespace MapTo.Sources
@@ -42,9 +43,8 @@ namespace MapTo.Sources
 
         private static SourceBuilder WriteUsings(this SourceBuilder builder, MappingModel model)
         {
-            return builder
-                .WriteLine("using System;")
-                .WriteLineIf(model.Options.SupportNullableReferenceTypes, "using System.Diagnostics.CodeAnalysis;");
+            model.Usings.Sort().ForEach(u => builder.WriteLine($"using {u};"));
+            return builder;
         }
         
         private static SourceBuilder GenerateConstructor(this SourceBuilder builder, MappingModel model)
@@ -64,7 +64,7 @@ namespace MapTo.Sources
             var baseConstructor = model.HasMappedBaseClass ? $" : base({sourceClassParameterName})" : string.Empty;
             
             builder
-                .WriteLine($"{model.Options.ConstructorAccessModifier.ToLowercaseString()} {model.ClassName}({model.SourceClassFullName} {sourceClassParameterName}){baseConstructor}")
+                .WriteLine($"{model.Options.ConstructorAccessModifier.ToLowercaseString()} {model.ClassName}({model.SourceClassName} {sourceClassParameterName}){baseConstructor}")
                 .WriteOpeningBracket()
                 .WriteLine($"if ({sourceClassParameterName} == null) throw new ArgumentNullException(nameof({sourceClassParameterName}));")
                 .WriteLine();
@@ -73,9 +73,16 @@ namespace MapTo.Sources
             {
                 if (property.TypeConverter is null)
                 {
-                    builder.WriteLine(property.MappedSourcePropertyTypeName is null 
-                        ? $"{property.Name} = {sourceClassParameterName}.{property.SourcePropertyName};"
-                        : $"{property.Name} = {sourceClassParameterName}.{property.SourcePropertyName}.To{property.Type}();");
+                    if (property.IsEnumerable)
+                    {
+                        builder.WriteLine($"{property.Name} = {sourceClassParameterName}.{property.SourcePropertyName}.Select({property.MappedSourcePropertyTypeName}To{property.EnumerableTypeArgument}Extensions.To{property.EnumerableTypeArgument}).ToList();");
+                    }
+                    else
+                    {
+                        builder.WriteLine(property.MappedSourcePropertyTypeName is null 
+                            ? $"{property.Name} = {sourceClassParameterName}.{property.SourcePropertyName};"
+                            : $"{property.Name} = {sourceClassParameterName}.{property.SourcePropertyName}.To{property.Type}();");
+                    }
                 }
                 else
                 {
@@ -98,7 +105,7 @@ namespace MapTo.Sources
             return builder
                 .GenerateConvertorMethodsXmlDocs(model, sourceClassParameterName)
                 .WriteLineIf(model.Options.SupportNullableReferenceTypes, $"[return: NotNullIfNotNull(\"{sourceClassParameterName}\")]")
-                .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static {model.ClassName}{model.Options.NullableReferenceSyntax} From({model.SourceClassFullName}{model.Options.NullableReferenceSyntax} {sourceClassParameterName})")
+                .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static {model.ClassName}{model.Options.NullableReferenceSyntax} From({model.SourceClassName}{model.Options.NullableReferenceSyntax} {sourceClassParameterName})")
                 .WriteOpeningBracket()
                 .WriteLine($"return {sourceClassParameterName} == null ? null : new {model.ClassName}({sourceClassParameterName});")
                 .WriteClosingBracket();
@@ -136,7 +143,7 @@ namespace MapTo.Sources
             return builder
                 .GenerateConvertorMethodsXmlDocs(model, sourceClassParameterName)
                 .WriteLineIf(model.Options.SupportNullableReferenceTypes, $"[return: NotNullIfNotNull(\"{sourceClassParameterName}\")]")
-                .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static {model.ClassName}{model.Options.NullableReferenceSyntax} To{model.ClassName}(this {model.SourceClassFullName}{model.Options.NullableReferenceSyntax} {sourceClassParameterName})")
+                .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static {model.ClassName}{model.Options.NullableReferenceSyntax} To{model.ClassName}(this {model.SourceClassName}{model.Options.NullableReferenceSyntax} {sourceClassParameterName})")
                 .WriteOpeningBracket()
                 .WriteLine($"return {sourceClassParameterName} == null ? null : new {model.ClassName}({sourceClassParameterName});")
                 .WriteClosingBracket();

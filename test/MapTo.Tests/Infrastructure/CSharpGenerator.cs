@@ -40,7 +40,7 @@ namespace MapTo.Tests.Infrastructure
 
             driver.RunGeneratorsAndUpdateCompilation(compilation, out var outputCompilation, out var generateDiagnostics);
             
-            generateDiagnostics.ShouldBeSuccessful();
+            generateDiagnostics.ShouldBeSuccessful(ignoreDiagnosticsIds: new[] { "MT" });
             outputCompilation.GetDiagnostics().ShouldBeSuccessful(outputCompilation);
 
             return (outputCompilation, generateDiagnostics);

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using MapTo.Extensions;
 using MapTo.Sources;
 using Microsoft.CodeAnalysis;
@@ -96,11 +95,19 @@ namespace MapTo.Tests
             return builder.ToString();
         }
 
-        internal static string[] GetEmployeeManagerSourceText(Func<string> employeeClassSource = null, Func<string> managerClassSource = null, Func<string> employeeViewModelSource = null, Func<string> managerViewModelSource = null)
+        internal static string[] GetEmployeeManagerSourceText(Func<string> employeeClassSource = null, Func<string> managerClassSource = null, Func<string> employeeViewModelSource = null, Func<string> managerViewModelSource = null, bool useDifferentViewModelNamespace = false)
         {
             return new[]
             {
-                employeeClassSource?.Invoke() ?? @"
+                employeeClassSource?.Invoke() ?? DefaultEmployeeClassSource(),
+                managerClassSource?.Invoke() ?? DefaultManagerClassSource(),
+                employeeViewModelSource?.Invoke() ??
+                DefaultEmployeeViewModelSource(useDifferentViewModelNamespace),
+                managerViewModelSource?.Invoke() ?? DefaultManagerViewModelSource(useDifferentViewModelNamespace)
+            };
+
+            static string DefaultEmployeeClassSource() =>
+                @"
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -115,8 +122,10 @@ namespace Test.Data.Models
 
         public Manager Manager { get; set; }
     }
-}".Trim(),
-                managerClassSource?.Invoke() ?? @"using System;
+}".Trim();
+
+            static string DefaultManagerClassSource() =>
+                @"using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -129,8 +138,28 @@ namespace Test.Data.Models
         public IEnumerable<Employee> Employees { get; set; } = Array.Empty<Employee>();
     }
 }
-".Trim(),
-                employeeViewModelSource?.Invoke() ?? @"
+".Trim();
+
+            static string DefaultEmployeeViewModelSource(bool useDifferentNamespace) => useDifferentNamespace
+                ? @"
+using MapTo;
+using Test.Data.Models;
+using Test.ViewModels2;
+
+namespace Test.ViewModels
+{
+    [MapFrom(typeof(Employee))]
+    public partial class EmployeeViewModel
+    {
+        public int Id { get; set; }
+
+        public string EmployeeCode { get; set; }
+
+        public ManagerViewModel Manager { get; set; }
+    }
+}
+".Trim()
+                : @"
 using MapTo;
 using Test.Data.Models;
 
@@ -146,8 +175,28 @@ namespace Test.ViewModels
         public ManagerViewModel Manager { get; set; }
     }
 }
-".Trim(),
-                managerViewModelSource?.Invoke() ?? @"
+".Trim();
+
+            static string DefaultManagerViewModelSource(bool useDifferentNamespace) => useDifferentNamespace
+                ? @"
+using System;
+using System.Collections.Generic;
+using MapTo;
+using Test.Data.Models;
+using Test.ViewModels;
+
+namespace Test.ViewModels2
+{
+    [MapFrom(typeof(Manager))]
+    public partial class ManagerViewModel : EmployeeViewModel
+    {
+        public int Level { get; set; }
+
+        public IEnumerable<EmployeeViewModel> Employees { get; set; } = Array.Empty<EmployeeViewModel>();
+    }
+}
+".Trim()
+                : @"
 using System;
 using System.Collections.Generic;
 using MapTo;
@@ -162,8 +211,7 @@ namespace Test.ViewModels
 
         public IEnumerable<EmployeeViewModel> Employees { get; set; } = Array.Empty<EmployeeViewModel>();
     }
-}".Trim()
-            };
+}".Trim();
         }
 
         internal static PropertyDeclarationSyntax GetPropertyDeclarationSyntax(SyntaxTree syntaxTree, string targetPropertyName, string targetClass = "Foo")

@@ -60,7 +60,7 @@ namespace MapTo
             var expectedResult = @"
     partial class Foo
     {
-        public Foo(Test.Models.Baz baz)
+        public Foo(Baz baz)
         {
             if (baz == null) throw new ArgumentNullException(nameof(baz));
 

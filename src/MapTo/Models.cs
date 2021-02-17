@@ -8,12 +8,16 @@ namespace MapTo
     internal record SourceCode(string Text, string HintName);
 
     internal record MappedProperty(
-        string Name, 
+        string Name,
         string Type,
-        string? TypeConverter, 
+        string? TypeConverter,
         ImmutableArray<string> TypeConverterParameters,
         string SourcePropertyName,
-        string? MappedSourcePropertyTypeName);
+        string? MappedSourcePropertyTypeName,
+        string? EnumerableTypeArgument)
+    {
+        public bool IsEnumerable => EnumerableTypeArgument is not null;
+    }
 
     internal record MappingModel (
         SourceGenerationOptions Options,
@@ -24,7 +28,8 @@ namespace MapTo
         string SourceClassName,
         string SourceClassFullName,
         ImmutableArray<MappedProperty> MappedProperties,
-        bool HasMappedBaseClass
+        bool HasMappedBaseClass,
+        ImmutableArray<string> Usings
     );
 
     internal record SourceGenerationOptions(
