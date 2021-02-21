@@ -42,7 +42,7 @@ namespace MapTo.Sources
                     .WriteLine($"/// Initializes a new instance of <see cref=\"{AttributeClassName}\"/>.")
                     .WriteLine("/// </summary>")
                     .WriteLine($"/// <param name=\"converter\">The <see cref=\"{ITypeConverterSource.InterfaceName}{{TSource,TDestination}}\" /> to be used to convert the source type.</param>")
-                    .WriteLine("/// <param name=\"converterParameters\">The parameter list to pass to the <paramref name=\"converter\"/> during the type conversion.</param>");
+                    .WriteLine("/// <param name=\"converterParameters\">The list of parameters to pass to the <paramref name=\"converter\"/> during the type conversion.</param>");
             }
 
             builder
@@ -69,7 +69,7 @@ namespace MapTo.Sources
             {
                 builder
                     .WriteLine("/// <summary>")
-                    .WriteLine($"/// Gets the parameter list to pass to the <see cref=\"{ConverterPropertyName}\"/> during the type conversion.")
+                    .WriteLine($"/// Gets the list of parameters to pass to the <see cref=\"{ConverterPropertyName}\"/> during the type conversion.")
                     .WriteLine("/// </summary>");
             }
 

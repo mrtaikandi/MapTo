@@ -24,7 +24,7 @@ namespace MapTo.Sources
             {
                 builder
                     .WriteLine("/// <summary>")
-                    .WriteLine("/// Specifies the mapping behavior of annotated property.")
+                    .WriteLine("/// Specifies the mapping behavior of the annotated property.")
                     .WriteLine("/// </summary>")
                     .WriteLine("/// <remarks>")
                     .WriteLine($"/// {AttributeClassName} has a number of uses:")

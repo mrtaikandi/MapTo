@@ -21,7 +21,7 @@ namespace MapTo.Sources
             {
                 builder
                     .WriteLine("/// <summary>")
-                    .WriteLine("/// Specified that the annotated property should not be included in the generated mappings.")
+                    .WriteLine("/// Specifies that the annotated property should be excluded.")
                     .WriteLine("/// </summary>");
             }
 

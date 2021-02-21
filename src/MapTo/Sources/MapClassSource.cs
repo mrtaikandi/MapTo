@@ -123,7 +123,7 @@ namespace MapTo.Sources
                 .WriteLine($"/// Creates a new instance of <see cref=\"{model.ClassName}\"/> and sets its participating properties")
                 .WriteLine($"/// using the property values from <paramref name=\"{sourceClassParameterName}\"/>.")
                 .WriteLine("/// </summary>")
-                .WriteLine($"/// <param name=\"{sourceClassParameterName}\">Instance of <see cref=\"{model.SourceClassName}\"/> to use as source.</param>")
+                .WriteLine($"/// <param name=\"{sourceClassParameterName}\">The instance of <see cref=\"{model.SourceClassName}\"/> to use as source.</param>")
                 .WriteLine($"/// <returns>A new instance of <see cred=\"{model.ClassName}\"/> -or- <c>null</c> if <paramref name=\"{sourceClassParameterName}\"/> is <c>null</c>.</returns>");
         }
 

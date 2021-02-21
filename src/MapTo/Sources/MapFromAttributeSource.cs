@@ -35,7 +35,8 @@ namespace MapTo.Sources
                 builder
                     .WriteLine("/// <summary>")
                     .WriteLine($"/// Initializes a new instance of the <see cref=\"{AttributeName}Attribute\"/> class with the specified <paramref name=\"sourceType\"/>.")
-                    .WriteLine("/// </summary>");
+                    .WriteLine("/// </summary>")
+                    .WriteLine("/// <param name=\"sourceType\">The type of to map from.</param>");
             }
 
             builder
@@ -49,7 +50,7 @@ namespace MapTo.Sources
             {
                 builder
                     .WriteLine("/// <summary>")
-                    .WriteLine("/// Gets the type of the class that the annotated class should be able to map from.")
+                    .WriteLine("/// Gets the type to map from.")
                     .WriteLine("/// </summary>");
             }
 

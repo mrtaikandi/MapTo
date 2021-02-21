@@ -23,7 +23,7 @@ namespace MapTo.Sources
             {
                 builder
                     .WriteLine("/// <summary>")
-                    .WriteLine("/// Converts the value of <typeparamref name=\"TSource\"/> <typeparamref name=\"TDestination\"/>.")
+                    .WriteLine("/// Converts the value of <typeparamref name=\"TSource\"/> to <typeparamref name=\"TDestination\"/>.")
                     .WriteLine("/// </summary>")
                     .WriteLine("/// <typeparam name=\"TSource\">The type to convert from.</typeparam>")
                     .WriteLine("/// <typeparam name=\"TDestination\">The type to convert to.</typeparam>");
