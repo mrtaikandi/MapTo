@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Text;
-using MapTo.Sources;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
@@ -13,7 +12,7 @@ namespace MapTo.Extensions
 
         internal static T GetBuildGlobalOption<T>(this GeneratorExecutionContext context, string propertyName, T defaultValue = default!) where T : notnull
         {
-            if (!context.AnalyzerConfigOptions.GlobalOptions.TryGetValue(GetBuildPropertyName(propertyName), out var optionValue))
+            if (!context.AnalyzerConfigOptions.GlobalOptions.TryGetValue(GetBuildPropertyName(propertyName), out var optionValue) || string.IsNullOrWhiteSpace(optionValue))
             {
                 return defaultValue;
             }
