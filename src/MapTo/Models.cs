@@ -43,8 +43,8 @@ namespace MapTo
             var compilationOptions = (context.Compilation as CSharpCompilation)?.Options;
 
             return new(
-                context.GetBuildGlobalOption<AccessModifier>(nameof(ConstructorAccessModifier)),
-                context.GetBuildGlobalOption<AccessModifier>(nameof(GeneratedMethodsAccessModifier)),
+                context.GetBuildGlobalOption(nameof(ConstructorAccessModifier), AccessModifier.Public),
+                context.GetBuildGlobalOption(nameof(GeneratedMethodsAccessModifier), AccessModifier.Public),
                 context.GetBuildGlobalOption(nameof(GenerateXmlDocument), true),
                 compilationOptions is not null && (compilationOptions.NullableContextOptions == NullableContextOptions.Warnings || compilationOptions.NullableContextOptions == NullableContextOptions.Enable)
             );
