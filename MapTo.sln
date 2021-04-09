@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapToTests", "test\MapTo.Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestConsoleApp", "test\TestConsoleApp\TestConsoleApp.csproj", "{5BE2551A-9EF9-42FA-B6D1-5B5E6A90CC85}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapTo.Integration.Tests", "test\MapTo.Integration.Tests\MapTo.Integration.Tests.csproj", "{23B46FDF-6A1E-4287-88C9-C8C5D7EECB8C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{5BE2551A-9EF9-42FA-B6D1-5B5E6A90CC85}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5BE2551A-9EF9-42FA-B6D1-5B5E6A90CC85}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5BE2551A-9EF9-42FA-B6D1-5B5E6A90CC85}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23B46FDF-6A1E-4287-88C9-C8C5D7EECB8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23B46FDF-6A1E-4287-88C9-C8C5D7EECB8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23B46FDF-6A1E-4287-88C9-C8C5D7EECB8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23B46FDF-6A1E-4287-88C9-C8C5D7EECB8C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

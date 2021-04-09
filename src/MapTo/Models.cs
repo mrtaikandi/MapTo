@@ -36,17 +36,30 @@ namespace MapTo
         AccessModifier ConstructorAccessModifier,
         AccessModifier GeneratedMethodsAccessModifier,
         bool GenerateXmlDocument,
-        bool SupportNullableReferenceTypes)
+        bool SupportNullableReferenceTypes,
+        bool SupportNullableStaticAnalysis,
+        LanguageVersion LanguageVersion)
     {
         internal static SourceGenerationOptions From(GeneratorExecutionContext context)
         {
-            var compilationOptions = (context.Compilation as CSharpCompilation)?.Options;
+            var compilation = context.Compilation as CSharpCompilation;
+            var supportNullableReferenceTypes = false;
+            var supportNullableStaticAnalysis = false;
 
+            if (compilation is not  null)
+            {
+                supportNullableStaticAnalysis = compilation.LanguageVersion >= LanguageVersion.CSharp8;
+                supportNullableReferenceTypes = compilation.Options.NullableContextOptions == NullableContextOptions.Warnings || 
+                                                compilation.Options.NullableContextOptions == NullableContextOptions.Enable;
+            }
+            
             return new(
                 context.GetBuildGlobalOption(nameof(ConstructorAccessModifier), AccessModifier.Public),
                 context.GetBuildGlobalOption(nameof(GeneratedMethodsAccessModifier), AccessModifier.Public),
                 context.GetBuildGlobalOption(nameof(GenerateXmlDocument), true),
-                compilationOptions is not null && (compilationOptions.NullableContextOptions == NullableContextOptions.Warnings || compilationOptions.NullableContextOptions == NullableContextOptions.Enable)
+                supportNullableReferenceTypes,
+                supportNullableStaticAnalysis,
+                compilation?.LanguageVersion ?? LanguageVersion.Default
             );
         }
 

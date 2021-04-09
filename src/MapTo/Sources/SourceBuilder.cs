@@ -1,6 +1,8 @@
 ﻿using System;
 using System.CodeDom.Compiler;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace MapTo.Sources
 {
@@ -8,7 +10,7 @@ namespace MapTo.Sources
     {
         private readonly StringWriter _writer;
         private readonly IndentedTextWriter _indentedWriter;
-        
+
         public SourceBuilder()
         {
             _writer = new StringWriter();
@@ -21,12 +23,12 @@ namespace MapTo.Sources
             _writer.Dispose();
             _indentedWriter.Dispose();
         }
-        
+
         public SourceBuilder WriteLine(string? value = null)
         {
             if (string.IsNullOrWhiteSpace(value))
             {
-                _indentedWriter.WriteLineNoTabs(string.Empty);    
+                _indentedWriter.WriteLineNoTabs(string.Empty);
             }
             else
             {
@@ -60,6 +62,23 @@ namespace MapTo.Sources
         {
             _indentedWriter.Indent--;
             _indentedWriter.WriteLine("}");
+
+            return this;
+        }
+
+        public SourceBuilder WriteUsings(IEnumerable<string> usings)
+        {
+            foreach (var u in usings.OrderBy(s => s))
+            {
+                WriteUsing(u);
+            }
+
+            return this;
+        }
+
+        public SourceBuilder WriteUsing(string u)
+        {
+            WriteLine($"using {u};");
 
             return this;
         }

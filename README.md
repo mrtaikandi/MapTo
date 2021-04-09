@@ -4,7 +4,7 @@
 
 A convention based object to object mapper using [Roslyn source generator](https://github.com/dotnet/roslyn/blob/master/docs/features/source-generators.md).
 
-MapTo is a library to programmatically generate the necessary code to map one object to another during compile-time. It creates mappings during compile-time, eliminating the need to use reflection to map one object to another and make it simpler to use faster than other libraries at runtime.
+MapTo is a library to programmatically generate the necessary code to map one object to another during compile-time, eliminating the need to use reflection to map objects and make it much faster in runtime. It provides compile-time safety checks and ease of use by leveraging extension methods.
 
 
 ## Installation

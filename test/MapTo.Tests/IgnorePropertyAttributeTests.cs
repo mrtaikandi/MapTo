@@ -53,8 +53,14 @@ namespace MapTo
     partial class Foo
     {
         public Foo(Baz baz)
+            : this(new MappingContext(), baz) { }
+
+        private protected Foo(MappingContext context, Baz baz)
         {
+            if (context == null) throw new ArgumentNullException(nameof(context));
             if (baz == null) throw new ArgumentNullException(nameof(baz));
+
+            context.Register(baz, this);
 
             Prop1 = baz.Prop1;
             Prop2 = baz.Prop2;

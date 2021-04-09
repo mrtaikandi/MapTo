@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using MapTo.Extensions;
+﻿using MapTo.Extensions;
 using static MapTo.Sources.Constants;
 
 namespace MapTo.Sources
@@ -12,7 +11,7 @@ namespace MapTo.Sources
                 .WriteLine(GeneratedFilesHeader)
                 .WriteNullableContextOptionIf(model.Options.SupportNullableReferenceTypes)
                 .WriteLine()
-                .WriteUsings(model)
+                .WriteUsings(model.Usings)
                 .WriteLine()
 
                 // Namespace declaration
@@ -24,7 +23,9 @@ namespace MapTo.Sources
                 .WriteOpeningBracket()
 
                 // Class body
-                .GenerateConstructor(model)
+                .GenerateSecondaryConstructor(model)
+                .WriteLine()
+                .GeneratePrivateConstructor(model)
                 .WriteLine()
                 .GenerateFactoryMethod(model)
 
@@ -41,13 +42,7 @@ namespace MapTo.Sources
             return new(builder.ToString(), $"{model.ClassName}.g.cs");
         }
 
-        private static SourceBuilder WriteUsings(this SourceBuilder builder, MappingModel model)
-        {
-            model.Usings.Sort().ForEach(u => builder.WriteLine($"using {u};"));
-            return builder;
-        }
-        
-        private static SourceBuilder GenerateConstructor(this SourceBuilder builder, MappingModel model)
+        private static SourceBuilder GenerateSecondaryConstructor(this SourceBuilder builder, MappingModel model)
         {
             var sourceClassParameterName = model.SourceClassName.ToCamelCase();
 
@@ -61,12 +56,25 @@ namespace MapTo.Sources
                     .WriteLine($"/// <exception cref=\"ArgumentNullException\">{sourceClassParameterName} is null</exception>");
             }
 
-            var baseConstructor = model.HasMappedBaseClass ? $" : base({sourceClassParameterName})" : string.Empty;
-            
+            return builder
+                .WriteLine($"{model.Options.ConstructorAccessModifier.ToLowercaseString()} {model.ClassName}({model.SourceClassName} {sourceClassParameterName})")
+                .WriteLine($"    : this(new {MappingContextSource.ClassName}(), {sourceClassParameterName}) {{ }}");
+        }
+        
+        private static SourceBuilder GeneratePrivateConstructor(this SourceBuilder builder, MappingModel model)
+        {
+            var sourceClassParameterName = model.SourceClassName.ToCamelCase();
+            const string mappingContextParameterName = "context";
+
+            var baseConstructor = model.HasMappedBaseClass ? $" : base({mappingContextParameterName}, {sourceClassParameterName})" : string.Empty;
+
             builder
-                .WriteLine($"{model.Options.ConstructorAccessModifier.ToLowercaseString()} {model.ClassName}({model.SourceClassName} {sourceClassParameterName}){baseConstructor}")
+                .WriteLine($"private protected {model.ClassName}({MappingContextSource.ClassName} {mappingContextParameterName}, {model.SourceClassName} {sourceClassParameterName}){baseConstructor}")
                 .WriteOpeningBracket()
+                .WriteLine($"if ({mappingContextParameterName} == null) throw new ArgumentNullException(nameof({mappingContextParameterName}));")
                 .WriteLine($"if ({sourceClassParameterName} == null) throw new ArgumentNullException(nameof({sourceClassParameterName}));")
+                .WriteLine()
+                .WriteLine($"{mappingContextParameterName}.{MappingContextSource.RegisterMethodName}({sourceClassParameterName}, this);")
                 .WriteLine();
 
             foreach (var property in model.MappedProperties)
@@ -75,13 +83,13 @@ namespace MapTo.Sources
                 {
                     if (property.IsEnumerable)
                     {
-                        builder.WriteLine($"{property.Name} = {sourceClassParameterName}.{property.SourcePropertyName}.Select({property.MappedSourcePropertyTypeName}To{property.EnumerableTypeArgument}Extensions.To{property.EnumerableTypeArgument}).ToList();");
+                        builder.WriteLine($"{property.Name} = {sourceClassParameterName}.{property.SourcePropertyName}.Select({mappingContextParameterName}.{MappingContextSource.MapMethodName}<{property.MappedSourcePropertyTypeName}, {property.EnumerableTypeArgument}>).ToList();");
                     }
                     else
                     {
                         builder.WriteLine(property.MappedSourcePropertyTypeName is null 
                             ? $"{property.Name} = {sourceClassParameterName}.{property.SourcePropertyName};"
-                            : $"{property.Name} = {sourceClassParameterName}.{property.SourcePropertyName}.To{property.Type}();");
+                            : $"{property.Name} = {mappingContextParameterName}.{MappingContextSource.MapMethodName}<{property.MappedSourcePropertyTypeName}, {property.Type}>({sourceClassParameterName}.{property.SourcePropertyName});");
                     }
                 }
                 else
@@ -104,10 +112,10 @@ namespace MapTo.Sources
 
             return builder
                 .GenerateConvertorMethodsXmlDocs(model, sourceClassParameterName)
-                .WriteLineIf(model.Options.SupportNullableReferenceTypes, $"[return: NotNullIfNotNull(\"{sourceClassParameterName}\")]")
+                .WriteLineIf(model.Options.SupportNullableStaticAnalysis, $"[return: NotNullIfNotNull(\"{sourceClassParameterName}\")]")
                 .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static {model.ClassName}{model.Options.NullableReferenceSyntax} From({model.SourceClassName}{model.Options.NullableReferenceSyntax} {sourceClassParameterName})")
                 .WriteOpeningBracket()
-                .WriteLine($"return {sourceClassParameterName} == null ? null : new {model.ClassName}({sourceClassParameterName});")
+                .WriteLine($"return {sourceClassParameterName} == null ? null : {MappingContextSource.ClassName}.{MappingContextSource.FactoryMethodName}<{model.SourceClassName}, {model.ClassName}>({sourceClassParameterName});")
                 .WriteClosingBracket();
         }
         
@@ -142,7 +150,7 @@ namespace MapTo.Sources
 
             return builder
                 .GenerateConvertorMethodsXmlDocs(model, sourceClassParameterName)
-                .WriteLineIf(model.Options.SupportNullableReferenceTypes, $"[return: NotNullIfNotNull(\"{sourceClassParameterName}\")]")
+                .WriteLineIf(model.Options.SupportNullableStaticAnalysis, $"[return: NotNullIfNotNull(\"{sourceClassParameterName}\")]")
                 .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static {model.ClassName}{model.Options.NullableReferenceSyntax} To{model.ClassName}(this {model.SourceClassName}{model.Options.NullableReferenceSyntax} {sourceClassParameterName})")
                 .WriteOpeningBracket()
                 .WriteLine($"return {sourceClassParameterName} == null ? null : new {model.ClassName}({sourceClassParameterName});")

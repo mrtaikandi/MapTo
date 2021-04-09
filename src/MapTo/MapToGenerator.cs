@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using MapTo.Extensions;
 using MapTo.Sources;
@@ -22,18 +23,27 @@ namespace MapTo
         /// <inheritdoc />
         public void Execute(GeneratorExecutionContext context)
         {
-            var options = SourceGenerationOptions.From(context);
-
-            var compilation = context.Compilation
-                .AddSource(ref context, MapFromAttributeSource.Generate(options))
-                .AddSource(ref context, IgnorePropertyAttributeSource.Generate(options))
-                .AddSource(ref context, ITypeConverterSource.Generate(options))
-                .AddSource(ref context, MapTypeConverterAttributeSource.Generate(options))
-                .AddSource(ref context, MapPropertyAttributeSource.Generate(options));
-
-            if (context.SyntaxReceiver is MapToSyntaxReceiver receiver && receiver.CandidateClasses.Any())
+            try
             {
-                AddGeneratedMappingsClasses(context, compilation, receiver.CandidateClasses, options);
+                var options = SourceGenerationOptions.From(context);
+
+                var compilation = context.Compilation
+                    .AddSource(ref context, MapFromAttributeSource.Generate(options))
+                    .AddSource(ref context, IgnorePropertyAttributeSource.Generate(options))
+                    .AddSource(ref context, ITypeConverterSource.Generate(options))
+                    .AddSource(ref context, MapTypeConverterAttributeSource.Generate(options))
+                    .AddSource(ref context, MapPropertyAttributeSource.Generate(options))
+                    .AddSource(ref context, MappingContextSource.Generate(options));
+
+                if (context.SyntaxReceiver is MapToSyntaxReceiver receiver && receiver.CandidateClasses.Any())
+                {
+                    AddGeneratedMappingsClasses(context, compilation, receiver.CandidateClasses, options);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                throw;
             }
         }
 

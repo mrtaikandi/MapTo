@@ -21,6 +21,16 @@ namespace MapTo.Tests.Extensions
             syntax.ShouldBe(expectedSource, customMessage);
         }
         
+        internal static void ShouldContainPartialSource(this IEnumerable<SyntaxTree> syntaxTree, string typeName, string expectedSource, string customMessage = null)
+        {
+            var syntax = syntaxTree
+                .Select(s => s.ToString().Trim())
+                .SingleOrDefault(s => s.Contains(typeName));
+            
+            syntax.ShouldNotBeNullOrWhiteSpace();
+            syntax.ShouldContainWithoutWhitespace(expectedSource, customMessage);
+        }
+        
         internal static void ShouldContainPartialSource(this SyntaxTree syntaxTree, string expectedSource, string customMessage = null)
         {
             var syntax = syntaxTree.ToString();

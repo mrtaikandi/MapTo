@@ -4,7 +4,7 @@ using MapTo.Sources;
 using MapTo.Tests.Extensions;
 using MapTo.Tests.Infrastructure;
 using Microsoft.CodeAnalysis;
-using Shouldly;
+using Microsoft.CodeAnalysis.CSharp;
 using Xunit;
 using static MapTo.Tests.Common;
 
@@ -20,6 +20,7 @@ namespace MapTo.Tests
             // Arrange
             const string source = "";
             var nullableSyntax = nullableContextOptions == NullableContextOptions.Enable ? "?" : string.Empty;
+            var languageVersion = nullableContextOptions == NullableContextOptions.Enable ? LanguageVersion.CSharp8 : LanguageVersion.CSharp7_3;
             var expectedInterface = $@"
 {Constants.GeneratedFilesHeader}
 {(nullableContextOptions == NullableContextOptions.Enable ? $"#nullable enable{Environment.NewLine}" : string.Empty)}
@@ -36,8 +37,9 @@ namespace MapTo
 ".Trim();
 
             // Act
-            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions, nullableContextOptions: nullableContextOptions);
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions, nullableContextOptions: nullableContextOptions, languageVersion: languageVersion);
 
+            
             // Assert
             diagnostics.ShouldBeSuccessful();
             compilation.SyntaxTrees.ShouldContainSource(MapPropertyAttributeSource.AttributeName, expectedInterface);
@@ -61,8 +63,14 @@ namespace MapTo
     partial class Foo
     {
         public Foo(Baz baz)
+            : this(new MappingContext(), baz) { }
+
+        private protected Foo(MappingContext context, Baz baz)
         {
+            if (context == null) throw new ArgumentNullException(nameof(context));
             if (baz == null) throw new ArgumentNullException(nameof(baz));
+
+            context.Register(baz, this);
 
             Prop1 = baz.Prop1;
             Prop2 = baz.Prop2;

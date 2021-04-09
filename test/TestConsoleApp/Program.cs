@@ -1,4 +1,5 @@
 ﻿using System;
+using MapTo;
 using TestConsoleApp.Data.Models;
 using TestConsoleApp.ViewModels;
 using TestConsoleApp.ViewModels2;
@@ -10,6 +11,14 @@ namespace TestConsoleApp
         private static void Main(string[] args)
         {
             //UserTest();
+            CyclicReferenceTest();
+             
+            // EmployeeManagerTest();
+            Console.WriteLine("done");
+        }
+
+        private static void EmployeeManagerTest()
+        {
             var manager1 = new Manager
             {
                 Id = 1,
@@ -44,6 +53,19 @@ namespace TestConsoleApp
 
             manager1.ToManagerViewModel();
             employee1.ToEmployeeViewModel();
+        }
+
+        private static ManagerViewModel CyclicReferenceTest()
+        {
+            var manager1 = new Manager
+            {
+                Id = 1,
+                EmployeeCode = "M001",
+                Level = 100
+            };
+
+            manager1.Manager = manager1;
+            return manager1.ToManagerViewModel();
         }
 
         private static void UserTest()

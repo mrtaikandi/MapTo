@@ -24,7 +24,7 @@ namespace MapTo
         internal MappingContext(Compilation compilation, SourceGenerationOptions sourceGenerationOptions, ClassDeclarationSyntax classSyntax)
         {
             _diagnostics = new List<Diagnostic>();
-            _usings = new List<string> { "System" };
+            _usings = new List<string> { "System", Constants.RootNamespace };
             _sourceGenerationOptions = sourceGenerationOptions;
             _classSyntax = classSyntax;
             _compilation = compilation;
@@ -35,7 +35,7 @@ namespace MapTo
             _mapPropertyAttributeTypeSymbol = compilation.GetTypeByMetadataNameOrThrow(MapPropertyAttributeSource.FullyQualifiedName);
             _mapFromAttributeTypeSymbol = compilation.GetTypeByMetadataNameOrThrow(MapFromAttributeSource.FullyQualifiedName);
 
-            AddUsingIfRequired(sourceGenerationOptions.SupportNullableReferenceTypes, "System.Diagnostics.CodeAnalysis");
+            AddUsingIfRequired(sourceGenerationOptions.SupportNullableStaticAnalysis, "System.Diagnostics.CodeAnalysis");
 
             Initialize();
         }
@@ -154,7 +154,10 @@ namespace MapTo
             }
 
             var mapFromAttribute = property.Type.GetAttribute(_mapFromAttributeTypeSymbol);
-            if (mapFromAttribute is null && property.Type is INamedTypeSymbol namedTypeSymbol && _compilation.IsGenericEnumerable(property.Type))
+            if (mapFromAttribute is null && 
+                property.Type is INamedTypeSymbol namedTypeSymbol && 
+                !property.Type.IsPrimitiveType() &&
+                (_compilation.IsGenericEnumerable(property.Type) || property.Type.AllInterfaces.Any(i => _compilation.IsGenericEnumerable(i))))
             {
                 enumerableTypeArgument = namedTypeSymbol.TypeArguments.First();
                 mapFromAttribute = enumerableTypeArgument.GetAttribute(_mapFromAttributeTypeSymbol);

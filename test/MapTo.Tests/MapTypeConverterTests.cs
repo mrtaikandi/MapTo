@@ -3,7 +3,7 @@ using MapTo.Sources;
 using MapTo.Tests.Extensions;
 using MapTo.Tests.Infrastructure;
 using Microsoft.CodeAnalysis;
-using Shouldly;
+using Microsoft.CodeAnalysis.CSharp;
 using Xunit;
 using static MapTo.Tests.Common;
 
@@ -77,7 +77,7 @@ namespace MapTo
 ".Trim();
 
             // Act
-            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions, nullableContextOptions: NullableContextOptions.Enable);
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions, nullableContextOptions: NullableContextOptions.Enable, languageVersion: LanguageVersion.CSharp8);
 
             // Assert
             diagnostics.ShouldBeSuccessful();
@@ -128,7 +128,7 @@ namespace MapTo
 ".Trim();
 
             // Act
-            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions, nullableContextOptions: NullableContextOptions.Enable);
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions, nullableContextOptions: NullableContextOptions.Enable, languageVersion: LanguageVersion.CSharp8);
 
             // Assert
             diagnostics.ShouldBeSuccessful();
@@ -220,8 +220,14 @@ namespace Test
     partial class Foo
     {
         public Foo(Baz baz)
+            : this(new MappingContext(), baz) { }
+
+        private protected Foo(MappingContext context, Baz baz)
         {
+            if (context == null) throw new ArgumentNullException(nameof(context));
             if (baz == null) throw new ArgumentNullException(nameof(baz));
+
+            context.Register(baz, this);
 
             Prop1 = baz.Prop1;
             Prop2 = baz.Prop2;
