@@ -20,24 +20,30 @@ namespace MapTo.Sources
 
                 // Class declaration
                 .WriteLine($"partial class {model.ClassName}")
-                .WriteOpeningBracket()
+                .WriteOpeningBracket();
 
                 // Class body
-                .GenerateSecondaryConstructor(model)
-                .WriteLine()
-                .GeneratePrivateConstructor(model)
-                .WriteLine()
-                .GenerateFactoryMethod(model)
+                if (model.GenerateSecondaryConstructor)
+                {
+                    builder
+                        .GenerateSecondaryConstructor(model)
+                        .WriteLine();
+                }
 
-                // End class declaration
-                .WriteClosingBracket()
-                .WriteLine()
+                builder
+                    .GeneratePrivateConstructor(model)
+                    .WriteLine()
+                    .GenerateFactoryMethod(model)
 
-                // Extension class declaration
-                .GenerateSourceTypeExtensionClass(model)
+                    // End class declaration
+                    .WriteClosingBracket()
+                    .WriteLine()
 
-                // End namespace declaration
-                .WriteClosingBracket();
+                    // Extension class declaration
+                    .GenerateSourceTypeExtensionClass(model)
+
+                    // End namespace declaration
+                    .WriteClosingBracket();
             
             return new(builder.ToString(), $"{model.ClassName}.g.cs");
         }

@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Linq;
+﻿using System.Linq;
 using MapTo.Sources;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -37,6 +36,6 @@ namespace MapTo
             Create($"{ErrorId}050", constructorSyntax.GetLocation(), "There are no argument given that corresponds to the required formal parameter.");
 
         private static Diagnostic Create(string id, Location? location, string message, DiagnosticSeverity severity = DiagnosticSeverity.Error) =>
-            Diagnostic.Create(new DiagnosticDescriptor(id, null, message, UsageCategory, severity, true), location ?? Location.None);
+            Diagnostic.Create(new DiagnosticDescriptor(id, string.Empty, message, UsageCategory, severity, true), location ?? Location.None);
     }
 }

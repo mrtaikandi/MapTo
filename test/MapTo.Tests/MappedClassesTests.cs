@@ -1,5 +1,8 @@
-﻿using MapTo.Tests.Extensions;
+﻿using System.Linq;
+using MapTo.Tests.Extensions;
 using MapTo.Tests.Infrastructure;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
 using static MapTo.Tests.Common;
@@ -27,6 +30,70 @@ namespace MapTo.Tests
             // Assert
             diagnostics.ShouldBeSuccessful();
             _output.WriteLine(compilation.PrintSyntaxTree());
+        }
+
+        [Fact]
+        public void When_SecondaryConstructorExists_Should_NotGenerateOne()
+        {
+            // Arrange
+            var source = @"
+using MapTo;
+namespace Test.Data.Models
+{
+    public class SourceClass { public string Prop1 { get; set; } }
+
+    [MapFrom(typeof(SourceClass))]
+    public partial class DestinationClass
+    {
+        public DestinationClass(SourceClass source) : this(new MappingContext(), source) { }
+        public string Prop1 { get; set; }
+    }
+}
+".Trim();
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
+            
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+            compilation
+                .GetGeneratedSyntaxTree("DestinationClass")
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<ConstructorDeclarationSyntax>()
+                .Count()
+                .ShouldBe(1);
+        }
+        
+        [Fact]
+        public void When_SecondaryConstructorExistsButDoNotReferencePrivateConstructor_Should_ReportError()
+        {
+            // Arrange
+            var source = @"
+using MapTo;
+namespace Test.Data.Models
+{
+    public class SourceClass { public string Prop1 { get; set; } }
+
+    [MapFrom(typeof(SourceClass))]
+    public partial class DestinationClass
+    {
+        public DestinationClass(SourceClass source) { }
+        public string Prop1 { get; set; }
+    }
+}
+".Trim();
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
+            
+            // Assert
+            var constructorSyntax = compilation.SyntaxTrees
+                .First()
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<ConstructorDeclarationSyntax>()
+                .Single();
+            
+            diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.MissingConstructorArgument(constructorSyntax));
         }
 
         private static string NestedSourceClass => @"

@@ -4,6 +4,7 @@ using System.Linq;
 using MapTo.Extensions;
 using MapTo.Sources;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MapTo
@@ -17,6 +18,7 @@ namespace MapTo
         private readonly INamedTypeSymbol _mapFromAttributeTypeSymbol;
         private readonly INamedTypeSymbol _mapPropertyAttributeTypeSymbol;
         private readonly INamedTypeSymbol _mapTypeConverterAttributeTypeSymbol;
+        private readonly INamedTypeSymbol _mappingContextTypeSymbol;
         private readonly SourceGenerationOptions _sourceGenerationOptions;
         private readonly INamedTypeSymbol _typeConverterInterfaceTypeSymbol;
         private readonly List<string> _usings;
@@ -34,6 +36,7 @@ namespace MapTo
             _typeConverterInterfaceTypeSymbol = compilation.GetTypeByMetadataNameOrThrow(ITypeConverterSource.FullyQualifiedName);
             _mapPropertyAttributeTypeSymbol = compilation.GetTypeByMetadataNameOrThrow(MapPropertyAttributeSource.FullyQualifiedName);
             _mapFromAttributeTypeSymbol = compilation.GetTypeByMetadataNameOrThrow(MapFromAttributeSource.FullyQualifiedName);
+            _mappingContextTypeSymbol = compilation.GetTypeByMetadataNameOrThrow(MappingContextSource.FullyQualifiedName);
 
             AddUsingIfRequired(sourceGenerationOptions.SupportNullableStaticAnalysis, "System.Diagnostics.CodeAnalysis");
 
@@ -47,27 +50,28 @@ namespace MapTo
         private void Initialize()
         {
             var semanticModel = _compilation.GetSemanticModel(_classSyntax.SyntaxTree);
-            if (!(semanticModel.GetDeclaredSymbol(_classSyntax) is INamedTypeSymbol classTypeSymbol))
+            if (!(ModelExtensions.GetDeclaredSymbol(semanticModel, _classSyntax) is INamedTypeSymbol classTypeSymbol))
             {
-                _diagnostics.Add(DiagnosticProvider.TypeNotFoundError(_classSyntax.GetLocation(), _classSyntax.Identifier.ValueText));
+                _diagnostics.Add(DiagnosticsFactory.TypeNotFoundError(_classSyntax.GetLocation(), _classSyntax.Identifier.ValueText));
                 return;
             }
 
             var sourceTypeSymbol = GetSourceTypeSymbol(_classSyntax, semanticModel);
             if (sourceTypeSymbol is null)
             {
-                _diagnostics.Add(DiagnosticProvider.MapFromAttributeNotFoundError(_classSyntax.GetLocation()));
+                _diagnostics.Add(DiagnosticsFactory.MapFromAttributeNotFoundError(_classSyntax.GetLocation()));
                 return;
             }
 
             var className = _classSyntax.GetClassName();
             var sourceClassName = sourceTypeSymbol.Name;
             var isClassInheritFromMappedBaseClass = IsClassInheritFromMappedBaseClass(semanticModel);
+            var shouldGenerateSecondaryConstructor = ShouldGenerateSecondaryConstructor(semanticModel, sourceTypeSymbol);
 
             var mappedProperties = GetMappedProperties(classTypeSymbol, sourceTypeSymbol, isClassInheritFromMappedBaseClass);
             if (!mappedProperties.Any())
             {
-                _diagnostics.Add(DiagnosticProvider.NoMatchingPropertyFoundError(_classSyntax.GetLocation(), classTypeSymbol, sourceTypeSymbol));
+                _diagnostics.Add(DiagnosticsFactory.NoMatchingPropertyFoundError(_classSyntax.GetLocation(), classTypeSymbol, sourceTypeSymbol));
                 return;
             }
 
@@ -84,13 +88,38 @@ namespace MapTo
                 sourceTypeSymbol.ToString(),
                 mappedProperties.ToImmutableArray(),
                 isClassInheritFromMappedBaseClass,
-                _usings.ToImmutableArray());
+                _usings.ToImmutableArray(),
+                shouldGenerateSecondaryConstructor);
+        }
+
+        private bool ShouldGenerateSecondaryConstructor(SemanticModel semanticModel, ISymbol sourceTypeSymbol)
+        {
+            var constructorSyntax = _classSyntax.DescendantNodes()
+                .OfType<ConstructorDeclarationSyntax>()
+                .SingleOrDefault(c =>
+                    c.ParameterList.Parameters.Count == 1 &&
+                    SymbolEqualityComparer.Default.Equals(semanticModel.GetTypeInfo(c.ParameterList.Parameters.Single().Type!).ConvertedType, sourceTypeSymbol));
+
+            if (constructorSyntax is null)
+            {
+                // Secondary constructor is not defined.
+                return true;
+            }
+
+            if (constructorSyntax.Initializer?.ArgumentList.Arguments is not { Count: 2 } arguments ||
+                !SymbolEqualityComparer.Default.Equals(semanticModel.GetTypeInfo(arguments[0].Expression).ConvertedType, _mappingContextTypeSymbol) ||
+                !SymbolEqualityComparer.Default.Equals(semanticModel.GetTypeInfo(arguments[1].Expression).ConvertedType, sourceTypeSymbol))
+            {
+                _diagnostics.Add(DiagnosticsFactory.MissingConstructorArgument(constructorSyntax));
+            }
+
+            return false;
         }
 
         private bool IsClassInheritFromMappedBaseClass(SemanticModel semanticModel)
         {
             return _classSyntax.BaseList is not null && _classSyntax.BaseList.Types
-                .Select(t => semanticModel.GetTypeInfo(t.Type).Type)
+                .Select(t => ModelExtensions.GetTypeInfo(semanticModel, t.Type).Type)
                 .Any(t => t?.GetAttribute(_mapFromAttributeTypeSymbol) != null);
         }
 
@@ -154,8 +183,8 @@ namespace MapTo
             }
 
             var mapFromAttribute = property.Type.GetAttribute(_mapFromAttributeTypeSymbol);
-            if (mapFromAttribute is null && 
-                property.Type is INamedTypeSymbol namedTypeSymbol && 
+            if (mapFromAttribute is null &&
+                property.Type is INamedTypeSymbol namedTypeSymbol &&
                 !property.Type.IsPrimitiveType() &&
                 (_compilation.IsGenericEnumerable(property.Type) || property.Type.AllInterfaces.Any(i => _compilation.IsGenericEnumerable(i))))
             {
@@ -167,7 +196,7 @@ namespace MapTo
 
             if (mappedSourcePropertyType is null && enumerableTypeArgument is null)
             {
-                _diagnostics.Add(DiagnosticProvider.NoMatchingPropertyTypeFoundError(property));
+                _diagnostics.Add(DiagnosticsFactory.NoMatchingPropertyTypeFoundError(property));
             }
 
             return _diagnostics.IsEmpty();
@@ -203,7 +232,7 @@ namespace MapTo
             var baseInterface = GetTypeConverterBaseInterface(converterTypeSymbol, property, sourceProperty);
             if (baseInterface is null)
             {
-                _diagnostics.Add(DiagnosticProvider.InvalidTypeConverterGenericTypesError(property, sourceProperty));
+                _diagnostics.Add(DiagnosticsFactory.InvalidTypeConverterGenericTypesError(property, sourceProperty));
                 return false;
             }
 
@@ -257,7 +286,7 @@ namespace MapTo
                 .OfType<TypeOfExpressionSyntax>()
                 .SingleOrDefault();
 
-            return sourceTypeExpressionSyntax is not null ? semanticModel.GetTypeInfo(sourceTypeExpressionSyntax.Type).Type as INamedTypeSymbol : null;
+            return sourceTypeExpressionSyntax is not null ? ModelExtensions.GetTypeInfo(semanticModel, sourceTypeExpressionSyntax.Type).Type as INamedTypeSymbol : null;
         }
     }
 }

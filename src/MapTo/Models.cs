@@ -29,7 +29,8 @@ namespace MapTo
         string SourceClassFullName,
         ImmutableArray<MappedProperty> MappedProperties,
         bool HasMappedBaseClass,
-        ImmutableArray<string> Usings
+        ImmutableArray<string> Usings,
+        bool GenerateSecondaryConstructor
     );
 
     internal record SourceGenerationOptions(
