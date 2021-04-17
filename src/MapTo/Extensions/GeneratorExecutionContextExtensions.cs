@@ -30,7 +30,7 @@ namespace MapTo.Extensions
             }
             catch (Exception)
             {
-                context.ReportDiagnostic(DiagnosticProvider.ConfigurationParseError($"'{optionValue}' is not a valid value for {PropertyNameSuffix}{propertyName} property."));
+                context.ReportDiagnostic(DiagnosticsFactory.ConfigurationParseError($"'{optionValue}' is not a valid value for {PropertyNameSuffix}{propertyName} property."));
                 return defaultValue;
             }
         }

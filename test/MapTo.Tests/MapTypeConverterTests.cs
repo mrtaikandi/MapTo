@@ -276,8 +276,8 @@ namespace Test
             var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
 
             // Assert
-            var expectedError = DiagnosticProvider.InvalidTypeConverterGenericTypesError(GetSourcePropertySymbol("Prop4", compilation), GetSourcePropertySymbol("Prop4", compilation, "Baz"));
-            diagnostics.ShouldBeUnsuccessful(expectedError);
+            var expectedError = DiagnosticsFactory.InvalidTypeConverterGenericTypesError(GetSourcePropertySymbol("Prop4", compilation), GetSourcePropertySymbol("Prop4", compilation, "Baz"));
+            diagnostics.ShouldNotBeSuccessful(expectedError);
         }
     }
 }

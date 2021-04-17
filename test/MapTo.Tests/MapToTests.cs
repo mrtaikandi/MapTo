@@ -56,9 +56,9 @@ namespace MapTo
             var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
 
             // Assert
-            var expectedError = DiagnosticProvider.NoMatchingPropertyTypeFoundError(GetSourcePropertySymbol("Prop4", compilation));
+            var expectedError = DiagnosticsFactory.NoMatchingPropertyTypeFoundError(GetSourcePropertySymbol("Prop4", compilation));
 
-            diagnostics.ShouldBeUnsuccessful(expectedError);
+            diagnostics.ShouldNotBeSuccessful(expectedError);
         }
 
         [Fact]
@@ -178,7 +178,7 @@ namespace Test
             var bazType = compilation.GetTypeByMetadataName("Test.Baz");
             bazType.ShouldNotBeNull();
 
-            var expectedDiagnostic = DiagnosticProvider.NoMatchingPropertyFoundError(fooType.Locations.Single(), fooType, bazType);
+            var expectedDiagnostic = DiagnosticsFactory.NoMatchingPropertyFoundError(fooType.Locations.Single(), fooType, bazType);
             var error = diagnostics.FirstOrDefault(d => d.Id == expectedDiagnostic.Id);
             error.ShouldNotBeNull();
         }
@@ -425,8 +425,8 @@ namespace Test
             var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
 
             // Assert
-            var expectedError = DiagnosticProvider.NoMatchingPropertyTypeFoundError(GetSourcePropertySymbol("InnerProp1", compilation));
-            diagnostics.ShouldBeUnsuccessful(expectedError);
+            var expectedError = DiagnosticsFactory.NoMatchingPropertyTypeFoundError(GetSourcePropertySymbol("InnerProp1", compilation));
+            diagnostics.ShouldNotBeSuccessful(expectedError);
         }
         
         [Fact]
@@ -454,8 +454,8 @@ namespace Test
             var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
 
             // Assert
-            var expectedError = DiagnosticProvider.NoMatchingPropertyTypeFoundError(GetSourcePropertySymbol("InnerProp1", compilation));
-            diagnostics.ShouldBeUnsuccessful(expectedError);
+            var expectedError = DiagnosticsFactory.NoMatchingPropertyTypeFoundError(GetSourcePropertySymbol("InnerProp1", compilation));
+            diagnostics.ShouldNotBeSuccessful(expectedError);
         }
         
         [Fact]

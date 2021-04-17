@@ -66,7 +66,7 @@ namespace MapTo.Tests.Extensions
             Assert.False(true, builder.ToString());
         }
 
-        internal static void ShouldBeUnsuccessful(this ImmutableArray<Diagnostic> diagnostics, Diagnostic expectedError)
+        internal static void ShouldNotBeSuccessful(this ImmutableArray<Diagnostic> diagnostics, Diagnostic expectedError)
         {
             var actualDiagnostics = diagnostics.SingleOrDefault(d => d.Id == expectedError.Id);
             var compilationDiagnostics = actualDiagnostics == null ? diagnostics : diagnostics.Except(new[] { actualDiagnostics });
