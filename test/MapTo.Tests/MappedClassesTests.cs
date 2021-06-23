@@ -96,6 +96,37 @@ namespace Test.Data.Models
             diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.MissingConstructorArgument(constructorSyntax));
         }
 
+        [Fact]
+        public void When_PropertyNameIsTheSameAsClassName_Should_MapAccordingly()
+        {
+            // Arrange
+            var source = @"
+namespace Sale
+{
+    public class Sale { public Sale Prop1 { get; set; } }
+}
+
+namespace SaleModel
+{
+    using MapTo;
+    using Sale;
+
+    [MapFrom(typeof(Sale))]
+    public partial class SaleModel
+    {
+        [MapProperty(SourcePropertyName = nameof(global::Sale.Sale.Prop1))]
+        public Sale Sale { get; set; }
+    }
+}
+".Trim();
+
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
+
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+        }
+
         private static string NestedSourceClass => @"
 namespace Test.Data.Models
 {
