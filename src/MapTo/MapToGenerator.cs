@@ -35,9 +35,9 @@ namespace MapTo
                     .AddSource(ref context, MapPropertyAttributeSource.Generate(options))
                     .AddSource(ref context, MappingContextSource.Generate(options));
 
-                if (context.SyntaxReceiver is MapToSyntaxReceiver receiver && receiver.CandidateClasses.Any())
+                if (context.SyntaxReceiver is MapToSyntaxReceiver receiver && receiver.CandidateTypes.Any())
                 {
-                    AddGeneratedMappingsClasses(context, compilation, receiver.CandidateClasses, options);
+                    AddGeneratedMappingsClasses(context, compilation, receiver.CandidateTypes, options);
                 }
             }
             catch (Exception ex)
@@ -47,7 +47,7 @@ namespace MapTo
             }
         }
 
-        private static void AddGeneratedMappingsClasses(GeneratorExecutionContext context, Compilation compilation, IEnumerable<ClassDeclarationSyntax> candidateClasses, SourceGenerationOptions options)
+        private static void AddGeneratedMappingsClasses(GeneratorExecutionContext context, Compilation compilation, IEnumerable<TypeDeclarationSyntax> candidateClasses, SourceGenerationOptions options)
         {
             foreach (var classSyntax in candidateClasses)
             {

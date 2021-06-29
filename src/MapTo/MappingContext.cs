@@ -11,7 +11,7 @@ namespace MapTo
 {
     internal class MappingContext
     {
-        private readonly ClassDeclarationSyntax _classSyntax;
+        private readonly TypeDeclarationSyntax _typeSyntax;
         private readonly Compilation _compilation;
         private readonly List<Diagnostic> _diagnostics;
         private readonly INamedTypeSymbol _ignorePropertyAttributeTypeSymbol;
@@ -23,12 +23,12 @@ namespace MapTo
         private readonly INamedTypeSymbol _typeConverterInterfaceTypeSymbol;
         private readonly List<string> _usings;
 
-        internal MappingContext(Compilation compilation, SourceGenerationOptions sourceGenerationOptions, ClassDeclarationSyntax classSyntax)
+        internal MappingContext(Compilation compilation, SourceGenerationOptions sourceGenerationOptions, TypeDeclarationSyntax typeSyntax)
         {
             _diagnostics = new List<Diagnostic>();
             _usings = new List<string> { "System", Constants.RootNamespace };
             _sourceGenerationOptions = sourceGenerationOptions;
-            _classSyntax = classSyntax;
+            _typeSyntax = typeSyntax;
             _compilation = compilation;
 
             _ignorePropertyAttributeTypeSymbol = compilation.GetTypeByMetadataNameOrThrow(IgnorePropertyAttributeSource.FullyQualifiedName);
@@ -49,29 +49,29 @@ namespace MapTo
 
         private void Initialize()
         {
-            var semanticModel = _compilation.GetSemanticModel(_classSyntax.SyntaxTree);
-            if (!(ModelExtensions.GetDeclaredSymbol(semanticModel, _classSyntax) is INamedTypeSymbol classTypeSymbol))
+            var semanticModel = _compilation.GetSemanticModel(_typeSyntax.SyntaxTree);
+            if (ModelExtensions.GetDeclaredSymbol(semanticModel, _typeSyntax) is not INamedTypeSymbol classTypeSymbol)
             {
-                _diagnostics.Add(DiagnosticsFactory.TypeNotFoundError(_classSyntax.GetLocation(), _classSyntax.Identifier.ValueText));
+                _diagnostics.Add(DiagnosticsFactory.TypeNotFoundError(_typeSyntax.GetLocation(), _typeSyntax.Identifier.ValueText));
                 return;
             }
 
-            var sourceTypeSymbol = GetSourceTypeSymbol(_classSyntax, semanticModel);
+            var sourceTypeSymbol = GetSourceTypeSymbol(_typeSyntax, semanticModel);
             if (sourceTypeSymbol is null)
             {
-                _diagnostics.Add(DiagnosticsFactory.MapFromAttributeNotFoundError(_classSyntax.GetLocation()));
+                _diagnostics.Add(DiagnosticsFactory.MapFromAttributeNotFoundError(_typeSyntax.GetLocation()));
                 return;
             }
 
-            var className = _classSyntax.GetClassName();
-            var sourceClassName = sourceTypeSymbol.Name;
-            var isClassInheritFromMappedBaseClass = IsClassInheritFromMappedBaseClass(semanticModel);
+            var typeIdentifierName = _typeSyntax.GetIdentifierName();
+            var sourceTypeIdentifierName = sourceTypeSymbol.Name;
+            var isTypeInheritFromMappedBaseClass = IsTypeInheritFromMappedBaseClass(semanticModel);
             var shouldGenerateSecondaryConstructor = ShouldGenerateSecondaryConstructor(semanticModel, sourceTypeSymbol);
 
-            var mappedProperties = GetMappedProperties(classTypeSymbol, sourceTypeSymbol, isClassInheritFromMappedBaseClass);
+            var mappedProperties = GetMappedProperties(classTypeSymbol, sourceTypeSymbol, isTypeInheritFromMappedBaseClass);
             if (!mappedProperties.Any())
             {
-                _diagnostics.Add(DiagnosticsFactory.NoMatchingPropertyFoundError(_classSyntax.GetLocation(), classTypeSymbol, sourceTypeSymbol));
+                _diagnostics.Add(DiagnosticsFactory.NoMatchingPropertyFoundError(_typeSyntax.GetLocation(), classTypeSymbol, sourceTypeSymbol));
                 return;
             }
 
@@ -80,21 +80,22 @@ namespace MapTo
 
             Model = new MappingModel(
                 _sourceGenerationOptions,
-                _classSyntax.GetNamespace(),
-                _classSyntax.Modifiers,
-                className,
+                _typeSyntax.GetNamespace(),
+                _typeSyntax.Modifiers,
+                _typeSyntax.Keyword.Text,
+                typeIdentifierName,
                 sourceTypeSymbol.ContainingNamespace.ToString(),
-                sourceClassName,
+                sourceTypeIdentifierName,
                 sourceTypeSymbol.ToString(),
                 mappedProperties.ToImmutableArray(),
-                isClassInheritFromMappedBaseClass,
+                isTypeInheritFromMappedBaseClass,
                 _usings.ToImmutableArray(),
                 shouldGenerateSecondaryConstructor);
         }
 
         private bool ShouldGenerateSecondaryConstructor(SemanticModel semanticModel, ISymbol sourceTypeSymbol)
         {
-            var constructorSyntax = _classSyntax.DescendantNodes()
+            var constructorSyntax = _typeSyntax.DescendantNodes()
                 .OfType<ConstructorDeclarationSyntax>()
                 .SingleOrDefault(c =>
                     c.ParameterList.Parameters.Count == 1 &&
@@ -116,18 +117,18 @@ namespace MapTo
             return false;
         }
 
-        private bool IsClassInheritFromMappedBaseClass(SemanticModel semanticModel)
+        private bool IsTypeInheritFromMappedBaseClass(SemanticModel semanticModel)
         {
-            return _classSyntax.BaseList is not null && _classSyntax.BaseList.Types
+            return _typeSyntax.BaseList is not null && _typeSyntax.BaseList.Types
                 .Select(t => ModelExtensions.GetTypeInfo(semanticModel, t.Type).Type)
                 .Any(t => t?.GetAttribute(_mapFromAttributeTypeSymbol) != null);
         }
 
-        private ImmutableArray<MappedProperty> GetMappedProperties(ITypeSymbol classSymbol, ITypeSymbol sourceTypeSymbol, bool isClassInheritFromMappedBaseClass)
+        private ImmutableArray<MappedProperty> GetMappedProperties(ITypeSymbol typeSymbol, ITypeSymbol sourceTypeSymbol, bool isClassInheritFromMappedBaseClass)
         {
             var mappedProperties = new List<MappedProperty>();
             var sourceProperties = sourceTypeSymbol.GetAllMembers().OfType<IPropertySymbol>().ToArray();
-            var classProperties = classSymbol.GetAllMembers(!isClassInheritFromMappedBaseClass)
+            var classProperties = typeSymbol.GetAllMembers(!isClassInheritFromMappedBaseClass)
                 .OfType<IPropertySymbol>()
                 .Where(p => !p.HasAttribute(_ignorePropertyAttributeTypeSymbol));
 
@@ -207,7 +208,7 @@ namespace MapTo
 
         private void AddUsingIfRequired(bool condition, string? ns)
         {
-            if (condition && ns is not null && ns != _classSyntax.GetNamespace() && !_usings.Contains(ns))
+            if (condition && ns is not null && ns != _typeSyntax.GetNamespace() && !_usings.Contains(ns))
             {
                 _usings.Add(ns);
             }
@@ -270,8 +271,8 @@ namespace MapTo
                 : converterParameter.Values.Where(v => v.Value is not null).Select(v => v.Value!.ToSourceCodeString()).ToImmutableArray();
         }
 
-        private INamedTypeSymbol? GetSourceTypeSymbol(ClassDeclarationSyntax classDeclarationSyntax, SemanticModel? semanticModel = null) =>
-            GetSourceTypeSymbol(classDeclarationSyntax.GetAttribute(MapFromAttributeSource.AttributeName), semanticModel);
+        private INamedTypeSymbol? GetSourceTypeSymbol(TypeDeclarationSyntax typeDeclarationSyntax, SemanticModel? semanticModel = null) =>
+            GetSourceTypeSymbol(typeDeclarationSyntax.GetAttribute(MapFromAttributeSource.AttributeName), semanticModel);
 
         private INamedTypeSymbol? GetSourceTypeSymbol(AttributeSyntax? attributeSyntax, SemanticModel? semanticModel = null)
         {

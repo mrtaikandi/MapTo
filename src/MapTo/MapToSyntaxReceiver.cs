@@ -8,12 +8,12 @@ namespace MapTo
 {
     internal class MapToSyntaxReceiver : ISyntaxReceiver
     {
-        public List<ClassDeclarationSyntax> CandidateClasses { get; } = new();
+        public List<TypeDeclarationSyntax> CandidateTypes { get; } = new();
 
         /// <inheritdoc />
         public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
         {
-            if (syntaxNode is not ClassDeclarationSyntax { AttributeLists: { Count: >= 1 } attributes } classDeclaration)
+            if (syntaxNode is not TypeDeclarationSyntax { AttributeLists: { Count: >= 1 } attributes } typeDeclarationSyntax)
             {
                 return;
             }
@@ -21,7 +21,7 @@ namespace MapTo
             var attributeSyntax = attributes
                 .SelectMany(a => a.Attributes)
                 .SingleOrDefault(a => a.Name is
-                    IdentifierNameSyntax { Identifier: { ValueText: MapFromAttributeSource.AttributeName } } // For: [MapFrom] 
+                    IdentifierNameSyntax { Identifier: { ValueText: MapFromAttributeSource.AttributeName } } // For: [MapFrom]
                     or
                     QualifiedNameSyntax // For: [MapTo.MapFrom]
                     {
@@ -32,7 +32,7 @@ namespace MapTo
 
             if (attributeSyntax is not null)
             {
-                CandidateClasses.Add(classDeclaration);
+                CandidateTypes.Add(typeDeclarationSyntax);
             }
         }
     }

@@ -28,11 +28,11 @@ namespace MapTo.Extensions
 
         public static CompilationUnitSyntax GetCompilationUnit(this SyntaxNode syntaxNode) => syntaxNode.Ancestors().OfType<CompilationUnitSyntax>().Single();
 
-        public static string GetClassName(this ClassDeclarationSyntax classSyntax) => classSyntax.Identifier.Text;
+        public static string GetIdentifierName(this TypeDeclarationSyntax typeSyntax) => typeSyntax.Identifier.Text;
 
-        public static AttributeSyntax? GetAttribute(this ClassDeclarationSyntax classSyntax, string attributeName)
+        public static AttributeSyntax? GetAttribute(this TypeDeclarationSyntax typeDeclarationSyntax, string attributeName)
         {
-            return classSyntax.AttributeLists
+            return typeDeclarationSyntax.AttributeLists
                 .SelectMany(al => al.Attributes)
                 .SingleOrDefault(a =>
                     (a.Name as IdentifierNameSyntax)?.Identifier.ValueText == attributeName ||
@@ -48,8 +48,8 @@ namespace MapTo.Extensions
         public static AttributeData? GetAttribute(this ISymbol symbol, ITypeSymbol attributeSymbol) =>
             symbol.GetAttributes(attributeSymbol).FirstOrDefault();
 
-        public static string? GetNamespace(this ClassDeclarationSyntax classDeclarationSyntax) =>
-            classDeclarationSyntax.Ancestors()
+        public static string? GetNamespace(this TypeDeclarationSyntax typeDeclarationSyntax) =>
+            typeDeclarationSyntax.Ancestors()
                 .OfType<NamespaceDeclarationSyntax>()
                 .FirstOrDefault()
                 ?.Name

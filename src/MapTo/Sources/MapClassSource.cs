@@ -18,7 +18,7 @@ namespace MapTo.Sources
                 .WriteLine()
 
                 // Class declaration
-                .WriteLine($"partial class {model.ClassName}")
+                .WriteLine($"partial class {model.TypeIdentifierName}")
                 .WriteOpeningBracket();
 
                 // Class body
@@ -44,37 +44,37 @@ namespace MapTo.Sources
                     // End namespace declaration
                     .WriteClosingBracket();
             
-            return new(builder.ToString(), $"{model.ClassName}.g.cs");
+            return new(builder.ToString(), $"{model.TypeIdentifierName}.g.cs");
         }
 
         private static SourceBuilder GenerateSecondaryConstructor(this SourceBuilder builder, MappingModel model)
         {
-            var sourceClassParameterName = model.SourceClassName.ToCamelCase();
+            var sourceClassParameterName = model.SourceTypeIdentifierName.ToCamelCase();
 
             if (model.Options.GenerateXmlDocument)
             {
                 builder
                     .WriteLine("/// <summary>")
-                    .WriteLine($"/// Initializes a new instance of the <see cref=\"{model.ClassName}\"/> class")
+                    .WriteLine($"/// Initializes a new instance of the <see cref=\"{model.TypeIdentifierName}\"/> class")
                     .WriteLine($"/// using the property values from the specified <paramref name=\"{sourceClassParameterName}\"/>.")
                     .WriteLine("/// </summary>")
                     .WriteLine($"/// <exception cref=\"ArgumentNullException\">{sourceClassParameterName} is null</exception>");
             }
 
             return builder
-                .WriteLine($"{model.Options.ConstructorAccessModifier.ToLowercaseString()} {model.ClassName}({model.SourceClassName} {sourceClassParameterName})")
+                .WriteLine($"{model.Options.ConstructorAccessModifier.ToLowercaseString()} {model.TypeIdentifierName}({model.SourceTypeIdentifierName} {sourceClassParameterName})")
                 .WriteLine($"    : this(new {MappingContextSource.ClassName}(), {sourceClassParameterName}) {{ }}");
         }
         
         private static SourceBuilder GeneratePrivateConstructor(this SourceBuilder builder, MappingModel model)
         {
-            var sourceClassParameterName = model.SourceClassName.ToCamelCase();
+            var sourceClassParameterName = model.SourceTypeIdentifierName.ToCamelCase();
             const string mappingContextParameterName = "context";
 
             var baseConstructor = model.HasMappedBaseClass ? $" : base({mappingContextParameterName}, {sourceClassParameterName})" : string.Empty;
 
             builder
-                .WriteLine($"private protected {model.ClassName}({MappingContextSource.ClassName} {mappingContextParameterName}, {model.SourceClassName} {sourceClassParameterName}){baseConstructor}")
+                .WriteLine($"private protected {model.TypeIdentifierName}({MappingContextSource.ClassName} {mappingContextParameterName}, {model.SourceTypeIdentifierName} {sourceClassParameterName}){baseConstructor}")
                 .WriteOpeningBracket()
                 .WriteLine($"if ({mappingContextParameterName} == null) throw new ArgumentNullException(nameof({mappingContextParameterName}));")
                 .WriteLine($"if ({sourceClassParameterName} == null) throw new ArgumentNullException(nameof({sourceClassParameterName}));")
@@ -113,14 +113,14 @@ namespace MapTo.Sources
         
         private static SourceBuilder GenerateFactoryMethod(this SourceBuilder builder, MappingModel model)
         {
-            var sourceClassParameterName = model.SourceClassName.ToCamelCase();
+            var sourceClassParameterName = model.SourceTypeIdentifierName.ToCamelCase();
 
             return builder
                 .GenerateConvertorMethodsXmlDocs(model, sourceClassParameterName)
                 .WriteLineIf(model.Options.SupportNullableStaticAnalysis, $"[return: NotNullIfNotNull(\"{sourceClassParameterName}\")]")
-                .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static {model.ClassName}{model.Options.NullableReferenceSyntax} From({model.SourceClassName}{model.Options.NullableReferenceSyntax} {sourceClassParameterName})")
+                .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static {model.TypeIdentifierName}{model.Options.NullableReferenceSyntax} From({model.SourceTypeIdentifierName}{model.Options.NullableReferenceSyntax} {sourceClassParameterName})")
                 .WriteOpeningBracket()
-                .WriteLine($"return {sourceClassParameterName} == null ? null : {MappingContextSource.ClassName}.{MappingContextSource.FactoryMethodName}<{model.SourceClassName}, {model.ClassName}>({sourceClassParameterName});")
+                .WriteLine($"return {sourceClassParameterName} == null ? null : {MappingContextSource.ClassName}.{MappingContextSource.FactoryMethodName}<{model.SourceTypeIdentifierName}, {model.TypeIdentifierName}>({sourceClassParameterName});")
                 .WriteClosingBracket();
         }
         
@@ -133,17 +133,17 @@ namespace MapTo.Sources
 
             return builder
                 .WriteLine("/// <summary>")
-                .WriteLine($"/// Creates a new instance of <see cref=\"{model.ClassName}\"/> and sets its participating properties")
+                .WriteLine($"/// Creates a new instance of <see cref=\"{model.TypeIdentifierName}\"/> and sets its participating properties")
                 .WriteLine($"/// using the property values from <paramref name=\"{sourceClassParameterName}\"/>.")
                 .WriteLine("/// </summary>")
-                .WriteLine($"/// <param name=\"{sourceClassParameterName}\">The instance of <see cref=\"{model.SourceClassName}\"/> to use as source.</param>")
-                .WriteLine($"/// <returns>A new instance of <see cred=\"{model.ClassName}\"/> -or- <c>null</c> if <paramref name=\"{sourceClassParameterName}\"/> is <c>null</c>.</returns>");
+                .WriteLine($"/// <param name=\"{sourceClassParameterName}\">The instance of <see cref=\"{model.SourceTypeIdentifierName}\"/> to use as source.</param>")
+                .WriteLine($"/// <returns>A new instance of <see cred=\"{model.TypeIdentifierName}\"/> -or- <c>null</c> if <paramref name=\"{sourceClassParameterName}\"/> is <c>null</c>.</returns>");
         }
 
         private static SourceBuilder GenerateSourceTypeExtensionClass(this SourceBuilder builder, MappingModel model)
         {
             return builder
-                .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static partial class {model.SourceClassName}To{model.ClassName}Extensions")
+                .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static partial class {model.SourceTypeIdentifierName}To{model.TypeIdentifierName}Extensions")
                 .WriteOpeningBracket()
                 .GenerateSourceTypeExtensionMethod(model)
                 .WriteClosingBracket();
@@ -151,14 +151,14 @@ namespace MapTo.Sources
         
         private static SourceBuilder GenerateSourceTypeExtensionMethod(this SourceBuilder builder, MappingModel model)
         {
-            var sourceClassParameterName = model.SourceClassName.ToCamelCase();
+            var sourceClassParameterName = model.SourceTypeIdentifierName.ToCamelCase();
 
             return builder
                 .GenerateConvertorMethodsXmlDocs(model, sourceClassParameterName)
                 .WriteLineIf(model.Options.SupportNullableStaticAnalysis, $"[return: NotNullIfNotNull(\"{sourceClassParameterName}\")]")
-                .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static {model.ClassName}{model.Options.NullableReferenceSyntax} To{model.ClassName}(this {model.SourceClassName}{model.Options.NullableReferenceSyntax} {sourceClassParameterName})")
+                .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static {model.TypeIdentifierName}{model.Options.NullableReferenceSyntax} To{model.TypeIdentifierName}(this {model.SourceTypeIdentifierName}{model.Options.NullableReferenceSyntax} {sourceClassParameterName})")
                 .WriteOpeningBracket()
-                .WriteLine($"return {sourceClassParameterName} == null ? null : new {model.ClassName}({sourceClassParameterName});")
+                .WriteLine($"return {sourceClassParameterName} == null ? null : new {model.TypeIdentifierName}({sourceClassParameterName});")
                 .WriteClosingBracket();
         }
     }
