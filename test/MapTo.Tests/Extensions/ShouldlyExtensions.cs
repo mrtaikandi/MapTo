@@ -11,7 +11,7 @@ namespace MapTo.Tests.Extensions
 {
     internal static class ShouldlyExtensions
     {
-        internal static void ShouldContainSource(this IEnumerable<SyntaxTree> syntaxTree, string typeName, string expectedSource, string customMessage = null)
+        internal static void ShouldContainSource(this IEnumerable<SyntaxTree> syntaxTree, string typeName, string expectedSource, string? customMessage = null)
         {
             var syntax = syntaxTree
                 .Select(s => s.ToString().Trim())
@@ -21,7 +21,7 @@ namespace MapTo.Tests.Extensions
             syntax.ShouldBe(expectedSource, customMessage);
         }
         
-        internal static void ShouldContainPartialSource(this IEnumerable<SyntaxTree> syntaxTree, string typeName, string expectedSource, string customMessage = null)
+        internal static void ShouldContainPartialSource(this IEnumerable<SyntaxTree> syntaxTree, string typeName, string expectedSource, string? customMessage = null)
         {
             var syntax = syntaxTree
                 .Select(s => s.ToString().Trim())
@@ -31,14 +31,14 @@ namespace MapTo.Tests.Extensions
             syntax.ShouldContainWithoutWhitespace(expectedSource, customMessage);
         }
         
-        internal static void ShouldContainPartialSource(this SyntaxTree syntaxTree, string expectedSource, string customMessage = null)
+        internal static void ShouldContainPartialSource(this SyntaxTree syntaxTree, string expectedSource, string? customMessage = null)
         {
             var syntax = syntaxTree.ToString();
             syntax.ShouldNotBeNullOrWhiteSpace();
             syntax.ShouldContainWithoutWhitespace(expectedSource, customMessage);
         }
         
-        internal static void ShouldBeSuccessful(this IEnumerable<Diagnostic> diagnostics, Compilation compilation = null, IEnumerable<string> ignoreDiagnosticsIds = null)
+        internal static void ShouldBeSuccessful(this IEnumerable<Diagnostic> diagnostics, Compilation? compilation = null, IEnumerable<string>? ignoreDiagnosticsIds = null)
         {
             var actual = diagnostics
                 .Where(d => (ignoreDiagnosticsIds is null || ignoreDiagnosticsIds.All(i => !d.Id.StartsWith(i) )) && (d.Severity == DiagnosticSeverity.Warning || d.Severity == DiagnosticSeverity.Error))
@@ -74,14 +74,14 @@ namespace MapTo.Tests.Extensions
             compilationDiagnostics.ShouldBeSuccessful();
             
             Assert.NotNull(actualDiagnostics);
-            Assert.Equal(expectedError.Id, actualDiagnostics.Id);
-            Assert.Equal(expectedError.Descriptor.Id, actualDiagnostics.Descriptor.Id);
-            Assert.Equal(expectedError.Descriptor.Description, actualDiagnostics.Descriptor.Description);
-            Assert.Equal(expectedError.Descriptor.Title, actualDiagnostics.Descriptor.Title);
+            Assert.Equal(expectedError.Id, actualDiagnostics?.Id);
+            Assert.Equal(expectedError.Descriptor.Id, actualDiagnostics?.Descriptor.Id);
+            Assert.Equal(expectedError.Descriptor.Description, actualDiagnostics?.Descriptor.Description);
+            Assert.Equal(expectedError.Descriptor.Title, actualDiagnostics?.Descriptor.Title);
             
             if (expectedError.Location != Location.None)
             {
-                Assert.Equal(expectedError.Location, actualDiagnostics.Location);
+                Assert.Equal(expectedError.Location, actualDiagnostics?.Location);
             }
         }
     }

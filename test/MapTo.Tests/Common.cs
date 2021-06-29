@@ -6,6 +6,7 @@ using MapTo.Sources;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Shouldly;
 
 namespace MapTo.Tests
 {
@@ -21,7 +22,7 @@ namespace MapTo.Tests
             [GeneratorExecutionContextExtensions.GetBuildPropertyName(nameof(SourceGenerationOptions.GenerateXmlDocument))] = "false"
         };
 
-        internal static string GetSourceText(SourceGeneratorOptions options = null)
+        internal static string GetSourceText(SourceGeneratorOptions? options = null)
         {
             const string ns = "Test";
             options ??= new SourceGeneratorOptions();
@@ -95,7 +96,12 @@ namespace MapTo.Tests
             return builder.ToString();
         }
 
-        internal static string[] GetEmployeeManagerSourceText(Func<string> employeeClassSource = null, Func<string> managerClassSource = null, Func<string> employeeViewModelSource = null, Func<string> managerViewModelSource = null, bool useDifferentViewModelNamespace = false)
+        internal static string[] GetEmployeeManagerSourceText(
+            Func<string>? employeeClassSource = null,
+            Func<string>? managerClassSource = null,
+            Func<string>? employeeViewModelSource = null,
+            Func<string>? managerViewModelSource = null,
+            bool useDifferentViewModelNamespace = false)
         {
             return new[]
             {
@@ -231,7 +237,7 @@ namespace Test.ViewModels
             var propSyntax = GetPropertyDeclarationSyntax(syntaxTree, propertyName, targetClass);
 
             var semanticModel = compilation.GetSemanticModel(syntaxTree);
-            return semanticModel.GetDeclaredSymbol(propSyntax);
+            return semanticModel.GetDeclaredSymbol(propSyntax).ShouldNotBeNull();
         }
 
         internal record SourceGeneratorOptions(
@@ -239,8 +245,8 @@ namespace Test.ViewModels
             string SourceClassNamespace = "Test.Models",
             int ClassPropertiesCount = 3,
             int SourceClassPropertiesCount = 3,
-            Action<SourceBuilder> PropertyBuilder = null,
-            Action<SourceBuilder> SourcePropertyBuilder = null,
-            IEnumerable<string> Usings = null);
+            Action<SourceBuilder>? PropertyBuilder = null,
+            Action<SourceBuilder>? SourcePropertyBuilder = null,
+            IEnumerable<string>? Usings = null);
     }
 }

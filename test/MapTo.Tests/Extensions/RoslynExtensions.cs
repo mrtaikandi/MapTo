@@ -7,7 +7,7 @@ namespace MapTo.Tests.Extensions
 {
     internal static class RoslynExtensions
     {
-        internal static SyntaxTree GetGeneratedSyntaxTree(this Compilation compilation, string className) => 
+        internal static SyntaxTree? GetGeneratedSyntaxTree(this Compilation compilation, string className) =>
             compilation.SyntaxTrees.SingleOrDefault(s => s.FilePath.EndsWith($"{className}.g.cs"));
 
         internal static string PrintSyntaxTree(this Compilation compilation)

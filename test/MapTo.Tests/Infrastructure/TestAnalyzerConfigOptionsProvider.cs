@@ -7,7 +7,7 @@ namespace MapTo.Tests.Infrastructure
 {
     internal sealed class TestAnalyzerConfigOptionsProvider : AnalyzerConfigOptionsProvider
     {
-        public TestAnalyzerConfigOptionsProvider(IDictionary<string, string> options)
+        public TestAnalyzerConfigOptionsProvider(IDictionary<string, string>? options)
         {
             GlobalOptions = new TestAnalyzerConfigOptions(options);
         }

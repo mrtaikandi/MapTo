@@ -5,7 +5,6 @@ using System.Linq;
 using MapTo.Tests.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Xunit;
 
 namespace MapTo.Tests.Infrastructure
 {
@@ -14,7 +13,7 @@ namespace MapTo.Tests.Infrastructure
         internal static (Compilation compilation, ImmutableArray<Diagnostic> diagnostics) GetOutputCompilation(
             string source,
             bool assertCompilation = false,
-            IDictionary<string, string> analyzerConfigOptions = null,
+            IDictionary<string, string>? analyzerConfigOptions = null,
             NullableContextOptions nullableContextOptions = NullableContextOptions.Disable,
             LanguageVersion languageVersion = LanguageVersion.CSharp7_3) =>
             GetOutputCompilation(
@@ -27,7 +26,7 @@ namespace MapTo.Tests.Infrastructure
         internal static (Compilation compilation, ImmutableArray<Diagnostic> diagnostics) GetOutputCompilation(
             IEnumerable<string> sources, 
             bool assertCompilation = false, 
-            IDictionary<string, string> analyzerConfigOptions = null, 
+            IDictionary<string, string>? analyzerConfigOptions = null,
             NullableContextOptions nullableContextOptions = NullableContextOptions.Disable, 
             LanguageVersion languageVersion = LanguageVersion.CSharp7_3)
         {

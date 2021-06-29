@@ -9,11 +9,11 @@ namespace MapTo.Tests.Infrastructure
     {
         private readonly ImmutableDictionary<string, string> _backing;
 
-        public TestAnalyzerConfigOptions(IDictionary<string, string> properties)
+        public TestAnalyzerConfigOptions(IDictionary<string, string>? properties)
         {
             _backing = properties?.ToImmutableDictionary(KeyComparer) ?? ImmutableDictionary.Create<string, string>(KeyComparer);
         }
 
-        public override bool TryGetValue(string key, [NotNullWhen(true)] out string value) => _backing.TryGetValue(key, out value);
+        public override bool TryGetValue(string key, [NotNullWhen(true)] out string? value) => _backing.TryGetValue(key, out value);
     }
 }

@@ -52,18 +52,19 @@ namespace Test.Data.Models
 ".Trim();
             // Act
             var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
-            
+
             // Assert
             diagnostics.ShouldBeSuccessful();
             compilation
                 .GetGeneratedSyntaxTree("DestinationClass")
+                .ShouldNotBeNull()
                 .GetRoot()
                 .DescendantNodes()
                 .OfType<ConstructorDeclarationSyntax>()
                 .Count()
                 .ShouldBe(1);
         }
-        
+
         [Fact]
         public void When_SecondaryConstructorExistsButDoNotReferencePrivateConstructor_Should_ReportError()
         {
@@ -84,7 +85,7 @@ namespace Test.Data.Models
 ".Trim();
             // Act
             var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions);
-            
+
             // Assert
             var constructorSyntax = compilation.SyntaxTrees
                 .First()
@@ -92,7 +93,7 @@ namespace Test.Data.Models
                 .DescendantNodes()
                 .OfType<ConstructorDeclarationSyntax>()
                 .Single();
-            
+
             diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.MissingConstructorArgument(constructorSyntax));
         }
 
