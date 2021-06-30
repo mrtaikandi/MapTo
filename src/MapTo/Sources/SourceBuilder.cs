@@ -38,6 +38,12 @@ namespace MapTo.Sources
             return this;
         }
 
+        public SourceBuilder Write(string? value = null)
+        {
+            _indentedWriter.Write(value);
+            return this;
+        }
+
         public SourceBuilder WriteLineIf(bool condition, string? value)
         {
             if (condition)
@@ -80,6 +86,18 @@ namespace MapTo.Sources
         {
             WriteLine($"using {u};");
 
+            return this;
+        }
+
+        public SourceBuilder Indent()
+        {
+            _indentedWriter.Indent++;
+            return this;
+        }
+
+        public SourceBuilder Unindent()
+        {
+            _indentedWriter.Indent--;
             return this;
         }
 

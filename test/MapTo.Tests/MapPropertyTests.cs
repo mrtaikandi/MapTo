@@ -28,7 +28,7 @@ using System;
 
 namespace MapTo
 {{
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter, AllowMultiple = true)]
     public sealed class MapPropertyAttribute : Attribute
     {{
         public string{nullableSyntax} SourcePropertyName {{ get; set; }}

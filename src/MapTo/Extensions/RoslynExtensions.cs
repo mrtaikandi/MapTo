@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -48,15 +49,36 @@ namespace MapTo.Extensions
         public static AttributeData? GetAttribute(this ISymbol symbol, ITypeSymbol attributeSymbol) =>
             symbol.GetAttributes(attributeSymbol).FirstOrDefault();
 
-        public static string? GetNamespace(this TypeDeclarationSyntax typeDeclarationSyntax) =>
-            typeDeclarationSyntax.Ancestors()
-                .OfType<NamespaceDeclarationSyntax>()
-                .FirstOrDefault()
-                ?.Name
-                .ToString();
+        public static string? GetNamespace(this TypeDeclarationSyntax typeDeclarationSyntax) => typeDeclarationSyntax
+            .Ancestors()
+            .OfType<NamespaceDeclarationSyntax>()
+            .FirstOrDefault()
+            ?.Name
+            .ToString();
 
-        public static bool HasCompatibleTypes(this Compilation compilation, IPropertySymbol sourceProperty, IPropertySymbol destinationProperty) =>
-            SymbolEqualityComparer.Default.Equals(destinationProperty.Type, sourceProperty.Type) || compilation.HasImplicitConversion(sourceProperty.Type, destinationProperty.Type);
+        public static bool HasCompatibleTypes(this Compilation compilation, ISymbol source, ISymbol destination) =>
+            source.TryGetTypeSymbol(out var sourceType) && destination.TryGetTypeSymbol(out var destinationType) &&
+            (SymbolEqualityComparer.Default.Equals(destinationType, sourceType) || compilation.HasImplicitConversion(sourceType, destinationType));
+
+        public static bool TryGetTypeSymbol(this ISymbol symbol, [NotNullWhen(true)] out ITypeSymbol? typeSymbol)
+        {
+            switch (symbol)
+            {
+                case IPropertySymbol propertySymbol:
+                    typeSymbol = propertySymbol.Type;
+                    return true;
+
+                case IParameterSymbol parameterSymbol:
+                    typeSymbol = parameterSymbol.Type;
+                    return true;
+
+                default:
+                    typeSymbol = null;
+                    return false;
+            }
+        }
+
+        public static ITypeSymbol? GetTypeSymbol(this ISymbol symbol) => symbol.TryGetTypeSymbol(out var typeSymbol) ? typeSymbol : null;
 
         public static IPropertySymbol? FindProperty(this IEnumerable<IPropertySymbol> properties, IPropertySymbol targetProperty)
         {
@@ -91,5 +113,8 @@ namespace MapTo.Extensions
             SpecialType.System_Double or
             SpecialType.System_Char or
             SpecialType.System_Object;
+
+        public static SyntaxNode? GetSyntaxNode(this ISymbol symbol) =>
+            symbol.Locations.FirstOrDefault() is { } location ? location.SourceTree?.GetRoot().FindNode(location.SourceSpan) : null;
     }
 }

@@ -36,7 +36,7 @@ namespace MapTo.Sources
             }
             
             builder
-                .WriteLine("[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]")
+                .WriteLine("[AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter, AllowMultiple = true)]")
                 .WriteLine($"public sealed class {AttributeClassName} : Attribute")
                 .WriteOpeningBracket();
          

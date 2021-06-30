@@ -47,18 +47,26 @@ namespace MapTo
             }
         }
 
-        private static void AddGeneratedMappingsClasses(GeneratorExecutionContext context, Compilation compilation, IEnumerable<TypeDeclarationSyntax> candidateClasses, SourceGenerationOptions options)
+        private static void AddGeneratedMappingsClasses(GeneratorExecutionContext context, Compilation compilation, IEnumerable<TypeDeclarationSyntax> candidateTypes, SourceGenerationOptions options)
         {
-            foreach (var classSyntax in candidateClasses)
+            foreach (var typeDeclarationSyntax in candidateTypes)
             {
-                var mappingContext = new MappingContext(compilation, options, classSyntax);
+                var mappingContext = MappingContext.Create(compilation, options, typeDeclarationSyntax);
                 mappingContext.Diagnostics.ForEach(context.ReportDiagnostic);
-                
-                if (mappingContext.Model is not null)
+
+                if (mappingContext.Model is null)
                 {
-                    var (source, hintName) = MapClassSource.Generate(mappingContext.Model);
-                    context.AddSource(hintName, source);
+                    continue;
                 }
+
+                var (source, hintName) = typeDeclarationSyntax switch
+                {
+                    ClassDeclarationSyntax => MapClassSource.Generate(mappingContext.Model),
+                    RecordDeclarationSyntax => MapRecordSource.Generate(mappingContext.Model),
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+
+                context.AddSource(hintName, source);
             }
         }
     }

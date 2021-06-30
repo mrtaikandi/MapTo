@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using MapTo.Extensions;
 using MapTo.Sources;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -23,11 +24,11 @@ namespace MapTo
         internal static Diagnostic NoMatchingPropertyFoundError(Location location, INamedTypeSymbol classType, INamedTypeSymbol sourceType) =>
             Create($"{ErrorId}030", location, $"No matching properties found between '{classType.ToDisplayString()}' and '{sourceType.ToDisplayString()}' types.");
 
-        internal static Diagnostic NoMatchingPropertyTypeFoundError(IPropertySymbol property) =>
+        internal static Diagnostic NoMatchingPropertyTypeFoundError(ISymbol property) =>
             Create($"{ErrorId}031", property.Locations.FirstOrDefault(), $"Cannot create a map for '{property.ToDisplayString()}' property because source and destination types are not implicitly convertible. Consider using '{MapTypeConverterAttributeSource.FullyQualifiedName}' to provide a type converter or ignore the property using '{IgnorePropertyAttributeSource.FullyQualifiedName}'.");
 
-        internal static Diagnostic InvalidTypeConverterGenericTypesError(IPropertySymbol property, IPropertySymbol sourceProperty) =>
-            Create($"{ErrorId}032", property.Locations.FirstOrDefault(), $"Cannot map '{property.ToDisplayString()}' property because the annotated converter does not implement '{RootNamespace}.{ITypeConverterSource.InterfaceName}<{sourceProperty.Type.ToDisplayString()}, {property.Type.ToDisplayString()}>'.");
+        internal static Diagnostic InvalidTypeConverterGenericTypesError(ISymbol property, IPropertySymbol sourceProperty) =>
+            Create($"{ErrorId}032", property.Locations.FirstOrDefault(), $"Cannot map '{property.ToDisplayString()}' property because the annotated converter does not implement '{RootNamespace}.{ITypeConverterSource.InterfaceName}<{sourceProperty.Type.ToDisplayString()}, {property.GetTypeSymbol()?.ToDisplayString()}>'.");
 
         internal static Diagnostic ConfigurationParseError(string error) =>
             Create($"{ErrorId}040", Location.None, error);
