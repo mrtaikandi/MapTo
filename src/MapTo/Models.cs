@@ -32,7 +32,10 @@ namespace MapTo
         bool HasMappedBaseClass,
         ImmutableArray<string> Usings,
         bool GenerateSecondaryConstructor
-    );
+    )
+    {
+        public string SourceType => SourceTypeIdentifierName == TypeIdentifierName ? SourceTypeFullName : SourceTypeIdentifierName;
+    }
 
     internal record SourceGenerationOptions(
         AccessModifier ConstructorAccessModifier,

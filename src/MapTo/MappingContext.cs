@@ -271,7 +271,7 @@ namespace MapTo
                 typeIdentifierName,
                 sourceTypeSymbol.ContainingNamespace.ToString(),
                 sourceTypeIdentifierName,
-                sourceTypeSymbol.ToString(),
+                sourceTypeSymbol.ToDisplayString(),
                 mappedProperties,
                 isTypeInheritFromMappedBaseClass,
                 Usings,
