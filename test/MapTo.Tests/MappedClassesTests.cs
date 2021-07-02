@@ -324,7 +324,51 @@ namespace Test
         public static IEnumerable<object[]> VerifyMappedTypesData => new List<object[]>
         {
             new object[] { new[] { MainSourceClass, NestedSourceClass, MainDestinationClass, NestedDestinationClass }, LanguageVersion.CSharp7_3 },
-            new object[] { new[] { MainSourceRecord, NestedSourceRecord, MainDestinationRecord, NestedDestinationRecord }, LanguageVersion.CSharp9 }
+            new object[] { new[] { MainSourceRecord, NestedSourceRecord, MainDestinationRecord, NestedDestinationRecord }, LanguageVersion.CSharp9 },
+            new object[]
+            {
+                new[]
+                {
+                    @"
+namespace Test.Classes.Classes1
+{
+    public class Class1
+    {      
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }  
+}",
+                    @"
+using System;
+using System.Collections.Generic;
+using Test.Classes.Classes1;
+
+namespace Test.Classes.Classes2
+{    
+    public class Class2
+    {
+        public int Id { get; set; }
+        public List<Class1> Genres { get; set; }
+        public DateTime? ReleaseDate { get; set; }
+    }  
+}",
+                    @"
+using MapTo;
+using System;
+using System.Collections.Generic;
+using TC = Test.Classes;
+
+namespace Tests.Records
+{
+    [MapFrom(typeof(Test.Classes.Classes1.Class1))]
+    public partial record Class1(int Id, string Name);
+
+   [MapFrom(typeof(Test.Classes.Classes2.Class2))]
+    public partial record Class2(int Id, IReadOnlyList<Class1> Genres);
+}"
+                },
+                LanguageVersion.CSharp9
+            }
         };
 
         [Fact]
@@ -444,7 +488,8 @@ public partial record UserViewModel(
     [MapProperty(SourcePropertyName = nameof(User.Id))] 
     [MapTypeConverter(typeof(UserViewModel.IdConverter))] 
     string Key, 
-    DateTimeOffset RegisteredAt)
+    DateTimeOffset RegisteredAt,
+    Profile Profile)
 {
     private class IdConverter : ITypeConverter<int, string>
     {

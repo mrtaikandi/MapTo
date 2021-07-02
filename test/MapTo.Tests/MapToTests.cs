@@ -387,7 +387,7 @@ namespace Test
             Prop1 = baz.Prop1;
             Prop2 = baz.Prop2;
             Prop3 = baz.Prop3;
-            InnerProp1 = context.MapFromWithContext<Test.A, B>(baz.InnerProp1);
+            InnerProp1 = context.MapFromWithContext<A, B>(baz.InnerProp1);
         }
 ".Trim();
 
@@ -571,11 +571,10 @@ namespace Test.ViewModels2
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using Test.ViewModels;
 
     partial class ManagerViewModel
     {
-       public ManagerViewModel(Test.Data.Models.Manager manager)
+        public ManagerViewModel(Test.Data.Models.Manager manager)
             : this(new MappingContext(), manager) { }
 
         private protected ManagerViewModel(MappingContext context, Test.Data.Models.Manager manager) : base(context, manager)
@@ -586,7 +585,7 @@ namespace Test.ViewModels2
             context.Register(manager, this);
 
             Level = manager.Level;
-            Employees = manager.Employees.Select(context.MapFromWithContext<Test.Data.Models.Employee, EmployeeViewModel>).ToList();
+            Employees = manager.Employees.Select(context.MapFromWithContext<Test.Data.Models.Employee, Test.ViewModels.EmployeeViewModel>).ToList();
         }
 ";
 

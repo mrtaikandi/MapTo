@@ -11,7 +11,7 @@ namespace MapTo
 {
     internal abstract class MappingContext
     {
-        private readonly List<string> _ignoredNamespaces;
+        private readonly List<SymbolDisplayPart> _ignoredNamespaces;
 
         protected MappingContext(Compilation compilation, SourceGenerationOptions sourceGenerationOptions, TypeDeclarationSyntax typeSyntax)
         {
@@ -76,14 +76,14 @@ namespace MapTo
         }
 
         protected void AddUsingIfRequired(ISymbol? namedTypeSymbol) =>
-            AddUsingIfRequired(namedTypeSymbol?.ContainingNamespace.IsGlobalNamespace == false, namedTypeSymbol?.ContainingNamespace.ToDisplayString());
+            AddUsingIfRequired(namedTypeSymbol?.ContainingNamespace.IsGlobalNamespace == false, namedTypeSymbol?.ContainingNamespace);
+
+        protected void AddUsingIfRequired(bool condition, INamespaceSymbol? ns) =>
+            AddUsingIfRequired(condition && ns is not null && !_ignoredNamespaces.Contains(ns.ToDisplayParts().First()), ns?.ToDisplayString());
 
         protected void AddUsingIfRequired(bool condition, string? ns)
         {
-            if (condition && ns is not null &&
-                ns != TypeSyntax.GetNamespace() &&
-                !_ignoredNamespaces.Contains(ns) &&
-                !Usings.Contains(ns))
+            if (ns is not null && condition && ns != TypeSyntax.GetNamespace() && !Usings.Contains(ns))
             {
                 Usings = Usings.Add(ns);
             }
@@ -156,7 +156,7 @@ namespace MapTo
 
             return new MappedProperty(
                 property.Name,
-                propertyType.Name,
+                ToQualifiedDisplayName(propertyType) ?? propertyType.Name,
                 converterFullyQualifiedName,
                 converterParameters.ToImmutableArray(),
                 sourceProperty.Name,
@@ -253,8 +253,7 @@ namespace MapTo
                 return null;
             }
 
-            var sourceTypeNamespace = sourceTypeSymbol.ContainingNamespace.ToDisplayString();
-            _ignoredNamespaces.Add(sourceTypeNamespace);
+            _ignoredNamespaces.Add(sourceTypeSymbol.ContainingNamespace.ToDisplayParts().First());
 
             var typeIdentifierName = TypeSyntax.GetIdentifierName();
             var sourceTypeIdentifierName = sourceTypeSymbol.Name;
@@ -276,7 +275,7 @@ namespace MapTo
                 TypeSyntax.Modifiers,
                 TypeSyntax.Keyword.Text,
                 typeIdentifierName,
-                sourceTypeNamespace,
+                sourceTypeSymbol.ContainingNamespace.ToDisplayString(),
                 sourceTypeIdentifierName,
                 sourceTypeSymbol.ToDisplayString(),
                 mappedProperties,
@@ -324,15 +323,18 @@ namespace MapTo
             return false;
         }
 
-        private string? ToQualifiedDisplayName(ISymbol? typeSymbol)
+        private string? ToQualifiedDisplayName(ISymbol? symbol)
         {
-            if (typeSymbol is null)
+            if (symbol is null)
             {
                 return null;
             }
 
-            var typeNamespace = typeSymbol.ContainingNamespace.ToDisplayString();
-            return _ignoredNamespaces.Contains(typeNamespace) ? typeSymbol.ToDisplayString() : typeSymbol.Name;
+            var containingNamespace = TypeSyntax.GetNamespace();
+            var symbolNamespace = symbol.ContainingNamespace.ToDisplayString();
+            return  containingNamespace != symbolNamespace && _ignoredNamespaces.Contains(symbol.ContainingNamespace.ToDisplayParts().First())
+                ? symbol.ToDisplayString()
+                : symbol.Name;
         }
     }
 }

@@ -108,15 +108,15 @@ namespace MapTo
             new object[]
             {
                 @"
-namespace Test 
+namespace Test
 {
     using System.Collections.Generic;
 
     public class InnerClass { public int Prop1 { get; set; } }
-    public class OuterClass 
-    { 
-        public int Id { get; set; } 
-        public List<InnerClass> InnerProp { get; set; } 
+    public class OuterClass
+    {
+        public int Id { get; set; }
+        public List<InnerClass> InnerProp { get; set; }
     }
 }
 
@@ -129,10 +129,10 @@ namespace Test.Models
     public partial class InnerClass { public int Prop1 { get; set; } }
 
     [MapFrom(typeof(Test.OuterClass))]
-    public partial class OuterClass 
-    { 
-        public int Id { get; set; } 
-        public IReadOnlyList<InnerClass> InnerProp { get; set; } 
+    public partial class OuterClass
+    {
+        public int Id { get; set; }
+        public IReadOnlyList<InnerClass> InnerProp { get; set; }
     }
 }
 ",
@@ -155,27 +155,39 @@ namespace Test.Models
                 @"
 namespace Test 
 {
+    using System;
     using System.Collections.Generic;
 
-    public record InnerClass(int Prop1);
-    public record OuterClass(int Id, List<InnerClass> InnerProp);    
+    public class InnerClass
+    {      
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+
+    public class OuterClass
+    {
+        public int Id { get; set; }
+        public List<InnerClass> InnerClasses { get; set; }
+        public DateTime? SomeDate { get; set; }
+    }  
 }
 
 namespace Test.Models
 {
     using MapTo;
+    using System;
     using System.Collections.Generic;
 
     [MapFrom(typeof(Test.InnerClass))]
-    public partial record InnerClass(int Prop1);
+    public partial record InnerClass(int Id, string Name);
 
     [MapFrom(typeof(Test.OuterClass))]
-    public partial record OuterClass(int Id, IReadOnlyList<InnerClass> InnerProp);
+    public partial record OuterClass(int Id, DateTime? SomeDate, IReadOnlyList<InnerClass> InnerClasses);
 }
 ",
                 @"
         private protected OuterClass(MappingContext context, Test.OuterClass outerClass)
-            : this(Id: outerClass.Id, InnerProp: outerClass.InnerProp.Select(context.MapFromWithContext<Test.InnerClass, InnerClass>).ToList())
+            : this(Id: outerClass.Id, SomeDate: outerClass.SomeDate, InnerClasses: outerClass.InnerClasses.Select(context.MapFromWithContext<Test.InnerClass, InnerClass>).ToList())
         {
             if (context == null) throw new ArgumentNullException(nameof(context));
             if (outerClass == null) throw new ArgumentNullException(nameof(outerClass));
