@@ -219,10 +219,10 @@ namespace Test
             var expectedResult = @"
     partial class Foo
     {
-        public Foo(Baz baz)
+        public Foo(Test.Models.Baz baz)
             : this(new MappingContext(), baz) { }
 
-        private protected Foo(MappingContext context, Baz baz)
+        private protected Foo(MappingContext context, Test.Models.Baz baz)
         {
             if (context == null) throw new ArgumentNullException(nameof(context));
             if (baz == null) throw new ArgumentNullException(nameof(baz));

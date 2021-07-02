@@ -28,7 +28,7 @@ namespace MapTo.Tests.Extensions
                             .AppendLine();
 
                         var lines = s.ToString().Split(Environment.NewLine);
-                        var lineNumber = 1;
+                        var lineNumber = 0;
                         foreach (var line in lines)
                         {
                             builder.AppendFormat("{0:00}: {1}", lineNumber, line).AppendLine();

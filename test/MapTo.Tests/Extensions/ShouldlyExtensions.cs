@@ -41,7 +41,7 @@ namespace MapTo.Tests.Extensions
         internal static void ShouldBeSuccessful(this IEnumerable<Diagnostic> diagnostics, Compilation? compilation = null, IEnumerable<string>? ignoreDiagnosticsIds = null)
         {
             var actual = diagnostics
-                .Where(d => (ignoreDiagnosticsIds is null || ignoreDiagnosticsIds.All(i => !d.Id.StartsWith(i) )) && (d.Severity == DiagnosticSeverity.Warning || d.Severity == DiagnosticSeverity.Error))
+                .Where(d => (ignoreDiagnosticsIds is null || ignoreDiagnosticsIds.All(i => !d.Id.StartsWith(i) )) && (d.Severity is DiagnosticSeverity.Warning or DiagnosticSeverity.Error))
                 .Select(c => $"{c.Severity}: {c.Location.GetLineSpan()} - {c.GetMessage()}").ToArray();
 
             if (!actual.Any())
