@@ -11,8 +11,11 @@ namespace MapTo
 {
     internal abstract class MappingContext
     {
+        private readonly List<string> _ignoredNamespaces;
+
         protected MappingContext(Compilation compilation, SourceGenerationOptions sourceGenerationOptions, TypeDeclarationSyntax typeSyntax)
         {
+            _ignoredNamespaces = new();
             Diagnostics = ImmutableArray<Diagnostic>.Empty;
             Usings = ImmutableArray.Create("System", Constants.RootNamespace);
             SourceGenerationOptions = sourceGenerationOptions;
@@ -77,7 +80,10 @@ namespace MapTo
 
         protected void AddUsingIfRequired(bool condition, string? ns)
         {
-            if (condition && ns is not null && ns != TypeSyntax.GetNamespace() && !Usings.Contains(ns))
+            if (condition && ns is not null &&
+                ns != TypeSyntax.GetNamespace() &&
+                !_ignoredNamespaces.Contains(ns) &&
+                !Usings.Contains(ns))
             {
                 Usings = Usings.Add(ns);
             }
@@ -145,7 +151,6 @@ namespace MapTo
             }
 
             AddUsingIfRequired(propertyType);
-            AddUsingIfRequired(sourceTypeSymbol);
             AddUsingIfRequired(enumerableTypeArgumentType);
             AddUsingIfRequired(mappedSourcePropertyType);
 
@@ -155,8 +160,8 @@ namespace MapTo
                 converterFullyQualifiedName,
                 converterParameters.ToImmutableArray(),
                 sourceProperty.Name,
-                mappedSourcePropertyType?.Name,
-                enumerableTypeArgumentType?.Name);
+                ToQualifiedDisplayName(mappedSourcePropertyType),
+                ToQualifiedDisplayName(enumerableTypeArgumentType));
         }
 
         protected bool TryGetMapTypeConverter(ISymbol property, IPropertySymbol sourceProperty, out string? converterFullyQualifiedName,
@@ -171,7 +176,7 @@ namespace MapTo
             }
 
             var typeConverterAttribute = property.GetAttribute(MapTypeConverterAttributeTypeSymbol);
-            if (!(typeConverterAttribute?.ConstructorArguments.First().Value is INamedTypeSymbol converterTypeSymbol))
+            if (typeConverterAttribute?.ConstructorArguments.First().Value is not INamedTypeSymbol converterTypeSymbol)
             {
                 return false;
             }
@@ -248,6 +253,9 @@ namespace MapTo
                 return null;
             }
 
+            var sourceTypeNamespace = sourceTypeSymbol.ContainingNamespace.ToDisplayString();
+            _ignoredNamespaces.Add(sourceTypeNamespace);
+
             var typeIdentifierName = TypeSyntax.GetIdentifierName();
             var sourceTypeIdentifierName = sourceTypeSymbol.Name;
             var isTypeInheritFromMappedBaseClass = IsTypeInheritFromMappedBaseClass(semanticModel);
@@ -260,7 +268,6 @@ namespace MapTo
                 return null;
             }
 
-            AddUsingIfRequired(sourceTypeSymbol);
             AddUsingIfRequired(mappedProperties.Any(p => p.IsEnumerable), "System.Linq");
 
             return new MappingModel(
@@ -269,7 +276,7 @@ namespace MapTo
                 TypeSyntax.Modifiers,
                 TypeSyntax.Keyword.Text,
                 typeIdentifierName,
-                sourceTypeSymbol.ContainingNamespace.ToString(),
+                sourceTypeNamespace,
                 sourceTypeIdentifierName,
                 sourceTypeSymbol.ToDisplayString(),
                 mappedProperties,
@@ -315,6 +322,17 @@ namespace MapTo
             }
 
             return false;
+        }
+
+        private string? ToQualifiedDisplayName(ISymbol? typeSymbol)
+        {
+            if (typeSymbol is null)
+            {
+                return null;
+            }
+
+            var typeNamespace = typeSymbol.ContainingNamespace.ToDisplayString();
+            return _ignoredNamespaces.Contains(typeNamespace) ? typeSymbol.ToDisplayString() : typeSymbol.Name;
         }
     }
 }

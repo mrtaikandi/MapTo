@@ -34,7 +34,7 @@ namespace MapTo
         bool GenerateSecondaryConstructor
     )
     {
-        public string SourceType => SourceTypeIdentifierName == TypeIdentifierName ? SourceTypeFullName : SourceTypeIdentifierName;
+        public string SourceType => SourceTypeFullName;
     }
 
     internal record SourceGenerationOptions(

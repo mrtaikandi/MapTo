@@ -173,6 +173,142 @@ namespace SaleModel
         }
 
         [Theory]
+        [MemberData(nameof(SameSourceAndDestinationTypeNameData))]
+        public void When_SourceAndDestinationNamesAreTheSame_Should_MapAccordingly(string source, LanguageVersion languageVersion)
+        {
+            // Arrange
+            source = source.Trim();
+
+            // Act
+            var (_, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions, languageVersion: languageVersion);
+
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+        }
+
+        public static IEnumerable<object> SameSourceAndDestinationTypeNameData => new List<object>
+        {
+            new object[]
+            {
+                @"
+namespace Test
+{
+    public class TypeName { public int Prop2 { get; set; } }
+}
+
+namespace Test2
+{
+    using MapTo;    
+
+    [MapFrom(typeof(Test.TypeName))]
+    public partial class TypeName
+    {
+        [MapProperty(SourcePropertyName=""Prop2"")]
+        public int Prop1 { get; set; }
+    }
+}",
+                LanguageVersion.CSharp7_3
+            },
+            new object[]
+            {
+                @"
+namespace Test
+{
+    public record TypeName(int Prop2);
+}
+
+namespace Test2
+{
+    using MapTo;    
+
+    [MapFrom(typeof(Test.TypeName))]
+    public partial record TypeName([MapProperty(SourcePropertyName=""Prop2"")] int Prop1);
+}",
+                LanguageVersion.CSharp9
+            },
+            new object[]
+            {
+                @"
+namespace Test
+{
+    using System.Collections.Generic; 
+
+    public class SourceType2 { public int Id { get; set; } }
+    public class SourceType 
+    { 
+        public int Id { get; set; }
+        public List<SourceType2> Prop1 { get; set; } 
+    }
+}
+
+namespace Test2
+{
+    using MapTo; 
+    using System.Collections.Generic;   
+
+    [MapFrom(typeof(Test.SourceType2))]
+    public partial class SourceType2 { public int Id { get; set; } }
+
+    [MapFrom(typeof(Test.SourceType))]
+    public partial class SourceType
+    {        
+        public int Id { get; set; }
+        public IReadOnlyList<SourceType2> Prop1 { get; set; }
+    }
+}",
+                LanguageVersion.CSharp7_3
+            },
+            new object[]
+            {
+                @"
+namespace Test
+{
+    using System.Collections.Generic;
+
+    public record SourceType(int Id, List<SourceType2> Prop1);
+    public record SourceType2(int Id);
+}
+
+namespace Test2
+{
+    using MapTo; 
+    using System.Collections.Generic;   
+
+    [MapFrom(typeof(Test.SourceType2))]
+    public partial record SourceType2(int Id);
+
+    [MapFrom(typeof(Test.SourceType))]
+    public partial record SourceType(int Id, IReadOnlyList<SourceType2> Prop1);
+}",
+                LanguageVersion.CSharp9
+            },
+            new object[]
+            {
+                @"
+namespace Test
+{
+    using System.Collections.Generic;
+
+    public record SourceType1(int Id);
+    public record SourceType2(int Id, List<SourceType1> Prop1);
+}
+
+namespace Test
+{
+    using MapTo; 
+    using System.Collections.Generic;   
+
+    [MapFrom(typeof(Test.SourceType1))]
+    public partial record SourceType3(int Id);
+
+    [MapFrom(typeof(Test.SourceType2))]
+    public partial record SourceType4(int Id, IReadOnlyList<SourceType3> Prop1);
+}",
+                LanguageVersion.CSharp9
+            }
+        };
+
+        [Theory]
         [MemberData(nameof(VerifyMappedTypesData))]
         public void VerifyMappedTypes(string[] sources, LanguageVersion languageVersion)
         {
