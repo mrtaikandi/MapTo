@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using MapTo.Sources;
 using MapTo.Tests.Extensions;
@@ -86,5 +87,104 @@ namespace MapTo
             diagnostics.ShouldBeSuccessful();
             compilation.SyntaxTrees.Last().ShouldContainPartialSource(expectedResult);
         }
+
+        [Theory]
+        [MemberData(nameof(MapPropertyWithImplicitConversionFoundData))]
+        public void When_MapPropertyWithImplicitConversionFound_Should_UseItToMapToSourceProperty(string source, string expectedResult, LanguageVersion languageVersion)
+        {
+            // Arrange
+            source = source.Trim();
+
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions, languageVersion: languageVersion);
+
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+            compilation.SyntaxTrees.Last().ShouldContainPartialSource(expectedResult);
+        }
+
+        public static IEnumerable<object[]> MapPropertyWithImplicitConversionFoundData => new List<object[]>
+        {
+            new object[]
+            {
+                @"
+namespace Test 
+{
+    using System.Collections.Generic;
+
+    public class InnerClass { public int Prop1 { get; set; } }
+    public class OuterClass 
+    { 
+        public int Id { get; set; } 
+        public List<InnerClass> InnerProp { get; set; } 
+    }
+}
+
+namespace Test.Models
+{
+    using MapTo;
+    using System.Collections.Generic;
+
+    [MapFrom(typeof(Test.InnerClass))]
+    public partial class InnerClass { public int Prop1 { get; set; } }
+
+    [MapFrom(typeof(Test.OuterClass))]
+    public partial class OuterClass 
+    { 
+        public int Id { get; set; } 
+        public IReadOnlyList<InnerClass> InnerProp { get; set; } 
+    }
+}
+",
+                @"
+        private protected OuterClass(MappingContext context, Test.OuterClass outerClass)
+        {
+            if (context == null) throw new ArgumentNullException(nameof(context));
+            if (outerClass == null) throw new ArgumentNullException(nameof(outerClass));
+
+            context.Register(outerClass, this);
+
+            Id = outerClass.Id;
+            InnerProp = outerClass.InnerProp.Select(context.MapFromWithContext<Test.InnerClass, InnerClass>).ToList();
+        }
+",
+                LanguageVersion.CSharp7_3
+            },
+            new object[]
+            {
+                @"
+namespace Test 
+{
+    using System.Collections.Generic;
+
+    public record InnerClass(int Prop1);
+    public record OuterClass(int Id, List<InnerClass> InnerProp);    
+}
+
+namespace Test.Models
+{
+    using MapTo;
+    using System.Collections.Generic;
+
+    [MapFrom(typeof(Test.InnerClass))]
+    public partial record InnerClass(int Prop1);
+
+    [MapFrom(typeof(Test.OuterClass))]
+    public partial record OuterClass(int Id, IReadOnlyList<InnerClass> InnerProp);
+}
+",
+                @"
+        private protected OuterClass(MappingContext context, Test.OuterClass outerClass)
+            : this(Id: outerClass.Id, InnerProp: outerClass.InnerProp.Select(context.MapFromWithContext<Test.InnerClass, InnerClass>).ToList())
+        {
+            if (context == null) throw new ArgumentNullException(nameof(context));
+            if (outerClass == null) throw new ArgumentNullException(nameof(outerClass));
+
+            context.Register(outerClass, this);
+        }
+",
+                LanguageVersion.CSharp9
+            }
+        };
     }
 }
