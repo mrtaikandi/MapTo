@@ -10,12 +10,12 @@ namespace MapTo.Sources
             using var builder = new SourceBuilder()
                 .WriteLine(GeneratedFilesHeader)
                 .WriteNullableContextOptionIf(model.Options.SupportNullableReferenceTypes)
+                .WriteUsings(model.Usings)
+                .WriteLine()
 
                 // Namespace declaration
                 .WriteLine($"namespace {model.Namespace}")
                 .WriteOpeningBracket()
-                .WriteUsings(model.Usings)
-                .WriteLine()
 
                 // Class declaration
                 .WriteLine($"partial class {model.TypeIdentifierName}")

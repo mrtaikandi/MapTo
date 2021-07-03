@@ -407,6 +407,38 @@ namespace Tests.Data.ViewModels
             _output.WriteLine(compilation.PrintSyntaxTree());
         }
 
+        [Fact]
+        public void VerifySystemNamespaceConflict()
+        {
+            // Arrange
+            var source = @"
+namespace Test
+{
+    public record SomeRecord(int Id);
+}
+
+namespace Test.Models
+{
+    using MapTo;
+
+    [MapFrom(typeof(Test.SomeRecord))]
+    public partial record SomeRecordModel(int Id);
+}
+
+namespace Test.System
+{
+    public interface IMyInterface { }
+}
+".Trim();
+
+            // Act
+            var (compilation, diagnostics) = CSharpGenerator.GetOutputCompilation(source, analyzerConfigOptions: DefaultAnalyzerOptions, languageVersion: LanguageVersion.CSharp9);
+
+            // Assert
+            diagnostics.ShouldBeSuccessful();
+            _output.WriteLine(compilation.PrintSyntaxTree());
+        }
+
         private static string MainSourceClass => @"
 using System;
 
