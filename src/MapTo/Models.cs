@@ -1,10 +1,25 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using MapTo.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace MapTo
 {
+    internal enum AccessModifier
+    {
+        Public,
+        Internal,
+        Private
+    }
+
+    internal enum NullStaticAnalysisState
+    {
+        Default,
+        Enabled,
+        Disabled
+    }
+
     internal record SourceCode(string Text, string HintName);
 
     internal record MappedProperty(
@@ -42,29 +57,25 @@ namespace MapTo
         AccessModifier GeneratedMethodsAccessModifier,
         bool GenerateXmlDocument,
         bool SupportNullableReferenceTypes,
-        bool SupportNullableStaticAnalysis,
-        LanguageVersion LanguageVersion)
+        bool SupportNullableStaticAnalysis)
     {
         internal static SourceGenerationOptions From(GeneratorExecutionContext context)
         {
-            var compilation = context.Compilation as CSharpCompilation;
-            var supportNullableReferenceTypes = false;
-            var supportNullableStaticAnalysis = false;
+            const string allowNullAttributeName = "System.Diagnostics.CodeAnalysis.AllowNullAttribute";
+            var supportNullableStaticAnalysis = context.GetBuildGlobalOption(propertyName: nameof(SupportNullableStaticAnalysis), NullStaticAnalysisState.Default);
+            var supportNullableReferenceTypes = context.Compilation.Options.NullableContextOptions is NullableContextOptions.Warnings or NullableContextOptions.Enable;
 
-            if (compilation is not  null)
-            {
-                supportNullableStaticAnalysis = compilation.LanguageVersion >= LanguageVersion.CSharp8;
-                supportNullableReferenceTypes = compilation.Options.NullableContextOptions == NullableContextOptions.Warnings || 
-                                                compilation.Options.NullableContextOptions == NullableContextOptions.Enable;
-            }
-            
             return new(
-                context.GetBuildGlobalOption(nameof(ConstructorAccessModifier), AccessModifier.Public),
-                context.GetBuildGlobalOption(nameof(GeneratedMethodsAccessModifier), AccessModifier.Public),
-                context.GetBuildGlobalOption(nameof(GenerateXmlDocument), true),
-                supportNullableReferenceTypes,
-                supportNullableStaticAnalysis,
-                compilation?.LanguageVersion ?? LanguageVersion.Default
+                ConstructorAccessModifier: context.GetBuildGlobalOption(propertyName: nameof(ConstructorAccessModifier), AccessModifier.Public),
+                GeneratedMethodsAccessModifier: context.GetBuildGlobalOption(propertyName: nameof(GeneratedMethodsAccessModifier), AccessModifier.Public),
+                GenerateXmlDocument: context.GetBuildGlobalOption(propertyName: nameof(GenerateXmlDocument), true),
+                SupportNullableReferenceTypes: supportNullableReferenceTypes,
+                SupportNullableStaticAnalysis: supportNullableStaticAnalysis switch
+                {
+                    NullStaticAnalysisState.Enabled => true,
+                    NullStaticAnalysisState.Disabled => false,
+                    _ => context.Compilation is CSharpCompilation { LanguageVersion: >= LanguageVersion.CSharp8 } cs && cs.TypeByMetadataNameExists(allowNullAttributeName)
+                }
             );
         }
 

@@ -18,7 +18,7 @@ namespace TestConsoleApp.ViewModels
 
         private class IdConverter : ITypeConverter<int, string>
         {
-            public string Convert(int source, object[] converterParameters) => $"{source:X}";
+            public string Convert(int source, object[]? converterParameters) => $"{source:X}";
         }
     }
 }

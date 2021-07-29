@@ -116,5 +116,16 @@ namespace MapTo.Extensions
 
         public static SyntaxNode? GetSyntaxNode(this ISymbol symbol) =>
             symbol.Locations.FirstOrDefault() is { } location ? location.SourceTree?.GetRoot().FindNode(location.SourceSpan) : null;
+
+        public static IEnumerable<INamedTypeSymbol> GetTypesByMetadataName(this Compilation compilation, string typeMetadataName)
+        {
+            return compilation.References
+                .Select(compilation.GetAssemblyOrModuleSymbol)
+                .OfType<IAssemblySymbol>()
+                .Select(assemblySymbol => assemblySymbol.GetTypeByMetadataName(typeMetadataName))
+                .Where(t => t != null)!;
+        }
+
+        public static bool TypeByMetadataNameExists(this Compilation compilation, string typeMetadataName) => GetTypesByMetadataName(compilation, typeMetadataName).Any();
     }
 }
