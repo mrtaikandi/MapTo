@@ -2,9 +2,9 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net5.0</TargetFramework>
+        <TargetFramework>net471</TargetFramework>
         <LangVersion>latest</LangVersion>
-        <Nullable>disable</Nullable>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
