@@ -31,11 +31,11 @@ namespace MapTo.Extensions
 
         public static string GetIdentifierName(this TypeDeclarationSyntax typeSyntax) => typeSyntax.Identifier.Text;
 
-        public static AttributeSyntax? GetAttribute(this TypeDeclarationSyntax typeDeclarationSyntax, string attributeName)
+        public static IEnumerable<AttributeSyntax> GetAttributes(this TypeDeclarationSyntax typeDeclarationSyntax, string attributeName)
         {
             return typeDeclarationSyntax.AttributeLists
                 .SelectMany(al => al.Attributes)
-                .SingleOrDefault(a =>
+                .Where(a =>
                     (a.Name as IdentifierNameSyntax)?.Identifier.ValueText == attributeName ||
                     ((a.Name as QualifiedNameSyntax)?.Right as IdentifierNameSyntax)?.Identifier.ValueText == attributeName);
         }

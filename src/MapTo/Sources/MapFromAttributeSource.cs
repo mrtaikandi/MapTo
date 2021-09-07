@@ -26,7 +26,7 @@ namespace MapTo.Sources
             }
 
             builder
-                .WriteLine("[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]")
+                .WriteLine("[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]")
                 .WriteLine($"public sealed class {AttributeName}Attribute : Attribute")
                 .WriteOpeningBracket();
 
