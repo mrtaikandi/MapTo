@@ -6,6 +6,7 @@ namespace TestConsoleApp.Data.Models
     {
         public int Id { get; set; }
 
+        public string Name { get; set; }
         public DateTimeOffset RegisteredAt { get; set; }
 
         public Profile Profile { get; set; }

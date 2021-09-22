@@ -1,5 +1,4 @@
-﻿using System;
-using static MapTo.Sources.Constants;
+﻿using static MapTo.Sources.Constants;
 
 namespace MapTo.Sources
 {
@@ -8,6 +7,7 @@ namespace MapTo.Sources
         internal const string AttributeName = "MapTypeConverter";
         internal const string AttributeClassName = AttributeName + "Attribute";
         internal const string FullyQualifiedName = RootNamespace + "." + AttributeClassName;
+        internal const string SourceTypeName = "SourceTypeName";
         internal const string ConverterPropertyName = "Converter";
         internal const string ConverterParametersPropertyName = "ConverterParameters";
 
@@ -31,7 +31,7 @@ namespace MapTo.Sources
             }
 
             builder
-                .WriteLine("[AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter, AllowMultiple = false)]")
+                .WriteLine("[AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter, AllowMultiple = true)]")
                 .WriteLine($"public sealed class {AttributeClassName} : Attribute")
                 .WriteOpeningBracket();
 
@@ -51,6 +51,18 @@ namespace MapTo.Sources
                 .WriteLine($"{ConverterPropertyName} = converter;")
                 .WriteLine($"{ConverterParametersPropertyName} = converterParameters;")
                 .WriteClosingBracket()
+                .WriteLine();
+
+            if (options.GenerateXmlDocument)
+            {
+                builder
+                    .WriteLine("/// <summary>")
+                    .WriteLine("/// Gets or sets the Type name of the object to Converter applies to.")
+                    .WriteLine("/// </summary>");
+            }
+
+            builder
+                .WriteLine($"public Type{options.NullableReferenceSyntax} {SourceTypeName} {{ get; set; }}")
                 .WriteLine();
 
             if (options.GenerateXmlDocument)

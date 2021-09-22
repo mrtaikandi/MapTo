@@ -44,7 +44,7 @@ namespace MapTo.Sources
                     // End namespace declaration
                     .WriteClosingBracket();
             
-            return new(builder.ToString(), $"{model.Namespace}.{model.TypeIdentifierName}.g.cs");
+            return new(builder.ToString(), $"{model.Namespace}.{model.SourceTypeIdentifierName}.{model.TypeIdentifierName}.g.cs");
         }
 
         private static SourceBuilder GenerateSecondaryConstructor(this SourceBuilder builder, MappingModel model)

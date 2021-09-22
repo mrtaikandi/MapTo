@@ -10,7 +10,7 @@ namespace TestConsoleApp
     {
         private static void Main(string[] args)
         {
-            //UserTest();
+            UserTest();
             CyclicReferenceTest();
              
             // EmployeeManagerTest();
@@ -78,15 +78,29 @@ namespace TestConsoleApp
                 {
                     FirstName = "John",
                     LastName = "Doe"
-                }
+                },
+                Name = "UserName"
             };
 
+            var userDto = new UserDto
+            {
+                Id = 123,
+                Name = "UserDtoName"
+            };
             var vm = user.ToUserViewModel();
+
+            var vm2 = userDto.ToUserViewModel();
+
 
             Console.WriteLine("Key: {0}", vm.Key);
             Console.WriteLine("RegisteredAt: {0}", vm.RegisteredAt);
             Console.WriteLine("FirstName: {0}", vm.Profile.FirstName);
             Console.WriteLine("LastName: {0}", vm.Profile.LastName);
+            Console.WriteLine("TestName: {0}", vm.TestName);
+            Console.WriteLine("--------------------------------------");
+            Console.WriteLine("Key: {0}", vm2.Key);
+            Console.WriteLine("RegisteredAt: {0}", vm2.RegisteredAt);
+            Console.WriteLine("TestName: {0}", vm2.TestName);
         }
     }
 }

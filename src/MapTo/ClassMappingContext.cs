@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.Linq;
 using MapTo.Extensions;
+using MapTo.Sources;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -18,7 +19,7 @@ namespace MapTo
             return typeSymbol
                 .GetAllMembers(!isInheritFromMappedBaseClass)
                 .OfType<IPropertySymbol>()
-                .Where(p => !p.HasAttribute(IgnorePropertyAttributeTypeSymbol))
+                .Where(p => !p.HasAttributeForType(IgnorePropertyAttributeTypeSymbol, sourceTypeSymbol, IgnorePropertyAttributeSource.SourceTypeName))
                 .Select(property => MapProperty(sourceTypeSymbol, sourceProperties, property))
                 .Where(mappedProperty => mappedProperty is not null)
                 .ToImmutableArray()!;

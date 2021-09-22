@@ -20,7 +20,7 @@ namespace MapTo
 
             var attributeSyntax = attributes
                 .SelectMany(a => a.Attributes)
-                .SingleOrDefault(a => a.Name is
+                .Where(a => a.Name is
                     IdentifierNameSyntax { Identifier: { ValueText: MapFromAttributeSource.AttributeName } } // For: [MapFrom]
                     or
                     QualifiedNameSyntax // For: [MapTo.MapFrom]
@@ -30,7 +30,7 @@ namespace MapTo
                     }
                 );
 
-            if (attributeSyntax is not null)
+            if (attributeSyntax is not null && attributeSyntax.Any())
             {
                 CandidateTypes.Add(typeDeclarationSyntax);
             }
