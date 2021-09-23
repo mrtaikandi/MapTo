@@ -17,7 +17,7 @@ using System;
 
 namespace MapTo
 {{
-    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
     public sealed class MapFromAttribute : Attribute
     {{
         public MapFromAttribute(Type sourceType)

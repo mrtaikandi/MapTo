@@ -23,7 +23,7 @@ using System;
 
 namespace MapTo
 {{
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter, AllowMultiple = true)]
     public sealed class MapTypeConverterAttribute : Attribute
     {{
         public MapTypeConverterAttribute(Type converter, object[] converterParameters = null)
@@ -31,6 +31,8 @@ namespace MapTo
             Converter = converter;
             ConverterParameters = converterParameters;
         }}
+
+        public Type SourceTypeName {{ get; set; }}
 
         public Type Converter {{ get; }}
 
@@ -60,7 +62,7 @@ using System;
 
 namespace MapTo
 {{
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Parameter, AllowMultiple = true)]
     public sealed class MapTypeConverterAttribute : Attribute
     {{
         public MapTypeConverterAttribute(Type converter, object[]? converterParameters = null)
@@ -68,6 +70,8 @@ namespace MapTo
             Converter = converter;
             ConverterParameters = converterParameters;
         }}
+
+        public Type? SourceTypeName {{ get; set; }}
 
         public Type Converter {{ get; }}
 

@@ -13,6 +13,7 @@ namespace MapTo.Sources
         {
             var builder = new SourceBuilder()
                 .WriteLine(GeneratedFilesHeader)
+                .WriteNullableContextOptionIf(options.SupportNullableReferenceTypes)
                 .WriteLine("using System;")
                 .WriteLine()
                 .WriteLine($"namespace {RootNamespace}")
