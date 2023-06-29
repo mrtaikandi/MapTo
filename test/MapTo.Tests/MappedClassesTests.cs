@@ -186,7 +186,7 @@ namespace SaleModel
             diagnostics.ShouldBeSuccessful();
         }
 
-        public static IEnumerable<object> SameSourceAndDestinationTypeNameData => new List<object>
+        public static IEnumerable<object[]> SameSourceAndDestinationTypeNameData => new List<object[]>
         {
             new object[]
             {
