@@ -6,6 +6,9 @@
         <LangVersion>latest</LangVersion>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+        <ImplicitUsings>true</ImplicitUsings>
+        <DefineConstants>$(DefineConstants);ROSLYN4_4_OR_GREATER</DefineConstants>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 
         <AssemblyName>MapTo</AssemblyName>
         <Description>An object to object mapping generator using Roslyn source generator.</Description>
@@ -20,6 +23,9 @@
         <RepositoryUrl>https://github.com/mrtaikandi/mapto</RepositoryUrl>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <RootNamespace>MapTo</RootNamespace>
+        <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+        <EnableNETAnalyzers>True</EnableNETAnalyzers>
+        <AnalysisLevel>none</AnalysisLevel>
     </PropertyGroup>
 
     <ItemGroup>
@@ -29,17 +35,20 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
-        <PackageReference Include="Microsoft.CodeAnalysis.Analyzers">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="All" />
+        <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="All" />
     </ItemGroup>
 
     <ItemGroup>
         <None Include="..\..\LICENSE" Pack="true" PackagePath="" Visible="false" />
         <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
         <None Include="MapTo.props" Pack="true" PackagePath="build" Visible="false" />
+        <None Include="Resources\*.cs" />
     </ItemGroup>
-    
+
+    <ItemGroup>
+        <Compile Remove="Resources\*" />
+        <EmbeddedResource Include="Resources\*.cs" />
+    </ItemGroup>
+
 </Project>

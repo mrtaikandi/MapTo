@@ -1,9 +1,6 @@
-﻿using System;
+﻿namespace MapTo.Extensions;
 
-namespace MapTo.Extensions
+internal static class EnumExtensions
 {
-    internal static class EnumExtensions
-    {
-        internal static string ToLowercaseString(this Enum member) => member.ToString().ToLower();
-    }
+    internal static string ToLowercaseString(this Enum member) => member.ToString().ToLower();
 }

@@ -1,73 +1,60 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using MapTo.Extensions;
-using MapTo.Sources;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Reflection;
+using System.Text;
+using MapTo.Configuration;
+using MapTo.Generators;
+using MapTo.Mappings;
+using Microsoft.CodeAnalysis.Text;
 
-namespace MapTo
+namespace MapTo;
+
+/// <summary>
+/// MapTo source generator.
+/// </summary>
+[Generator]
+public class MapToGenerator : IIncrementalGenerator
 {
-    /// <summary>
-    /// MapTo source generator.
-    /// </summary>
-    [Generator]
-    public class MapToGenerator : ISourceGenerator
+    /// <inheritdoc />
+    public void Initialize(IncrementalGeneratorInitializationContext initContext)
     {
-        /// <inheritdoc />
-        public void Initialize(GeneratorInitializationContext context)
+        initContext.RegisterPostInitializationOutput(RegisterResources);
+
+        var mappingOptions = initContext.AnalyzerConfigOptionsProvider
+            .Select(CodeGeneratorOptions.Create);
+
+        var mappingContext = initContext.SyntaxProvider
+            .CreateMappingContext()
+            .Combine(mappingOptions)
+            .Select(MappingContext.WithOptions);
+
+        initContext.RegisterSourceOutput(mappingContext, Execute);
+    }
+
+    private static void Execute(SourceProductionContext context, MappingContext mappingContext)
+    {
+        var mapping = TargetMapping.Create(mappingContext);
+        if (mappingContext.HasError)
         {
-            context.RegisterForSyntaxNotifications(() => new MapToSyntaxReceiver());
+            context.ReportDiagnostics(mappingContext.Diagnostics);
+            return;
         }
 
-        /// <inheritdoc />
-        public void Execute(GeneratorExecutionContext context)
+        var codeGenerator = new CodeGenerator(mappingContext.CompilerOptions, mappingContext.CodeGeneratorOptions, mapping);
+        context.GenerateSource(codeGenerator);
+    }
+
+    private static void RegisterResources(IncrementalGeneratorPostInitializationContext context)
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        var sources = assembly.GetManifestResourceNames()
+            .Where(x => x.StartsWith("MapTo.Resources."));
+
+        foreach (var source in sources)
         {
-            try
-            {
-                var options = SourceGenerationOptions.From(context);
+            using var resourceStream = assembly.GetManifestResourceStream(source) ?? throw new InvalidOperationException("Unable to get resource stream.");
+            using var streamReader = new StreamReader(resourceStream);
 
-                var compilation = context.Compilation
-                    .AddSource(ref context, MapFromAttributeSource.Generate(options))
-                    .AddSource(ref context, IgnorePropertyAttributeSource.Generate(options))
-                    .AddSource(ref context, ITypeConverterSource.Generate(options))
-                    .AddSource(ref context, MapTypeConverterAttributeSource.Generate(options))
-                    .AddSource(ref context, MapPropertyAttributeSource.Generate(options))
-                    .AddSource(ref context, MappingContextSource.Generate(options));
-
-                if (context.SyntaxReceiver is MapToSyntaxReceiver receiver && receiver.CandidateTypes.Any())
-                {
-                    AddGeneratedMappingsClasses(context, compilation, receiver.CandidateTypes, options);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-                throw;
-            }
-        }
-
-        private static void AddGeneratedMappingsClasses(GeneratorExecutionContext context, Compilation compilation, IEnumerable<TypeDeclarationSyntax> candidateTypes, SourceGenerationOptions options)
-        {
-            foreach (var typeDeclarationSyntax in candidateTypes)
-            {
-                var mappingContext = MappingContext.Create(compilation, options, typeDeclarationSyntax);
-                mappingContext.Diagnostics.ForEach(context.ReportDiagnostic);
-
-                if (mappingContext.Model is null)
-                {
-                    continue;
-                }
-
-                var (source, hintName) = typeDeclarationSyntax switch
-                {
-                    ClassDeclarationSyntax => MapClassSource.Generate(mappingContext.Model),
-                    RecordDeclarationSyntax => MapRecordSource.Generate(mappingContext.Model),
-                    _ => throw new ArgumentOutOfRangeException()
-                };
-
-                context.AddSource(hintName, source);
-            }
+            var name = Path.GetFileNameWithoutExtension(source);
+            context.AddSource($"{name}.g.cs", SourceText.From(streamReader.ReadToEnd(), Encoding.UTF8));
         }
     }
 }

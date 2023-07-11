@@ -1,0 +1,9 @@
+﻿global using System.Collections.Immutable;
+global using System.Linq;
+global using MapTo.Tests.Extensions;
+global using MapTo.Tests.Infrastructure;
+global using MapTo.Tests.SourceBuilders;
+global using Microsoft.CodeAnalysis;
+global using Microsoft.CodeAnalysis.CSharp;
+global using Shouldly;
+global using Xunit;

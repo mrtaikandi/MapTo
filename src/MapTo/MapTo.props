@@ -1,5 +1,6 @@
 <Project>
     <ItemGroup>
-        <CompilerVisibleProperty Include="MapTo_ConstructorAccessModifier" />
+        <CompilerVisibleProperty Include="MapTo_ConstructorAccessModifier"/>
+        <CompilerVisibleProperty Include="MapTo_MapMethodPrefix"/>
     </ItemGroup>
 </Project>

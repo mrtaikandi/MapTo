@@ -1,6 +1,11 @@
-﻿// ReSharper disable CheckNamespace
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
+// ReSharper disable All
+
+#pragma warning disable SA1649
+#pragma warning disable SA1402
+#pragma warning disable SA1642
+#pragma warning disable SA1623
 
 #if NETSTANDARD2_0
 namespace System.Diagnostics.CodeAnalysis
@@ -8,14 +13,17 @@ namespace System.Diagnostics.CodeAnalysis
 // These attributes already shipped with .NET Core 3.1 in System.Runtime
 #if !NETCOREAPP3_0 && !NETCOREAPP3_1 && !NETSTANDARD2_1
     /// <summary>Specifies that null is allowed as an input even if the corresponding type disallows it.</summary>
+    [ExcludeFromCodeCoverage]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property)]
     internal sealed class AllowNullAttribute : Attribute { }
 
     /// <summary>Specifies that null is disallowed as an input even if the corresponding type allows it.</summary>
+    [ExcludeFromCodeCoverage]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property)]
     internal sealed class DisallowNullAttribute : Attribute { }
 
     /// <summary>Specifies that an output may be null even if the corresponding type disallows it.</summary>
+    [ExcludeFromCodeCoverage]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue)]
     internal sealed class MaybeNullAttribute : Attribute { }
 
@@ -23,6 +31,7 @@ namespace System.Diagnostics.CodeAnalysis
     /// Specifies that an output will not be null even if the corresponding type allows it. Specifies that an input
     /// argument was not null when the call returns.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue)]
     internal sealed class NotNullAttribute : Attribute { }
 
@@ -30,6 +39,7 @@ namespace System.Diagnostics.CodeAnalysis
     /// Specifies that when a method returns <see cref="ReturnValue" />, the parameter may be null even if the
     /// corresponding type disallows it.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     [AttributeUsage(AttributeTargets.Parameter)]
     internal sealed class MaybeNullWhenAttribute : Attribute
     {
@@ -51,6 +61,7 @@ namespace System.Diagnostics.CodeAnalysis
     /// corresponding type allows it.
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter)]
+    [ExcludeFromCodeCoverage]
     internal sealed class NotNullWhenAttribute : Attribute
     {
         /// <summary>Initializes the attribute with the specified return value condition.</summary>
@@ -67,6 +78,7 @@ namespace System.Diagnostics.CodeAnalysis
     }
 
     /// <summary>Specifies that the output will be non-null if the named parameter is non-null.</summary>
+    [ExcludeFromCodeCoverage]
     [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue, AllowMultiple = true)]
     internal sealed class NotNullIfNotNullAttribute : Attribute
     {
@@ -84,10 +96,12 @@ namespace System.Diagnostics.CodeAnalysis
     }
 
     /// <summary>Applied to a method that will never return under any circumstance.</summary>
+    [ExcludeFromCodeCoverage]
     [AttributeUsage(AttributeTargets.Method, Inherited = false)]
     internal sealed class DoesNotReturnAttribute : Attribute { }
 
     /// <summary>Specifies that the method will not return if the associated Boolean parameter is passed the specified value.</summary>
+    [ExcludeFromCodeCoverage]
     [AttributeUsage(AttributeTargets.Parameter)]
     internal sealed class DoesNotReturnIfAttribute : Attribute
     {
@@ -110,6 +124,7 @@ namespace System.Diagnostics.CodeAnalysis
     /// Specifies that the method or property will ensure that the listed field and property members have not-null
     /// values.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
     internal sealed class MemberNotNullAttribute : Attribute
     {
@@ -139,6 +154,7 @@ namespace System.Diagnostics.CodeAnalysis
     /// Specifies that the method or property will ensure that the listed field and property members have not-null
     /// values when returning with the specified return value condition.
     /// </summary>
+    [ExcludeFromCodeCoverage]
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
     internal sealed class MemberNotNullWhenAttribute : Attribute
     {
