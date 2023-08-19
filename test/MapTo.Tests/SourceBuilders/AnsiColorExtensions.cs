@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using DiffPlex.DiffBuilder.Model;
+using Microsoft.CodeAnalysis.Text;
 
 namespace MapTo.Tests.SourceBuilders;
 
@@ -19,7 +20,7 @@ internal static class AnsiColorExtensions
     private const string StrikethroughFormat = "\u001b[9m";
     private const string SuccessConsoleColor = $"{BeginForegroundColor}16;147;8m";
     private const string UnderlineFormat = "\u001b[4m";
-    private const string WarningConsoleColor = $"{BeginForegroundColor}255;255;0m";
+    private const string WarningConsoleColor = $"{BeginForegroundColor}220;94;38m";
 
     internal static StringBuilder Append(this StringBuilder builder, string value, AnsiColor color) => builder
         .Append(value)
@@ -32,11 +33,17 @@ internal static class AnsiColorExtensions
         ? builder.AppendError(value)
         : builder.Append(value);
 
-    internal static StringBuilder AppendErrorLine(this StringBuilder builder, string value, FileLinePositionSpan location) => builder
+    internal static StringBuilder AppendErrorLine(this StringBuilder builder, string value, FileLinePositionSpan position) =>
+        builder.AppendErrorLine(value, position.StartLinePosition.Character, position.EndLinePosition.Character);
+
+    internal static StringBuilder AppendErrorLine(this StringBuilder builder, string value, LinePositionSpan position) =>
+        builder.AppendErrorLine(value, position.Start.Character, position.End.Character);
+
+    internal static StringBuilder AppendErrorLine(this StringBuilder builder, string value, int startPosition, int endPosition) => builder
         .Append(value)
         .ApplyFormat(
-            builder.Length - value.Length + location.StartLinePosition.Character,
-            builder.Length - value.Length + location.EndLinePosition.Character,
+            builder.Length - value.Length + startPosition,
+            builder.Length - value.Length + endPosition,
             AnsiColor.Error)
         .AppendLine();
 
@@ -54,6 +61,16 @@ internal static class AnsiColorExtensions
         ChangeType.Inserted => builder.Append("E ", AnsiColor.Success).AppendLine(diff.Text),
         _ => builder.Append("  ").AppendLine(diff.Text)
     };
+
+    internal static StringBuilder AppendLines(this StringBuilder builder, IEnumerable<string> values)
+    {
+        foreach (var value in values)
+        {
+            builder.AppendLine(value);
+        }
+
+        return builder;
+    }
 
     private static StringBuilder ApplyFormat(
         this StringBuilder builder,

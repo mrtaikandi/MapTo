@@ -10,7 +10,10 @@ internal readonly record struct TargetMapping(
     SourceMapping Source,
     ConstructorMapping Constructor,
     ImmutableArray<PropertyMapping> Properties,
-    Location Location)
+    Location Location,
+    ImmutableArray<string> UsingDirectives);
+
+internal static class TargetMappingFactory
 {
     public static TargetMapping Create(MappingContext context)
     {
@@ -19,45 +22,17 @@ internal readonly record struct TargetMapping(
         var properties = context.GetMappedProperties();
 
         var mapping = new TargetMapping(
-            targetTypeSyntax.GetAccessModifier(),
-            targetTypeSyntax.Identifier.Text,
-            NamespaceMapping.Create(targetTypeSymbol),
-            targetTypeSyntax.IsPartial(),
-            SourceMapping.Create(sourceTypeSymbol),
-            ConstructorMapping.Create(context, properties),
-            properties,
-            targetTypeSyntax.Identifier.GetLocation());
+            Modifier: targetTypeSyntax.GetAccessModifier(),
+            Name: targetTypeSyntax.Identifier.Text,
+            Namespace: NamespaceMapping.Create(targetTypeSymbol),
+            IsPartial: targetTypeSyntax.IsPartial(),
+            Source: SourceMapping.Create(sourceTypeSymbol),
+            Constructor: ConstructorMapping.Create(context, properties),
+            Properties: properties,
+            Location: targetTypeSyntax.Identifier.GetLocation(),
+            UsingDirectives: properties.SelectMany(p => p.UsingDirectives).Distinct().ToImmutableArray());
 
-        return !Validate(context, mapping) ? default : mapping;
-    }
-
-    private static bool Validate(MappingContext context, TargetMapping mapping)
-    {
-        if (mapping is { IsPartial: false, Constructor.IsGenerated: true })
-        {
-            context.ReportDiagnostic(DiagnosticsFactory.MissingPartialKeywordOnTargetClassError(mapping.Location, mapping.Name));
-            return false;
-        }
-
-        return true;
-    }
-}
-
-internal static class TypeMappingExtensions
-{
-    internal static ImmutableArray<PropertyMapping> GetMappedProperties(this MappingContext context)
-    {
-        var (_, targetTypeSymbol, _, sourceTypeSymbol, wellKnownTypes, _, _) = context;
-        var isInheritFromMappedBaseClass = context.IsTargetTypeInheritFromMappedBaseClass();
-
-        return targetTypeSymbol
-            .GetAllMembers(!isInheritFromMappedBaseClass)
-            .OfType<IPropertySymbol>()
-            .Where(p => !p.HasAttribute(wellKnownTypes.IgnorePropertyAttributeTypeSymbol))
-            .Select(p => PropertyMapping.Create(context, p, sourceTypeSymbol))
-            .Where(p => p is not null)
-            .Select(p => p!.Value)
-            .ToImmutableArray();
+        return mapping.IsValid(context) ? mapping : default;
     }
 
     internal static string GetReturnType(this TargetMapping mapping) =>
@@ -66,10 +41,25 @@ internal static class TypeMappingExtensions
     internal static string GetSourceType(this TargetMapping mapping) =>
         mapping.UseFullyQualifiedName() ? mapping.Source.ToFullyQualifiedName() : mapping.Source.Name;
 
-    internal static string ToFullyQualifiedName(this TargetMapping mapping) =>
+    private static ImmutableArray<PropertyMapping> GetMappedProperties(this MappingContext context)
+    {
+        var (_, targetTypeSymbol, _, sourceTypeSymbol, wellKnownTypes, _, _) = context;
+        var isInheritFromMappedBaseClass = context.IsTargetTypeInheritFromMappedBaseClass();
+
+        return targetTypeSymbol
+            .GetAllMembers(!isInheritFromMappedBaseClass)
+            .OfType<IPropertySymbol>()
+            .Where(p => !p.HasAttribute(wellKnownTypes.IgnorePropertyAttributeTypeSymbol))
+            .Select(p => PropertyMappingFactory.Create(context, p, sourceTypeSymbol))
+            .Where(p => p is not null)
+            .Select(p => p!.Value)
+            .ToImmutableArray();
+    }
+
+    private static string ToFullyQualifiedName(this TargetMapping mapping) =>
         mapping.Namespace.IsGlobalNamespace ? mapping.Name : $"global::{mapping.Namespace}.{mapping.Name}";
 
-    internal static bool UseFullyQualifiedName(this TargetMapping mapping) =>
+    private static bool UseFullyQualifiedName(this TargetMapping mapping) =>
         mapping.Namespace != mapping.Source.Namespace;
 
     private static bool IsTargetTypeInheritFromMappedBaseClass(this MappingContext context)
@@ -78,5 +68,16 @@ internal static class TypeMappingExtensions
         return typeSyntax.BaseList is not null && typeSyntax.BaseList.Types
             .Select(t => semanticModel.GetTypeInfo(t.Type).Type)
             .Any(t => t?.GetAttribute(wellKnownTypes.MapFromAttributeTypeSymbol) is not null);
+    }
+
+    private static bool IsValid(this TargetMapping mapping, MappingContext context)
+    {
+        if (mapping is { IsPartial: false, Constructor.IsGenerated: true })
+        {
+            context.ReportDiagnostic(DiagnosticsFactory.MissingPartialKeywordOnTargetClassError(mapping.Location, mapping.Name));
+            return false;
+        }
+
+        return true;
     }
 }

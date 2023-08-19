@@ -2,7 +2,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using DiffPlex.DiffBuilder;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Xunit.Sdk;
 
 namespace MapTo.Tests.Extensions;
 
@@ -16,7 +16,6 @@ internal static partial class ShouldlyExtensions
         var errors = diagnostics
             .Where(d => (ignoreDiagnosticsIds is null || ignoreDiagnosticsIds.All(i => !d.Id.StartsWith(i))) &&
                         d.Severity is DiagnosticSeverity.Warning or DiagnosticSeverity.Error)
-            .Select(c => (c.Severity, Location: c.Location.GetLineSpan(), Message: c.GetMessage()))
             .ToArray();
 
         if (!errors.Any())
@@ -24,18 +23,40 @@ internal static partial class ShouldlyExtensions
             return;
         }
 
-        var builder = new StringBuilder();
-        builder.AppendLine("Failed");
-
-        foreach (var (severity, location, message) in errors)
+        static string GetLocation(Diagnostic e)
         {
-            builder.Append($"- {severity}: {location} - {message}").AppendLine();
+            var l = e.Location.GetLineSpan();
+            return $"{l.Path}: ({l.StartLinePosition.Line + 1}, {l.StartLinePosition.Character}) - ({l.EndLinePosition.Line + 1}, {l.EndLinePosition.Character})";
+        }
+
+        var builder = new StringBuilder();
+        builder.AppendLine();
+        builder.AppendLine();
+
+        foreach (var error in errors)
+        {
+            switch (error.Severity)
+            {
+                case DiagnosticSeverity.Info:
+                    builder.Append("- ❕ ").Append(GetLocation(error));
+                    break;
+
+                case DiagnosticSeverity.Warning:
+                    builder.Append("- ⚠️ ").Append(GetLocation(error), AnsiColor.Warning);
+                    break;
+
+                default:
+                    builder.Append("- ❌ ").Append(GetLocation(error), AnsiColor.Error);
+                    break;
+            }
+
+            builder.Append($" - {error.Id}: {error.GetMessage()}").AppendLine();
         }
 
         if (compilation is not null)
         {
             builder.AppendLine("Generated Sources:");
-            builder.AppendLine(compilation.PrintSyntaxTree(errors));
+            builder.AppendLine(compilation.PrintSyntaxTree(errors, excludeSuccessful: true));
         }
 
         Assert.Fail(builder.ToString());
@@ -56,32 +77,47 @@ internal static partial class ShouldlyExtensions
 #pragma warning restore SA1118
     }
 
-    internal static void ShouldContainSource(this IEnumerable<SyntaxTree> syntaxTree, string typeName, string expectedSource, string? customMessage = null)
+    internal static void ShouldContainSourceFile(this Compilation compilation, string fileName, [StringSyntax("csharp")] string expectedSource)
     {
-        var syntax = syntaxTree
-            .Select(s => s.ToString().Trim())
-            .SingleOrDefault(s => s.Contains(typeName));
+        var syntaxTrees = compilation.SyntaxTrees.Where(s => s.FilePath.EndsWith(fileName)).ToList();
+        if (syntaxTrees.Count != 1)
+        {
+            var builder = new StringBuilder();
+            builder
+                .AppendErrorLine($"Expected to find exactly one syntax tree with the '{fileName}' file path but found {syntaxTrees.Count}.", 51, 51 + fileName.Length)
+                .AppendLine("Syntax Trees:")
+                .AppendLines(compilation.SyntaxTrees.Select(s => $"- {s.FilePath}"));
 
-        syntax.ShouldNotBeNullOrWhiteSpace();
-        syntax.ShouldBe(expectedSource, customMessage);
+            Assert.Fail(builder.ToString());
+        }
+
+        var syntax = syntaxTrees.Single().ToString().Trim();
+        Verify(syntax, expectedSource, $"Expected to find the following source in the '{fileName}' file path but found a difference.", Assert.Equal);
     }
 
-    internal static void ShouldNotBeSuccessful(this ImmutableArray<Diagnostic> diagnostics, Diagnostic expectedError)
+    internal static void ShouldNotBeSuccessful(this ImmutableArray<Diagnostic> diagnostics, Diagnostic expectedError, IEnumerable<string>? ignoreDiagnosticsIds = null)
     {
         var actualDiagnostics = diagnostics.SingleOrDefault(d => d.Id == expectedError.Id);
         var compilationDiagnostics = actualDiagnostics == null ? diagnostics : diagnostics.Except(new[] { actualDiagnostics });
 
-        compilationDiagnostics.ShouldBeSuccessful();
+        compilationDiagnostics.ShouldBeSuccessful(ignoreDiagnosticsIds: ignoreDiagnosticsIds);
 
-        Assert.NotNull(actualDiagnostics);
-        Assert.Equal(expectedError.Id, actualDiagnostics?.Id);
-        Assert.Equal(expectedError.Descriptor.Id, actualDiagnostics?.Descriptor.Id);
-        Assert.Equal(expectedError.Descriptor.Description, actualDiagnostics?.Descriptor.Description);
-        Assert.Equal(expectedError.Descriptor.Title, actualDiagnostics?.Descriptor.Title);
+        if (actualDiagnostics is null)
+        {
+            throw new XunitException($"Expected to find a diagnostic with the id '{expectedError.Id}' but found none. Expected diagnostic:" +
+                                     $"{Environment.NewLine}{Environment.NewLine}" +
+                                     $"[{expectedError.Severity}] {expectedError.Location.GetLineSpan()} - {expectedError.Id}: {expectedError.GetMessage()}" +
+                                     $"{Environment.NewLine}");
+        }
+
+        Assert.Equal(expectedError.Id, actualDiagnostics.Id);
+        Assert.Equal(expectedError.Descriptor.Id, actualDiagnostics.Descriptor.Id);
+        Assert.Equal(expectedError.Descriptor.Description, actualDiagnostics.Descriptor.Description);
+        Assert.Equal(expectedError.Descriptor.Title, actualDiagnostics.Descriptor.Title);
 
         if (expectedError.Location != Location.None)
         {
-            Assert.Equal(expectedError.Location.ToDisplayString(), actualDiagnostics?.Location.ToDisplayString());
+            Assert.Equal(expectedError.Location.ToDisplayString(), actualDiagnostics.Location.ToDisplayString());
         }
     }
 

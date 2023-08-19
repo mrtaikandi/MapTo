@@ -1,11 +1,10 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using MapTo.Configuration;
 using MapTo.Extensions;
 using MapTo.Generators;
 
 namespace MapTo.Tests.SourceBuilders;
 
-internal record TestPropertyBuilder(string Type, string Name, AccessModifier AccessModifier, PropertyType PropertyType, IEnumerable<string>? Attributes)
+internal record TestPropertyBuilder(string Type, string Name, AccessModifier AccessModifier, PropertyType PropertyType, IEnumerable<string>? Attributes, string? DefaultValue)
     : ITestPropertyBuilder
 {
     /// <inheritdoc />
@@ -34,7 +33,8 @@ internal record TestPropertyBuilder(string Type, string Name, AccessModifier Acc
                 .Write(" get;")
                 .WriteIf(initProperty, " init;")
                 .WriteIf(!readOnly && !initProperty, " set;")
-                .WriteLine(" }");
+                .WriteLine(" }")
+                .WriteIf(DefaultValue is not null, $" = {DefaultValue};");
         }
         else
         {
@@ -82,8 +82,18 @@ internal static class PropertyBuilderExtensions
         string name,
         AccessModifier accessModifier = AccessModifier.Public,
         PropertyType propertyType = PropertyType.AutoProperty,
-        [StringSyntax("csharp")] params string[] attributes) =>
-        builder.WithProperty(typeof(T).GetFriendlyName(), name, accessModifier, propertyType, attributes);
+        [StringSyntax("csharp")] string? defaultValue = null,
+        [StringSyntax("csharp")] string? attribute = null) =>
+        builder.WithProperty<T>(name, accessModifier, propertyType, attribute is null ? null : new[] { attribute }, defaultValue);
+
+    internal static ITestClassBuilder WithProperty<T>(
+        this ITestClassBuilder builder,
+        string name,
+        AccessModifier accessModifier,
+        PropertyType propertyType,
+        IEnumerable<string>? attributes,
+        [StringSyntax("csharp")] string? defaultValue = null) =>
+        builder.WithProperty(typeof(T).GetFriendlyName(), name, accessModifier, propertyType, defaultValue, attributes);
 
     internal static ITestClassBuilder WithProperty(
         this ITestClassBuilder builder,
@@ -91,8 +101,9 @@ internal static class PropertyBuilderExtensions
         string name,
         AccessModifier accessModifier = AccessModifier.Public,
         PropertyType propertyType = PropertyType.AutoProperty,
-        [StringSyntax("csharp")] params string[] attributes) =>
-        WithProperty(builder, new TestPropertyBuilder(type, name, accessModifier, propertyType, attributes));
+        [StringSyntax("csharp")] string? defaultValue = null,
+        [StringSyntax("csharp")] IEnumerable<string>? attributes = null) =>
+        WithProperty(builder, new TestPropertyBuilder(type, name, accessModifier, propertyType, attributes, defaultValue));
 
     internal static ITestClassBuilder WithProperty(this ITestClassBuilder builder, TestPropertyBuilder propertyBuilder)
     {

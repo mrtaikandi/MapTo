@@ -31,7 +31,7 @@ public class MapToGenerator : IIncrementalGenerator
 
     private static void Execute(SourceProductionContext context, MappingContext mappingContext)
     {
-        var mapping = TargetMapping.Create(mappingContext);
+        var mapping = TargetMappingFactory.Create(mappingContext);
         if (mappingContext.HasError)
         {
             context.ReportDiagnostics(mappingContext.Diagnostics);

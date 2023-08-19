@@ -1,7 +1,33 @@
-﻿namespace MapTo.Extensions;
+﻿using System.Diagnostics;
+
+namespace MapTo.Extensions;
 
 internal static class StringExtensions
 {
     public static string ToParameterNameCasing(this string value) =>
         string.IsNullOrWhiteSpace(value) ? value : $"{char.ToLower(value[0])}{value.Substring(1)}";
+
+    public static string ToSourceCodeString(this object? value) => value switch
+    {
+        null => "null",
+        string strValue => $"\"{strValue}\"",
+        char charValue => $"'{charValue}'",
+        _ => value.ToString()
+    };
+
+    public static string ToSourceCodeString(this TypedConstant constant)
+    {
+        if (constant.IsNull)
+        {
+            return "null";
+        }
+
+        if (constant.Kind == TypedConstantKind.Array)
+        {
+            Debug.Assert(constant.Type != null, "constant.Type != null");
+            return $"new {constant.Type!.ToDisplayString()} {{ {string.Join(", ", constant.Values.Select(v => v.ToCSharpString()))} }}";
+        }
+
+        return constant.ToCSharpString();
+    }
 }

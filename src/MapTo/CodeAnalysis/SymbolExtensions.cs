@@ -34,16 +34,6 @@ internal static class SymbolExtensions
     public static bool HasAttribute(this ISymbol? symbol, ITypeSymbol attributeSymbol) =>
         symbol?.GetAttributes().Any(a => a.AttributeClass?.Equals(attributeSymbol, SymbolEqualityComparer.Default) == true) == true;
 
-    public static bool HasCompatibleTypes(this Compilation compilation, ISymbol source, ISymbol destination) =>
-        source.TryGetTypeSymbol(out var sourceType) && destination.TryGetTypeSymbol(out var destinationType) &&
-        (SymbolEqualityComparer.Default.Equals(destinationType, sourceType) || compilation.HasImplicitConversion(sourceType, destinationType));
-
-    public static bool IsArray(this Compilation compilation, ITypeSymbol typeSymbol) => typeSymbol is IArrayTypeSymbol;
-
-    public static bool IsGenericEnumerable(this Compilation compilation, ITypeSymbol typeSymbol) =>
-        typeSymbol is INamedTypeSymbol { IsGenericType: true } &&
-        compilation.GetSpecialType(SpecialType.System_Collections_Generic_IEnumerable_T).Equals(typeSymbol.OriginalDefinition, SymbolEqualityComparer.Default);
-
     public static bool IsPrimitiveType(this ITypeSymbol type) => type.SpecialType is
         SpecialType.System_String or
         SpecialType.System_Boolean or
@@ -59,6 +49,9 @@ internal static class SymbolExtensions
         SpecialType.System_Double or
         SpecialType.System_Char or
         SpecialType.System_Object;
+
+    public static bool IsArrayOf(this ITypeSymbol type, SpecialType elementType) =>
+        type is IArrayTypeSymbol arrayTypeSymbol && arrayTypeSymbol.ElementType.SpecialType == elementType;
 
     public static bool TryGetTypeSymbol(this ISymbol symbol, [NotNullWhen(true)] out ITypeSymbol? typeSymbol)
     {

@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using MapTo.Configuration;
 using MapTo.Extensions;
 using MapTo.Generators;
 
@@ -68,7 +67,7 @@ internal static class MethodBuilderExtensions
         this ITestClassBuilder builder,
         [StringSyntax("csharp")] string returnType,
         string name,
-        [StringSyntax("csharp")] string body,
+        [StringSyntax("csharp")] string body = "",
         AccessModifier accessModifier = AccessModifier.Public,
         bool isAsync = false,
         bool isPartial = false,

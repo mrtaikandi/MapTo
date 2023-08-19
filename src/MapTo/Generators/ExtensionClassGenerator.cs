@@ -5,7 +5,7 @@ using MapTo.Mappings;
 namespace MapTo.Generators;
 
 internal readonly record struct ExtensionClassGenerator(
-    CodeGeneratorOptions Configuration,
+    CodeGeneratorOptions GeneratorOptions,
     CompilerOptions CompilerOptions,
     TargetMapping TargetMapping) : ICodeGenerator
 {
@@ -14,10 +14,10 @@ internal readonly record struct ExtensionClassGenerator(
     {
         writer
             .WriteCodeGeneratorAttribute()
-            .WriteExtensionClassDefinition(TargetMapping)
+            .WriteExtensionClassDefinition(TargetMapping, GeneratorOptions)
             .WriteOpeningBracket() // Class opening bracket
             .WriteExtensionMethodAttribute(TargetMapping, CompilerOptions)
-            .WriteExtensionMethodDefinition(TargetMapping, Configuration, CompilerOptions)
+            .WriteExtensionMethodDefinition(TargetMapping, GeneratorOptions, CompilerOptions)
             .WriteOpeningBracket() // Method opening bracket
             .WriteExtensionMethodBody(TargetMapping)
             .WriteClosingBracket() // Method closing bracket
@@ -37,8 +37,8 @@ internal static class ExtensionClassGeneratorExtensions
             .WriteClosingBracket();
     }
 
-    internal static CodeWriter WriteExtensionClassDefinition(this CodeWriter writer, TargetMapping mapping) =>
-        writer.WriteLine($"public static class {mapping.Source.Name}MapToExtensions");
+    internal static CodeWriter WriteExtensionClassDefinition(this CodeWriter writer, TargetMapping mapping, CodeGeneratorOptions options) =>
+        writer.WriteLine($"public static class {mapping.Source.Name}{options.MapExtensionClassSuffix}");
 
     internal static CodeWriter WriteExtensionMethodAttribute(this CodeWriter writer, TargetMapping mapping, CompilerOptions options) =>
         options.NullableStaticAnalysis || options.NullableReferenceTypes ? writer.WriteReturnNotNullIfNotNullAttribute(mapping.Source.Name.ToParameterNameCasing()) : writer;
@@ -87,7 +87,7 @@ internal static class ExtensionClassGeneratorExtensions
 
         return writer
             .Write($"new {mapping.Name}(")
-            .WriteJoin(", ", properties.Select(p => $"{parameterName}.{p.Name}"))
+            .WriteJoin(", ", properties.Select(p => p.GetMappedProperty(parameterName)))
             .WriteLine(")");
     }
 
@@ -99,7 +99,25 @@ internal static class ExtensionClassGeneratorExtensions
 
         return writer
             .WriteOpeningBracket()
-            .WriteLineJoin(",", properties.Select(p => $"{p.Name} = {parameterName}.{p.Name}"))
+            .WriteLineJoin(",", properties.Select(p => $"{p.Name} = {p.GetMappedProperty(parameterName)}"))
             .WriteClosingBracket(false).WriteLine(";");
+    }
+
+    private static string GetMappedProperty(this PropertyMapping property, string parameterName)
+    {
+        if (!property.HasTypeConverter)
+        {
+            return $"{parameterName}.{property.Name}";
+        }
+
+        var typeConverter = property.TypeConverter;
+        if (typeConverter.IsEnumerable)
+        {
+            return $"{parameterName}.{property.Name}.Select({typeConverter.ContainingType}.{typeConverter.MethodName}).ToList()";
+        }
+
+        return typeConverter.HasParameter
+            ? $"{typeConverter.ContainingType}.{typeConverter.MethodName}({parameterName}.{property.Name}, {typeConverter.Parameter})"
+            : $"{typeConverter.ContainingType}.{typeConverter.MethodName}({parameterName}.{property.Name})";
     }
 }

@@ -1,17 +1,20 @@
-﻿using Xunit.Abstractions;
-
-namespace MapTo.Tests.Extensions;
+﻿namespace MapTo.Tests.Extensions;
 
 internal static class DumpExtensions
 {
     internal static void Dump(this ITestSourceBuilder builder, ITestOutputHelper output, ITestFileBuilder file) =>
         Dump(output, builder.GetSourceContent(file));
 
-    internal static void Dump<T>(this T? value, ITestOutputHelper output) =>
+    internal static void Dump<T>(this T? value, ITestOutputHelper? output) =>
         Dump(output, value);
 
-    internal static void Dump<T>(this ITestOutputHelper output, T? value)
+    internal static void Dump<T>(this ITestOutputHelper? output, T? value)
     {
+        if (output is null)
+        {
+            return;
+        }
+
         output.WriteLine("------------------ DUMP ------------------");
         output.WriteLine(value switch
         {

@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using MapTo.Configuration;
 using MapTo.Extensions;
 using MapTo.Generators;
 
@@ -81,6 +80,12 @@ internal static class ClassBuilderExtensions
     public static ITestClassBuilder WithConstructor(this ITestClassBuilder builder, [StringSyntax("csharp")] string constructor)
     {
         builder.AddMember(new SimpleCodeBuilder(1, (writer, _) => writer.WriteLines(constructor.Split(writer.NewLine))));
+        return builder;
+    }
+
+    public static ITestClassBuilder WithBody(this ITestClassBuilder builder, [StringSyntax("csharp")] string body)
+    {
+        builder.AddMember(new SimpleCodeBuilder(1, (writer, _) => writer.WriteLines(body.Split(writer.NewLine))));
         return builder;
     }
 }

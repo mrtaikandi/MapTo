@@ -1,8 +1,4 @@
-﻿using MapTo.Configuration;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Xunit.Abstractions;
-
-namespace MapTo.Tests;
+﻿namespace MapTo.Tests;
 
 public class MapFromTests
 {
@@ -66,26 +62,27 @@ public class MapFromTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldBe($$"""
-            {{ScenarioBuilder.GeneratedCodeAttribute}}
-            public static class SourceClassMapToExtensions
-            {
-                [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
-                public static global::ExternalLibMap.TargetClass? MapToTargetClass(this global::ExternalLib.SourceClass? sourceClass)
-                {
-                    if (ReferenceEquals(sourceClass, null))
-                    {
-                        return null;
-                    }
-
-                    return new TargetClass
-                    {
-                        Id = sourceClass.Id,
-                        Name = sourceClass.Name
-                    };
-                }
-            }
-            """);
+        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+            .ShouldBe($$"""
+                        {{ScenarioBuilder.GeneratedCodeAttribute}}
+                        public static class SourceClassMapToExtensions
+                        {
+                            [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
+                            public static global::ExternalLibMap.TargetClass? MapToTargetClass(this global::ExternalLib.SourceClass? sourceClass)
+                            {
+                                if (ReferenceEquals(sourceClass, null))
+                                {
+                                    return null;
+                                }
+                        
+                                return new TargetClass
+                                {
+                                    Id = sourceClass.Id,
+                                    Name = sourceClass.Name
+                                };
+                            }
+                        }
+                        """);
     }
 
     [Theory]
@@ -118,24 +115,24 @@ public class MapFromTests
         diagnostics.ShouldBeSuccessful();
         compilation.GetClassDeclaration("SourceClassMapToExtensions")
             .ShouldBe($$"""
-                 {{ScenarioBuilder.GeneratedCodeAttribute}}
-                 public static class SourceClassMapToExtensions
-                 {
-                     [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
-                     public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
-                     {
-                         if (ReferenceEquals(sourceClass, null))
-                         {
-                             return null;
-                         }
-
-                         return new TargetClass(sourceClass.Id)
-                         {
-                             Name = sourceClass.Name
-                         };
-                     }
-                 }
-                 """);
+                        {{ScenarioBuilder.GeneratedCodeAttribute}}
+                        public static class SourceClassMapToExtensions
+                        {
+                            [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
+                            public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
+                            {
+                                if (ReferenceEquals(sourceClass, null))
+                                {
+                                    return null;
+                                }
+                        
+                                return new TargetClass(sourceClass.Id)
+                                {
+                                    Name = sourceClass.Name
+                                };
+                            }
+                        }
+                        """);
     }
 
     [Fact]
@@ -218,25 +215,25 @@ public class MapFromTests
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldBe($$"""
-            {{ScenarioBuilder.GeneratedCodeAttribute}}
-            public static class SourceClassMapToExtensions
-            {
-                [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
-                public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
-                {
-                    if (ReferenceEquals(sourceClass, null))
-                    {
-                        return null;
-                    }
-
-                    return new TargetClass
-                    {
-                        Id = sourceClass.Id,
-                        Name = sourceClass.Name
-                    };
-                }
-            }
-            """);
+                                                                                 {{ScenarioBuilder.GeneratedCodeAttribute}}
+                                                                                 public static class SourceClassMapToExtensions
+                                                                                 {
+                                                                                     [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
+                                                                                     public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
+                                                                                     {
+                                                                                         if (ReferenceEquals(sourceClass, null))
+                                                                                         {
+                                                                                             return null;
+                                                                                         }
+                                                                                 
+                                                                                         return new TargetClass
+                                                                                         {
+                                                                                             Id = sourceClass.Id,
+                                                                                             Name = sourceClass.Name
+                                                                                         };
+                                                                                     }
+                                                                                 }
+                                                                                 """);
     }
 
     [Fact]
@@ -250,11 +247,11 @@ public class MapFromTests
             .WithProperty<int?>("Id", propertyType: PropertyType.ReadOnly | PropertyType.AutoProperty)
             .WithProperty<string>("Name")
             .WithConstructor("""
-                public TargetClass(int id)
-                {                    
-                    Id = id;
-                }
-                """);
+                             public TargetClass(int id)
+                             {
+                                 Id = id;
+                             }
+                             """);
 
         // Act
         var (compilation, diagnostics) = builder.Compile();
@@ -263,11 +260,11 @@ public class MapFromTests
         diagnostics.ShouldBeSuccessful();
         compilation.GetClassDeclaration("SourceClassMapToExtensions")
             .ShouldContain("""
-                return new TargetClass(sourceClass.Id)
-                {                    
-                    Name = sourceClass.Name
-                };
-                """);
+                           return new TargetClass(sourceClass.Id)
+                           {
+                               Name = sourceClass.Name
+                           };
+                           """);
     }
 
     [Fact]
@@ -288,11 +285,11 @@ public class MapFromTests
         compilation.GetGeneratedFileSyntaxTree("TargetClass").GetClassDeclaration("TargetClass")?.DescendantNodes()
             .OfType<ConstructorDeclarationSyntax>().Single().ToString()
             .ShouldBe("""
-                public TargetClass(int? id)
-                    {
-                        Id = id;
-                    }
-                """);
+                      public TargetClass(int? id)
+                          {
+                              Id = id;
+                          }
+                      """);
     }
 
     [Fact]
@@ -317,5 +314,33 @@ public class MapFromTests
             targetClassDeclaration.Identifier.ValueText);
 
         diagnostics.ShouldNotBeSuccessful(expectedError);
+    }
+
+    [Fact]
+    public void When_MappedPropertyTypeIsAlsoMapped_Should_UseMapToExtensionOnNestedPropertyType()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+
+        var nestedSourceFile = builder.AddFile();
+        nestedSourceFile.AddClass(AccessModifier.Public, "NestedSourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        nestedSourceFile.AddClass(AccessModifier.Public, "NestedTargetClass", partial: true, attributes: "[MapFrom(typeof(NestedSourceClass))]")
+            .WithProperty<int>("Id", propertyType: PropertyType.ReadOnly | PropertyType.AutoProperty)
+            .WithProperty<string>("Name");
+
+        var sourceFile = builder.AddFile();
+        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Prop1").WithProperty("NestedSourceClass", "Prop2");
+        sourceFile.AddClass(AccessModifier.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+            .WithProperty<int>("Prop1")
+            .WithProperty("NestedTargetClass", "Prop2");
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+        compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.TargetClass.g.cs")
+            .GetClassDeclaration("SourceClassMapToExtensions")
+            .ShouldContain("Prop2 = MapTo.Tests.NestedSourceClassMapToExtensions.MapToNestedTargetClass(sourceClass.Prop2)");
     }
 }

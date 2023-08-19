@@ -1,6 +1,4 @@
-﻿using MapTo.Configuration;
-
-namespace MapTo.Tests.SourceBuilders;
+﻿namespace MapTo.Tests;
 
 internal static class ScenarioBuilder
 {
@@ -63,6 +61,77 @@ internal static class ScenarioBuilder
         return builder;
     }
 
+    public static ITestSourceBuilder BuildEmployeeManagerModels(LanguageVersion version = LanguageVersion.CSharp10)
+    {
+        var globalUsings = new[] { "System.Collections.Generic" };
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(version));
+        var employeeFile = builder.AddFile("Employee", usings: globalUsings);
+        employeeFile.AddClass("""
+                              public class Employee
+                              {
+                                  private Manager _manager;
+                              
+                                  public int Id { get; set; }
+                              
+                                  public string EmployeeCode { get; set; }
+                              
+                                  public Manager Manager
+                                  {
+                                      get => _manager;
+                                      set
+                                      {
+                                          if (value == null)
+                                          {
+                                              _manager.Employees.Remove(this);
+                                          }
+                                          else
+                                          {
+                                              value.Employees.Add(this);
+                                          }
+                              
+                                          _manager = value;
+                                      }
+                                  }
+                              }
+                              """);
+
+        var managerFile = builder.AddFile("Manager", usings: globalUsings);
+        managerFile.AddClass("""
+                             public class Manager : Employee
+                             {
+                                 public int Level { get; set; }
+                             
+                                 public List<Employee> Employees { get; set; } = new();
+                             }
+                             """);
+
+        var employeeViewModelFile = builder.AddFile("EmployeeViewModel");
+        employeeViewModelFile.AddClass("""
+                                       [MapFrom(typeof(Employee))]
+                                       public partial class EmployeeViewModel
+                                       {
+                                           public int Id { get; set; }
+                                       
+                                           public string EmployeeCode { get; set; }
+                                       
+                                           public ManagerViewModel Manager { get; set; }
+                                       }
+                                       """);
+
+        var managerViewModelFile = builder.AddFile("ManagerViewModel", usings: globalUsings);
+        managerViewModelFile.AddClass("""
+                                      [MapFrom(typeof(Manager))]
+                                      public partial class ManagerViewModel : EmployeeViewModel
+                                      {
+                                          public int Level { get; set; }
+                                      
+                                          public List<EmployeeViewModel> Employees { get; set;  } = new();
+                                      }
+                                      """);
+
+        return builder;
+    }
+
     private static string SimpleExpectedExtensionClassThatMapsIdAndNameProperties(ITestSourceBuilder builder) => builder.Options.SupportNullReferenceTypes
         ? $$"""
             {{GeneratedCodeAttribute}}
@@ -75,7 +144,7 @@ internal static class ScenarioBuilder
                     {
                         return null;
                     }
-
+            
                     return new TargetClass
                     {
                         Id = sourceClass.Id,
@@ -95,7 +164,7 @@ internal static class ScenarioBuilder
                     {
                         return null;
                     }
-
+            
                     return new TargetClass
                     {
                         Id = sourceClass.Id,

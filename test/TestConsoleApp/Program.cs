@@ -1,5 +1,5 @@
 ﻿using System;
-using MapTo;
+using TestConsoleApp.TestData;
 
 namespace TestConsoleApp;
 
@@ -9,18 +9,17 @@ public class Program
     {
         Console.WriteLine("Hello, World!");
 
-        var source = new SourceClass { Id = 1 };
+        var source = new SourceClass
+        {
+            Prop1 = 1,
+            Prop2 = new SourceClass
+            {
+                Prop1 = 2
+            }
+        };
+
         var target = source.MapToTargetClass();
+
+        Console.WriteLine(target.Prop1);
     }
-}
-
-public class SourceClass
-{
-    public int Id { get; set; }
-}
-
-[MapFrom(typeof(SourceClass))]
-public class TargetClass
-{
-    public int Id { get; set; }
 }

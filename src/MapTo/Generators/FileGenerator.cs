@@ -24,6 +24,8 @@ internal readonly record struct FileGenerator(
             writer.WriteLine($"namespace {Mapping.Namespace}");
             writer.WriteOpeningBracket();
         }
+
+        writer.WriteUsings(Mapping.UsingDirectives);
     }
 
     /// <inheritdoc />

@@ -9,11 +9,13 @@ namespace MapTo.Configuration;
 /// <param name="GeneratedMethodsAccessModifier">The access modifier for the generated methods.</param>
 /// <param name="GenerateXmlDocument">Indicates whether to generate an XML documentation file for the generated code.</param>
 /// <param name="MapMethodPrefix">The generated mapping extension method suffix.</param>
+/// <param name="MapExtensionClassSuffix">The generated mapping extension class suffix.</param>
 internal readonly record struct CodeGeneratorOptions(
     AccessModifier ConstructorAccessModifier = AccessModifier.Public,
     AccessModifier GeneratedMethodsAccessModifier = AccessModifier.Public,
     bool GenerateXmlDocument = true,
-    string MapMethodPrefix = "MapTo")
+    string MapMethodPrefix = "MapTo",
+    string MapExtensionClassSuffix = "MapToExtensions")
 {
     /// <summary>
     /// The prefix of the property name in the .editorconfig file.

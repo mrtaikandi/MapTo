@@ -18,6 +18,8 @@ internal readonly record struct MappingContext(
 
     internal IReadOnlyCollection<Diagnostic> Diagnostics => _diagnostics;
 
+    internal Compilation Compilation => TargetSemanticModel.Compilation;
+
     public static MappingContext WithOptions((MappingContext Builder, CodeGeneratorOptions Options) source, CancellationToken cancellationToken) => source.Builder with
     {
         CodeGeneratorOptions = source.Options,
