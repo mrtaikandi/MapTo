@@ -34,6 +34,22 @@ internal static class SymbolExtensions
     public static bool HasAttribute(this ISymbol? symbol, ITypeSymbol attributeSymbol) =>
         symbol?.GetAttributes().Any(a => a.AttributeClass?.Equals(attributeSymbol, SymbolEqualityComparer.Default) == true) == true;
 
+    public static bool IsPrimitiveType(this ITypeSymbol type, bool includeNullable)
+    {
+        if (type.IsPrimitiveType())
+        {
+            return true;
+        }
+
+        if (includeNullable && type is INamedTypeSymbol { IsGenericType: true, ConstructedFrom.SpecialType: SpecialType.System_Nullable_T } namedTypeSymbol)
+        {
+            var underlyingType = namedTypeSymbol.TypeArguments[0];
+            return underlyingType.IsPrimitiveType();
+        }
+
+        return false;
+    }
+
     public static bool IsPrimitiveType(this ITypeSymbol type) => type.SpecialType is
         SpecialType.System_String or
         SpecialType.System_Boolean or
@@ -74,4 +90,30 @@ internal static class SymbolExtensions
                 return false;
         }
     }
+
+    public static INamedTypeSymbol GetTypeNamedSymbol(this IPropertySymbol symbol)
+    {
+        var namedTypeSymbol = symbol.Type switch
+        {
+            IArrayTypeSymbol arrayTypeSymbol => arrayTypeSymbol.ElementType,
+            _ => symbol.Type
+        };
+
+        return namedTypeSymbol as INamedTypeSymbol ?? throw new InvalidOperationException($"Unable to get type symbol for property '{symbol.Name}'.");
+    }
+
+    public static IPropertySymbol? FindProperty(this IEnumerable<IPropertySymbol> properties, IPropertySymbol targetProperty)
+    {
+        return properties.SingleOrDefault(p =>
+            p.Name == targetProperty.Name &&
+            (p.NullableAnnotation != NullableAnnotation.Annotated ||
+             (p.NullableAnnotation == NullableAnnotation.Annotated &&
+              targetProperty.NullableAnnotation == NullableAnnotation.Annotated)));
+    }
+
+    public static SyntaxNode? GetSyntaxNode(this ISymbol symbol) =>
+        symbol.Locations.FirstOrDefault() is { } location ? location.SourceTree?.GetRoot().FindNode(location.SourceSpan) : null;
+
+    public static bool HasNonPrimitiveProperties(this ITypeSymbol typeSymbol) =>
+        typeSymbol.GetAllMembers().OfType<IPropertySymbol>().Any(p => !p.Type.IsPrimitiveType(true));
 }

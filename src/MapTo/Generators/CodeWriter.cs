@@ -91,6 +91,12 @@ internal sealed class CodeWriter : IDisposable
         return this;
     }
 
+    public CodeWriter WriteNewLine()
+    {
+        _indentedWriter.WriteLine();
+        return this;
+    }
+
     public CodeWriter WriteLine(string? value = null)
     {
         if (string.IsNullOrWhiteSpace(value))

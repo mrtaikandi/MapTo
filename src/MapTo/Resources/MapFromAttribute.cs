@@ -22,6 +22,7 @@ namespace MapTo
             }
             
             SourceType = sourceType;
+            ReferenceHandling = MapTo.ReferenceHandling.Auto;
         }
 
         /// <summary>
@@ -31,5 +32,13 @@ namespace MapTo
         [System.Diagnostics.CodeAnalysis.NotNull]
 #endif
         public Type SourceType { get; }
+        
+        /// <summary>
+        /// Gets or sets a value indicating whether to use reference handling.
+        /// If not set, MapTo will try to automatically determine whether to use reference handling.
+        /// Set to <see langword="true"/> to force reference handling or <see langword="false"/> to
+        /// force no reference handling.
+        /// </summary>
+        public ReferenceHandling ReferenceHandling { get; set; }
     }
 }

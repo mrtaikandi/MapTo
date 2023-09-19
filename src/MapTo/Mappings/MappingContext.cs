@@ -20,11 +20,26 @@ internal readonly record struct MappingContext(
 
     internal Compilation Compilation => TargetSemanticModel.Compilation;
 
-    public static MappingContext WithOptions((MappingContext Builder, CodeGeneratorOptions Options) source, CancellationToken cancellationToken) => source.Builder with
+    internal AttributeData MapFromAttributeData { get; init; }
+
+    public static MappingContext WithOptions((MappingContext Builder, CodeGeneratorOptions Options) source, CancellationToken cancellationToken)
     {
-        CodeGeneratorOptions = source.Options,
-        CompilerOptions = CompilerOptions.From(source.Builder.TargetSemanticModel.Compilation)
-    };
+        var codeGenOptions = source.Options;
+        if (source.Builder.MapFromAttributeData.TryGetNamedArgument(WellKnownTypes.MapFromReferenceHandlingPropertyName, out var value))
+        {
+            codeGenOptions = codeGenOptions with
+            {
+                // Values are from src/MapTo/Resources/ReferenceHandling.cs
+                UseReferenceHandling = value.Value switch { 1 => true, 2 => false, _ => null }
+            };
+        }
+
+        return source.Builder with
+        {
+            CodeGeneratorOptions = codeGenOptions,
+            CompilerOptions = CompilerOptions.From(source.Builder.TargetSemanticModel.Compilation)
+        };
+    }
 
     internal void ReportDiagnostic(Diagnostic diagnostic) => _diagnostics.Add(diagnostic);
 }
@@ -34,10 +49,17 @@ internal static class MappingContextExtensions
     public static IncrementalValuesProvider<MappingContext> CreateMappingContext(this SyntaxValueProvider provider) => provider.ForAttributeWithMetadataName(
         WellKnownTypes.MapFromAttributeFullyQualifiedName,
         static (node, _) => node is ClassDeclarationSyntax,
-        static (context, _) => new MappingContext(
-            context.TargetNode as ClassDeclarationSyntax ?? throw new InvalidOperationException("TargetNode is not a ClassDeclarationSyntax"),
-            context.TargetSymbol as INamedTypeSymbol ?? throw new InvalidOperationException("TargetSymbol is not a ITypeSymbol"),
-            context.SemanticModel,
-            context.Attributes.Single().ConstructorArguments.Single().Value as INamedTypeSymbol ?? throw new InvalidOperationException("SourceType is not a ITypeSymbol"),
-            WellKnownTypes.Create(context.SemanticModel.Compilation)));
+        static (context, _) =>
+        {
+            var mapFromAttribute = context.Attributes.Single();
+            return new MappingContext(
+                TargetTypeSyntax: context.TargetNode as ClassDeclarationSyntax ?? throw new InvalidOperationException("TargetNode is not a ClassDeclarationSyntax"),
+                TargetTypeSymbol: context.TargetSymbol as INamedTypeSymbol ?? throw new InvalidOperationException("TargetSymbol is not a ITypeSymbol"),
+                TargetSemanticModel: context.SemanticModel,
+                SourceTypeSymbol: mapFromAttribute.ConstructorArguments.First().Value as INamedTypeSymbol ?? throw new InvalidOperationException("SourceType is not a ITypeSymbol"),
+                WellKnownTypes: WellKnownTypes.Create(context.SemanticModel.Compilation))
+            {
+                MapFromAttributeData = mapFromAttribute
+            };
+        });
 }

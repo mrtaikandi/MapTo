@@ -58,6 +58,14 @@ internal static class DiagnosticsFactory
         converterMethodSymbol.Parameters[0].Locations.FirstOrDefault(),
         $"The property '{sourceProperty.ToDisplayString()}' is nullable, but the '{converterMethodSymbol.Name}' method parameter '{converterMethodSymbol.Parameters[0].Name}' is not.");
 
+    internal static Diagnostic SuitableMappingTypeInNestedPropertyNotFoundError(IPropertySymbol property, ITypeSymbol sourceType) => Create(
+        $"{ErrorId}039",
+        property.Locations.FirstOrDefault(),
+        $"Unable to find a suitable type to map '{property.ToDisplayString()}' property. Consider annotating '{sourceType.ToDisplayString()}' using '{MapFromAttributeName}' or ignore the property using '{IgnorePropertyAttributeName}'.");
+
+    internal static Diagnostic SelfReferencingConstructorMappingError(Location location, string classTypeDisplayName) =>
+        Create($"{ErrorId}040", location, $"Cannot create a map for '{classTypeDisplayName}' class because it has a self-referencing argument in the constructor.");
+
     private static Diagnostic Create(string id, Location? location, string message, DiagnosticSeverity severity = DiagnosticSeverity.Error) =>
         Diagnostic.Create(new DiagnosticDescriptor(id, string.Empty, message, UsageCategory, severity, true), location ?? Location.None);
 

@@ -338,6 +338,7 @@ public class MapFromTests
         var (compilation, diagnostics) = builder.Compile();
 
         // Assert
+        compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
         compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.TargetClass.g.cs")
             .GetClassDeclaration("SourceClassMapToExtensions")

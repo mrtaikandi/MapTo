@@ -11,6 +11,7 @@ internal record WellKnownTypes(
 
     internal const string MapFromAttributeName = "MapFromAttribute";
     internal const string MapFromAttributeFullyQualifiedName = $"{MapToNamespace}.MapFromAttribute";
+    internal const string MapFromReferenceHandlingPropertyName = "ReferenceHandling";
 
     internal const string IgnorePropertyAttributeName = "IgnorePropertyAttribute";
     internal const string IgnorePropertyAttributeFullyQualifiedName = $"{MapToNamespace}.{IgnorePropertyAttributeName}";

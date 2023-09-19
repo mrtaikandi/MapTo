@@ -39,4 +39,17 @@ public class MapFromCollectionTests
             .GetClassDeclaration("ManagerMapToExtensions")
             .ShouldContain("Employees = manager.Employees.Select(MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeModel).ToList()");
     }
+
+    [Fact]
+    public void When_MappedPropertyTypeIsArrayOfMappedObjects_Should_MapCollectionItems()
+    {
+        // Arrange
+        var builder = ScenarioBuilder.BuildAlbumAndArtistModels();
+
+        // Act
+        var (_, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+    }
 }

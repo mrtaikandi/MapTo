@@ -61,11 +61,18 @@ internal static class ScenarioBuilder
         return builder;
     }
 
-    public static ITestSourceBuilder BuildEmployeeManagerModels(LanguageVersion version = LanguageVersion.CSharp10)
+    public static ITestSourceBuilder BuildEmployeeManagerModels(LanguageVersion version = LanguageVersion.CSharp10, bool? referenceHandling = null)
     {
         var globalUsings = new[] { "System.Collections.Generic" };
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(version));
         var employeeFile = builder.AddFile("Employee", usings: globalUsings);
+        var referenceHandlingMode = referenceHandling switch
+        {
+            null => "ReferenceHandling.Auto",
+            true => "ReferenceHandling.Enabled",
+            false => "ReferenceHandling.Disabled"
+        };
+
         employeeFile.AddClass("""
                               public class Employee
                               {
@@ -106,28 +113,101 @@ internal static class ScenarioBuilder
                              """);
 
         var employeeViewModelFile = builder.AddFile("EmployeeViewModel");
-        employeeViewModelFile.AddClass("""
-                                       [MapFrom(typeof(Employee))]
-                                       public partial class EmployeeViewModel
-                                       {
-                                           public int Id { get; set; }
-                                       
-                                           public string EmployeeCode { get; set; }
-                                       
-                                           public ManagerViewModel Manager { get; set; }
-                                       }
-                                       """);
+        employeeViewModelFile.AddClass($$"""
+                                         [MapFrom(typeof(Employee), ReferenceHandling = {{referenceHandlingMode}})]
+                                         public partial class EmployeeViewModel
+                                         {
+                                             public int Id { get; init; }
+                                         
+                                             public string EmployeeCode { get; set; }
+                                         
+                                             public ManagerViewModel Manager { get; set; }
+                                         }
+                                         """);
 
         var managerViewModelFile = builder.AddFile("ManagerViewModel", usings: globalUsings);
-        managerViewModelFile.AddClass("""
-                                      [MapFrom(typeof(Manager))]
-                                      public partial class ManagerViewModel : EmployeeViewModel
-                                      {
-                                          public int Level { get; set; }
-                                      
-                                          public List<EmployeeViewModel> Employees { get; set;  } = new();
-                                      }
-                                      """);
+        managerViewModelFile.AddClass($$"""
+                                        [MapFrom(typeof(Manager), ReferenceHandling = {{referenceHandlingMode}})]
+                                        public partial class ManagerViewModel : EmployeeViewModel
+                                        {
+                                            public ManagerViewModel(int id) => Id = id;
+                                        
+                                            public int Level { get; init; }
+                                        
+                                            public List<EmployeeViewModel> Employees { get; set;  } = new();
+                                        }
+                                        """);
+
+        return builder;
+    }
+
+    public static ITestSourceBuilder BuildAlbumAndArtistModels(LanguageVersion version = LanguageVersion.CSharp10)
+    {
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(version));
+        var sourceFile = builder.AddFile("Models");
+        sourceFile.AddClass(
+            """
+            public class ExternalUrls
+            {
+                public string Url { get; set; }
+            }
+            """);
+
+        sourceFile.AddClass(
+            """
+            public class Artist
+            {
+                public ExternalUrls ExternalUrls { get; set; }
+            
+                public int Id { get; set; }
+            
+                public string Name { get; set; } = string.Empty;
+            }
+            """);
+
+        sourceFile.AddClass(
+            """
+            public class Album
+            {
+                public string Name { get; set; } = string.Empty;
+            
+                public Artist[] Artists { get; set; }
+            }
+            """);
+
+        var viewModels = builder.AddFile("ViewModels");
+        viewModels.AddClass(
+            """
+            [MapFrom(typeof(ExternalUrls))]
+            public partial class ExternalUrlViewModel
+            {
+                public string Url { get; set; }
+            }
+            """);
+
+        viewModels.AddClass(
+            """
+            [MapFrom(typeof(Artist))]
+            public partial class ArtistViewModel
+            {
+                public ExternalUrlViewModel ExternalUrls { get; set; }
+            
+                public int Id { get; set; }
+            
+                public string Name { get; set; } = string.Empty;
+            }
+            """);
+
+        viewModels.AddClass(
+            """
+            [MapFrom(typeof(Album))]
+            public partial class AlbumViewModel
+            {
+                public string Name { get; set; } = string.Empty;
+            
+                public ArtistViewModel[] Artists { get; set; }
+            }
+            """);
 
         return builder;
     }

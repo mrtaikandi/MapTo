@@ -1,5 +1,4 @@
 ﻿using MapTo.CodeAnalysis;
-using MapTo.Configuration;
 
 namespace MapTo.Tests.SourceBuilders;
 
@@ -19,7 +18,7 @@ internal static class TestSourceOutputCompilation
         var sources = builder.Build();
         var analyzerConfigOptions = builder.Options.AnalyzerConfigOptions;
         analyzerConfigOptions.TryAdd(
-            AnalyzerConfigOptionsExtensions.GetBuildPropertyName(nameof(CodeGeneratorOptions.GenerateXmlDocument)),
+            AnalyzerConfigOptionsExtensions.GetBuildPropertyName("GenerateXmlDocument"),
             builder.Options.GenerateXmlDoc.ToString());
 
         return CSharpGenerator.GetOutputCompilation(
@@ -30,9 +29,14 @@ internal static class TestSourceOutputCompilation
             assertOutputCompilation: assertOutputCompilation);
     }
 
-    internal static void CompileAndAssertExpectedGeneratedContent(this ITestSourceBuilder builder)
+    internal static void CompileAndAssertExpectedGeneratedContent(this ITestSourceBuilder builder, ITestOutputHelper? logger = null)
     {
         var (compilation, diagnostics) = builder.Compile();
+
+        if (logger is not null)
+        {
+            compilation.Dump(logger);
+        }
 
         diagnostics.ShouldBeSuccessful();
         compilation.GetLastSyntaxTreeString().ShouldBe(builder.GetExpectedFileContent());

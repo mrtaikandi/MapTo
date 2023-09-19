@@ -11,6 +11,9 @@ internal static partial class ShouldlyExtensions
     internal static void ShouldBe(this ClassDeclarationSyntax? classDeclaration, [StringSyntax("csharp")] string expected) =>
         Verify(classDeclaration?.ToString(), expected, "Should be equal but is not.", Assert.Equal);
 
+    internal static void ShouldBeSuccessful(this Compilation compilation, IEnumerable<string>? ignoreDiagnosticsIds = null) =>
+        compilation.GetDiagnostics().ShouldBeSuccessful(compilation, ignoreDiagnosticsIds);
+
     internal static void ShouldBeSuccessful(this IEnumerable<Diagnostic> diagnostics, Compilation? compilation = null, IEnumerable<string>? ignoreDiagnosticsIds = null)
     {
         var errors = diagnostics
@@ -114,11 +117,7 @@ internal static partial class ShouldlyExtensions
         Assert.Equal(expectedError.Descriptor.Id, actualDiagnostics.Descriptor.Id);
         Assert.Equal(expectedError.Descriptor.Description, actualDiagnostics.Descriptor.Description);
         Assert.Equal(expectedError.Descriptor.Title, actualDiagnostics.Descriptor.Title);
-
-        if (expectedError.Location != Location.None)
-        {
-            Assert.Equal(expectedError.Location.ToDisplayString(), actualDiagnostics.Location.ToDisplayString());
-        }
+        Assert.Equal(expectedError.Location.ToDisplayString(), actualDiagnostics.Location.ToDisplayString());
     }
 
     internal static void ShouldNotContain(this ClassDeclarationSyntax? classDeclaration, [StringSyntax("csharp")] string expected)

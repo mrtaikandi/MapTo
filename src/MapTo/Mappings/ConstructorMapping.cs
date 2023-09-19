@@ -3,10 +3,13 @@
 internal readonly record struct ConstructorMapping(string Name, bool IsGenerated, ImmutableArray<ConstructorArgumentMapping> Arguments)
 {
     public bool HasArguments => Arguments.Length > 0;
+}
 
+internal static class ConstructorMappingFactory
+{
     public static ConstructorMapping Create(MappingContext context, ImmutableArray<PropertyMapping> properties)
     {
-        var (targetType, typeSymbol, _, _, _, _, _) = context;
+        var (targetType, targetTypeSymbol, _, _, _, _, _) = context;
         var constructorName = targetType.Identifier.ValueText;
 
         var readonlyProperties = properties.Where(p => p.InitializationMode == PropertyInitializationMode.Constructor).ToArray();
@@ -16,23 +19,17 @@ internal readonly record struct ConstructorMapping(string Name, bool IsGenerated
             return new ConstructorMapping(constructorName, false, ImmutableArray<ConstructorArgumentMapping>.Empty);
         }
 
-        var constructors = typeSymbol.Constructors.Where(c => !c.IsImplicitlyDeclared && !c.IsStatic).ToArray();
+        var constructors = targetTypeSymbol.Constructors.Where(c => !c.IsImplicitlyDeclared && !c.IsStatic).ToArray();
         if (constructors.Length == 0)
         {
             return new ConstructorMapping(
                 constructorName,
                 true,
-                readonlyProperties.Select(p => new ConstructorArgumentMapping(p.ParameterName, p.Type, p)).ToImmutableArray());
+                readonlyProperties.Select(p => new ConstructorArgumentMapping(p.ParameterName, p.Type, p, Location.None)).ToImmutableArray());
         }
 
         var argumentMappings = GetArgumentMappings(context, constructors, readonlyProperties);
-        if (argumentMappings.IsDefaultOrEmpty)
-        {
-            context.ReportDiagnostic(DiagnosticsFactory.MissingConstructorOnTargetClassError(targetType.GetLocation(), targetType.Identifier.ValueText));
-            return default;
-        }
-
-        return new ConstructorMapping(constructorName, false, argumentMappings);
+        return argumentMappings.IsValid(context) ? new ConstructorMapping(constructorName, false, argumentMappings) : default;
     }
 
     private static ImmutableArray<ConstructorArgumentMapping> GetArgumentMappings(MappingContext context, IEnumerable<IMethodSymbol> constructors, PropertyMapping[] properties)
@@ -57,9 +54,30 @@ internal readonly record struct ConstructorMapping(string Name, bool IsGenerated
                 return ImmutableArray<ConstructorArgumentMapping>.Empty;
             }
 
-            arguments.Add(new ConstructorArgumentMapping(parameter.Name, parameter.Type, property));
+            arguments.Add(new ConstructorArgumentMapping(parameter.Name, parameter.Type, property, parameter.Locations.FirstOrDefault() ?? Location.None));
         }
 
         return arguments.ToImmutable();
+    }
+
+    private static bool IsValid(this ImmutableArray<ConstructorArgumentMapping> argumentMappings, MappingContext context)
+    {
+        var targetType = context.TargetTypeSyntax;
+        var targetTypeSymbol = context.TargetTypeSymbol;
+
+        if (argumentMappings.IsDefaultOrEmpty)
+        {
+            context.ReportDiagnostic(DiagnosticsFactory.MissingConstructorOnTargetClassError(targetType.GetLocation(), targetType.Identifier.ValueText));
+            return false;
+        }
+
+        var selfReferencingParameter = argumentMappings.FirstOrDefault(a => SymbolEqualityComparer.Default.Equals(a.Type, targetTypeSymbol));
+        if (selfReferencingParameter != default)
+        {
+            context.ReportDiagnostic(DiagnosticsFactory.SelfReferencingConstructorMappingError(selfReferencingParameter.Location, targetType.Identifier.ValueText));
+            return false;
+        }
+
+        return true;
     }
 }

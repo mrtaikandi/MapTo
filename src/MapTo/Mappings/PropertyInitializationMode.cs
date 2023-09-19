@@ -3,5 +3,6 @@
 internal enum PropertyInitializationMode
 {
     Constructor,
-    ObjectInitializer
+    ObjectInitializer,
+    Setter
 }

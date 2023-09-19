@@ -3,6 +3,7 @@
 internal static class CSharpGenerator
 {
     private static readonly string[] IgnoredDiagnosticIds = { "MT" };
+    private static readonly string[] AssertionSuppressedDiagnosticIds = { "CS0436" };
     private static readonly IIncrementalGenerator[] SourceGenerators = { new MapToGenerator() };
 
     internal static CompilationResult GetOutputCompilation(
@@ -55,7 +56,7 @@ internal static class CSharpGenerator
         if (assertOutputCompilation)
         {
             generateDiagnostics.ShouldBeSuccessful(ignoreDiagnosticsIds: IgnoredDiagnosticIds);
-            outputCompilation.GetDiagnostics().ShouldBeSuccessful(outputCompilation);
+            outputCompilation.GetDiagnostics().ShouldBeSuccessful(outputCompilation, ignoreDiagnosticsIds: AssertionSuppressedDiagnosticIds);
         }
 
         return new(outputCompilation, generateDiagnostics);
