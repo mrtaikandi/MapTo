@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <MapTo_UseReferenceHandling>False</MapTo_UseReferenceHandling>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <WarningsAsErrors>;NU1605;SYSLIB0011;CS8785</WarningsAsErrors>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <CompilerVisibleProperty Include="MapTo_UseReferenceHandling"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="Data\SpotifyAlbum.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="AgileObjects.AgileMapper"/>
+        <PackageReference Include="AutoMapper"/>
+        <PackageReference Include="BenchmarkDotNet"/>
+        <PackageReference Include="HolopaMir.ExpressMapper"/><!--ExpressMapper.Core-->
+        <PackageReference Include="Mapster"/>
+        <PackageReference Include="Newtonsoft.Json"/>
+        <PackageReference Include="TinyMapper"/>
+        <PackageReference Include="Riok.Mapperly"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\MapTo\MapTo.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+    </ItemGroup>
+
+</Project>
