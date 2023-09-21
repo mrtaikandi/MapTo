@@ -40,8 +40,16 @@ internal class TestSourceBuilder : ITestSourceBuilder
 [SuppressMessage("StyleCop.CSharp.OrderingRules", "SA1204:Static elements should appear before instance elements", Justification = "Wrongly reported by StyleCop.")]
 internal static class TestSourceBuilderExtensions
 {
-    public static string? GetPath(this TestSource source) =>
-        string.IsNullOrWhiteSpace(source.FileName) ? null : $"{Path.GetFileNameWithoutExtension(source.FileName)}.g.cs";
+    public static string? GetPath(this TestSource source)
+    {
+        if (string.IsNullOrWhiteSpace(source.FileName))
+        {
+            return null;
+        }
+
+        var fileName = Path.GetFileName(source.FileName);
+        return Path.HasExtension(fileName) ? fileName : $"{Path.GetFileNameWithoutExtension(fileName)}.g.cs";
+    }
 
     public static TestSource GetSource(this ITestSourceBuilder builder, ITestFileBuilder fileBuilder) =>
         builder.Sources.GetSource(fileBuilder.Name);

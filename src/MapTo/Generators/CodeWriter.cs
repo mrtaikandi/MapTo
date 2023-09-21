@@ -75,11 +75,15 @@ internal sealed class CodeWriter : IDisposable
 
     public CodeWriter WriteClosingParenthesis() => WriteLine(")");
 
-    public CodeWriter WriteIf(bool condition, string? value = null)
+    public CodeWriter WriteIf(bool condition, string? value = null, string? elseValue = null)
     {
         if (condition)
         {
             Write(value);
+        }
+        else if (elseValue != null)
+        {
+            Write(elseValue);
         }
 
         return this;

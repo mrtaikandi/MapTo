@@ -2,6 +2,7 @@
 
 internal static class ScenarioBuilder
 {
+    internal const string TestDataRelativeFolder = @"..\..\..\TestData";
     internal static readonly string GeneratedCodeAttribute =
         $$"""[global::System.CodeDom.Compiler.GeneratedCodeAttribute("MapTo", "{{typeof(MapToGenerator).Assembly.GetName().Version}}")]""";
 
@@ -25,6 +26,18 @@ internal static class ScenarioBuilder
         var sourceFile2 = builder.AddFile(ns: "ExternalLibMap", usings: new[] { "MapTo", "ExternalLib" });
         sourceFile2.AddClass(AccessModifier.Public, "TargetClass", attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id")
+            .WithProperty<string>("Name");
+
+        return builder;
+    }
+
+    public static ITestSourceBuilder SimplePartialMappedClassInSameNamespaceAsSource(TestSourceBuilderOptions? options = null)
+    {
+        var builder = new TestSourceBuilder(options ?? TestSourceBuilderOptions.Create());
+        var sourceFile = builder.AddFile();
+        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(AccessModifier.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+            .WithProperty<int?>("Id", propertyType: PropertyType.ReadOnly | PropertyType.AutoProperty)
             .WithProperty<string>("Name");
 
         return builder;
@@ -61,17 +74,11 @@ internal static class ScenarioBuilder
         return builder;
     }
 
-    public static ITestSourceBuilder BuildEmployeeManagerModels(LanguageVersion version = LanguageVersion.CSharp10, bool? referenceHandling = null)
+    public static ITestSourceBuilder BuildEmployeeManagerModels(LanguageVersion version = LanguageVersion.CSharp10, ReferenceHandling referenceHandling = ReferenceHandling.Disabled)
     {
         var globalUsings = new[] { "System.Collections.Generic" };
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(version));
         var employeeFile = builder.AddFile("Employee", usings: globalUsings);
-        var referenceHandlingMode = referenceHandling switch
-        {
-            null => "ReferenceHandling.Auto",
-            true => "ReferenceHandling.Enabled",
-            false => "ReferenceHandling.Disabled"
-        };
 
         employeeFile.AddClass("""
                               public class Employee
@@ -114,7 +121,7 @@ internal static class ScenarioBuilder
 
         var employeeViewModelFile = builder.AddFile("EmployeeViewModel");
         employeeViewModelFile.AddClass($$"""
-                                         [MapFrom(typeof(Employee), ReferenceHandling = {{referenceHandlingMode}})]
+                                         [MapFrom(typeof(Employee), ReferenceHandling = MapTo.Configuration.ReferenceHandling.{{referenceHandling}})]
                                          public partial class EmployeeViewModel
                                          {
                                              public int Id { get; init; }
@@ -127,7 +134,7 @@ internal static class ScenarioBuilder
 
         var managerViewModelFile = builder.AddFile("ManagerViewModel", usings: globalUsings);
         managerViewModelFile.AddClass($$"""
-                                        [MapFrom(typeof(Manager), ReferenceHandling = {{referenceHandlingMode}})]
+                                        [MapFrom(typeof(Manager), ReferenceHandling = MapTo.Configuration.ReferenceHandling.{{referenceHandling}})]
                                         public partial class ManagerViewModel : EmployeeViewModel
                                         {
                                             public ManagerViewModel(int id) => Id = id;
@@ -141,9 +148,13 @@ internal static class ScenarioBuilder
         return builder;
     }
 
-    public static ITestSourceBuilder BuildAlbumAndArtistModels(LanguageVersion version = LanguageVersion.CSharp10)
+    public static ITestSourceBuilder BuildSpotifyModels(TestSourceBuilderOptions? options = null) => new TestSourceBuilder(options ?? TestSourceBuilderOptions.Create())
+        .AddExternalFile(Path.Combine(TestDataRelativeFolder, "SpotifyAlbum.cs"))
+        .AddExternalFile(Path.Combine(TestDataRelativeFolder, "SpotifyAlbumDto.cs"));
+
+    public static ITestSourceBuilder BuildAlbumAndArtistModels(TestSourceBuilderOptions? options = null)
     {
-        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(version));
+        var builder = new TestSourceBuilder(options ?? TestSourceBuilderOptions.Create());
         var sourceFile = builder.AddFile("Models");
         sourceFile.AddClass(
             """

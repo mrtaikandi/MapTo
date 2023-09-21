@@ -69,6 +69,8 @@ internal static class SymbolExtensions
     public static bool IsArrayOf(this ITypeSymbol type, SpecialType elementType) =>
         type is IArrayTypeSymbol arrayTypeSymbol && arrayTypeSymbol.ElementType.SpecialType == elementType;
 
+    public static bool IsArray(this ITypeSymbol type) => type is IArrayTypeSymbol;
+
     public static bool TryGetTypeSymbol(this ISymbol symbol, [NotNullWhen(true)] out ITypeSymbol? typeSymbol)
     {
         switch (symbol)
@@ -115,5 +117,5 @@ internal static class SymbolExtensions
         symbol.Locations.FirstOrDefault() is { } location ? location.SourceTree?.GetRoot().FindNode(location.SourceSpan) : null;
 
     public static bool HasNonPrimitiveProperties(this ITypeSymbol typeSymbol) =>
-        typeSymbol.GetAllMembers().OfType<IPropertySymbol>().Any(p => !p.Type.IsPrimitiveType(true));
+        !typeSymbol.IsPrimitiveType() && typeSymbol.GetAllMembers().OfType<IPropertySymbol>().Any(p => !p.Type.IsPrimitiveType(true));
 }

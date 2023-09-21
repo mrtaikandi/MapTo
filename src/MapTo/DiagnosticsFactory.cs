@@ -1,5 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
-using static MapTo.WellKnownTypes;
+using static MapTo.KnownTypes;
 
 namespace MapTo;
 

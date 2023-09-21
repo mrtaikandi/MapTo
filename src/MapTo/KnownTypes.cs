@@ -1,6 +1,6 @@
 ﻿namespace MapTo;
 
-internal record WellKnownTypes(
+internal record KnownTypes(
     INamedTypeSymbol MapFromAttributeTypeSymbol,
     INamedTypeSymbol IgnorePropertyAttributeTypeSymbol,
     INamedTypeSymbol MapPropertyAttributeTypeSymbol,
@@ -12,6 +12,7 @@ internal record WellKnownTypes(
     internal const string MapFromAttributeName = "MapFromAttribute";
     internal const string MapFromAttributeFullyQualifiedName = $"{MapToNamespace}.MapFromAttribute";
     internal const string MapFromReferenceHandlingPropertyName = "ReferenceHandling";
+    internal const string MapFromCopyPrimitiveArraysPropertyName = "CopyPrimitiveArrays";
 
     internal const string IgnorePropertyAttributeName = "IgnorePropertyAttribute";
     internal const string IgnorePropertyAttributeFullyQualifiedName = $"{MapToNamespace}.{IgnorePropertyAttributeName}";
@@ -29,7 +30,7 @@ internal record WellKnownTypes(
     internal const string PropertyTypeConverterAttributeFullyQualifiedName = $"{MapToNamespace}.{PropertyTypeConverterAttributeName}";
     internal const string PropertyTypeConverterAttributeAdditionalParameters = "Parameters";
 
-    internal static WellKnownTypes Create(Compilation compilation) => new(
+    internal static KnownTypes Create(Compilation compilation) => new(
         compilation.GetTypeByMetadataNameOrThrow(MapFromAttributeFullyQualifiedName),
         compilation.GetTypeByMetadataNameOrThrow(IgnorePropertyAttributeFullyQualifiedName),
         compilation.GetTypeByMetadataNameOrThrow(MapPropertyAttributeFullyQualifiedName),

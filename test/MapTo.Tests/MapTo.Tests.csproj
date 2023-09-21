@@ -27,4 +27,13 @@
         <ProjectReference Include="..\..\src\MapTo\MapTo.csproj" />
     </ItemGroup>
 
+
+    <ItemGroup>
+      <Compile Remove="TestData\SpotifyAlbumDto.cs" />
+      <None Include="TestData\SpotifyAlbumDto.cs" />
+
+      <Compile Remove="TestData\SpotifyAlbum.cs" />
+      <None Include="TestData\SpotifyAlbum.cs" />
+    </ItemGroup>
+
 </Project>

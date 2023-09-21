@@ -5,11 +5,11 @@ public class ResourcesTests
     private const string EmptySource = "";
 
     [Theory]
-    [InlineData($@"src\MapTo\Resources\{WellKnownTypes.IgnorePropertyAttributeName}.cs")]
-    [InlineData($@"src\MapTo\Resources\{WellKnownTypes.MapConstructorAttributeName}.cs")]
-    [InlineData($@"src\MapTo\Resources\{WellKnownTypes.MapFromAttributeName}.cs")]
-    [InlineData($@"src\MapTo\Resources\{WellKnownTypes.MapPropertyAttributeName}.cs")]
-    [InlineData($@"src\MapTo\Resources\{WellKnownTypes.PropertyTypeConverterAttributeName}.cs")]
+    [InlineData($@"src\MapTo\Resources\{KnownTypes.IgnorePropertyAttributeName}.cs")]
+    [InlineData($@"src\MapTo\Resources\{KnownTypes.MapConstructorAttributeName}.cs")]
+    [InlineData($@"src\MapTo\Resources\{KnownTypes.MapFromAttributeName}.cs")]
+    [InlineData($@"src\MapTo\Resources\{KnownTypes.MapPropertyAttributeName}.cs")]
+    [InlineData($@"src\MapTo\Resources\{KnownTypes.PropertyTypeConverterAttributeName}.cs")]
     public void VerifyAttributesAreEmitted(string path)
     {
         // Arrange

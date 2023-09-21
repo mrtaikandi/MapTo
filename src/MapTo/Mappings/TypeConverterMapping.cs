@@ -16,7 +16,8 @@ internal readonly record struct TypeConverterMapping(
     string? EnumerableElementTypeName = null,
     EnumerableType EnumerableType = EnumerableType.None,
     bool IsMapToExtensionMethod = false,
-    bool UsingReferenceHandler = false)
+    bool ReferenceHandling = false,
+    ImmutableArray<string>? UsingDirectives = null)
 {
     public TypeConverterMapping(IMethodSymbol method, TypedConstant? parameters)
         : this(method.ContainingType.ToDisplayString(), method.Name, parameters?.ToSourceCodeString()) { }
@@ -26,4 +27,6 @@ internal readonly record struct TypeConverterMapping(
 
     [MemberNotNullWhen(true, nameof(EnumerableElementTypeName))]
     public bool IsEnumerable => EnumerableElementTypeName is not null;
+
+    public string MethodFullName => $"{ContainingType}.{MethodName}";
 }

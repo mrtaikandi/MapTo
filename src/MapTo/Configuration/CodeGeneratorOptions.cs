@@ -5,15 +5,15 @@ namespace MapTo.Configuration;
 /// <summary>
 /// Represents the analyzer configuration options for the MapTo generator.
 /// </summary>
-/// <param name="GeneratedMethodsAccessModifier">The access modifier for the generated methods.</param>
 /// <param name="MapMethodPrefix">The generated mapping extension method suffix.</param>
 /// <param name="MapExtensionClassSuffix">The generated mapping extension class suffix.</param>
-/// <param name="UseReferenceHandling">Indicates whether to use reference handling.</param>
+/// <param name="ReferenceHandling">Indicates whether to use reference handling.</param>
+/// <param name="CopyPrimitiveArrays">Indicates whether to copy object and primitive type arrays into a new array.</param>
 internal readonly record struct CodeGeneratorOptions(
-    AccessModifier GeneratedMethodsAccessModifier = AccessModifier.Public,
     string MapMethodPrefix = "MapTo",
     string MapExtensionClassSuffix = "MapToExtensions",
-    bool? UseReferenceHandling = null)
+    ReferenceHandling ReferenceHandling = ReferenceHandling.Disabled,
+    bool CopyPrimitiveArrays = false)
 {
     /// <summary>
     /// The prefix of the property name in the .editorconfig file.
@@ -26,9 +26,13 @@ internal readonly record struct CodeGeneratorOptions(
     /// <param name="provider">The <see cref="AnalyzerConfigOptionsProvider" /> to use.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken" /> to use.</param>
     /// <returns>A new instance of the <see cref="CodeGeneratorOptions" /> class.</returns>
-    public static CodeGeneratorOptions Create(AnalyzerConfigOptionsProvider provider, CancellationToken cancellationToken) => new(
-        GeneratedMethodsAccessModifier: provider.GlobalOptions.GetOption(nameof(GeneratedMethodsAccessModifier), AccessModifier.Public),
-        MapMethodPrefix: provider.GlobalOptions.GetOption(nameof(MapMethodPrefix), "MapTo"),
-        MapExtensionClassSuffix: provider.GlobalOptions.GetOption(nameof(MapExtensionClassSuffix), "MapToExtensions"),
-        UseReferenceHandling: provider.GlobalOptions.GetOption<bool?>(nameof(UseReferenceHandling)));
+    [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1118:Parameter should not span multiple lines", Justification = "Reviewed.")]
+    public static CodeGeneratorOptions Create(AnalyzerConfigOptionsProvider provider, CancellationToken cancellationToken)
+    {
+        return new CodeGeneratorOptions(
+            MapMethodPrefix: provider.GlobalOptions.GetOption(nameof(MapMethodPrefix), "MapTo"),
+            MapExtensionClassSuffix: provider.GlobalOptions.GetOption(nameof(MapExtensionClassSuffix), "MapToExtensions"),
+            ReferenceHandling: provider.GlobalOptions.GetOption<ReferenceHandling>(nameof(ReferenceHandling)),
+            CopyPrimitiveArrays: provider.GlobalOptions.GetOption(nameof(CopyPrimitiveArrays), false));
+    }
 }

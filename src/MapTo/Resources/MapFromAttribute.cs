@@ -3,6 +3,7 @@
 namespace MapTo
 {
     using System;
+    using MapTo.Configuration;
     
     /// <summary>
     /// Specifies the source type to map from.
@@ -22,7 +23,7 @@ namespace MapTo
             }
             
             SourceType = sourceType;
-            ReferenceHandling = MapTo.ReferenceHandling.Auto;
+            ReferenceHandling = ReferenceHandling.Auto;
         }
 
         /// <summary>
@@ -40,5 +41,10 @@ namespace MapTo
         /// force no reference handling.
         /// </summary>
         public ReferenceHandling ReferenceHandling { get; set; }
+        
+        /// <summary>
+        /// Gets or sets a value indicating whether to copy object and primitive type arrays into a new array.
+        /// </summary>
+        public bool CopyPrimitiveArrays { get; set; }
     }
 }

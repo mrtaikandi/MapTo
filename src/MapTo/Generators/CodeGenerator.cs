@@ -6,9 +6,8 @@ using Microsoft.CodeAnalysis.Text;
 namespace MapTo.Generators;
 
 internal readonly record struct CodeGenerator(
-    CompilerOptions CompilerOptions,
-    CodeGeneratorOptions Configuration,
-    TargetMapping Mapping)
+    TargetMapping Mapping,
+    CompilerOptions CompilerOptions)
 {
     public string HintName => $"{Mapping.Namespace}.{Mapping.Name}.g.cs";
 
@@ -24,7 +23,7 @@ internal readonly record struct CodeGenerator(
         {
             new FileGenerator(CompilerOptions.NullableReferenceTypes, CompilerOptions.FileScopedNamespace, Mapping),
             new PartialClassGenerator(Mapping),
-            new ExtensionClassGenerator(Configuration, CompilerOptions, Mapping)
+            new ExtensionClassGenerator(CompilerOptions, Mapping)
         };
 
         return writer

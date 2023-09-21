@@ -5,7 +5,7 @@
         <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <MapTo_UseReferenceHandling>False</MapTo_UseReferenceHandling>
+        <MapTo_ReferenceHandling>Disabled</MapTo_ReferenceHandling>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

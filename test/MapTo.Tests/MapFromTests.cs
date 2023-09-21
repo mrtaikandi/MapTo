@@ -30,6 +30,29 @@ public class MapFromTests
             .ShouldContain("""[return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]""");
     }
 
+    [Theory]
+    [InlineData(LanguageVersion.CSharp7_3, false)]
+    [InlineData(LanguageVersion.CSharp7_3, true)]
+    [InlineData(LanguageVersion.CSharp10, false)]
+    [InlineData(LanguageVersion.CSharp10, true)]
+    public void Should_WriteNullableReferenceSyntaxIfEnabled(LanguageVersion version, bool supportNullReferenceTypes)
+    {
+        // Arrange
+        var options = TestSourceBuilderOptions.Create(version, supportNullReferenceTypes: supportNullReferenceTypes);
+        var builder = ScenarioBuilder.SimpleMappedClassInSameNamespaceAsSource(options);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+        var targetClass = compilation.GetClassDeclaration("SourceClassMapToExtensions");
+
+        targetClass.ShouldContain(version > LanguageVersion.CSharp7_3 && supportNullReferenceTypes
+            ? "public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)"
+            : "public static TargetClass MapToTargetClass([global::System.Diagnostics.CodeAnalysis.AllowNull] this SourceClass sourceClass)");
+    }
+
     [Fact]
     public void When_FoundEmptyAnnotatedClass_Should_NotGenerate()
     {
@@ -214,26 +237,27 @@ public class MapFromTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldBe($$"""
-                                                                                 {{ScenarioBuilder.GeneratedCodeAttribute}}
-                                                                                 public static class SourceClassMapToExtensions
-                                                                                 {
-                                                                                     [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
-                                                                                     public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
-                                                                                     {
-                                                                                         if (ReferenceEquals(sourceClass, null))
-                                                                                         {
-                                                                                             return null;
-                                                                                         }
-                                                                                 
-                                                                                         return new TargetClass
-                                                                                         {
-                                                                                             Id = sourceClass.Id,
-                                                                                             Name = sourceClass.Name
-                                                                                         };
-                                                                                     }
-                                                                                 }
-                                                                                 """);
+        compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldBe(
+            $$"""
+              {{ScenarioBuilder.GeneratedCodeAttribute}}
+              public static class SourceClassMapToExtensions
+              {
+                  [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
+                  public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
+                  {
+                      if (ReferenceEquals(sourceClass, null))
+                      {
+                          return null;
+                      }
+              
+                      return new TargetClass
+                      {
+                          Id = sourceClass.Id,
+                          Name = sourceClass.Name
+                      };
+                  }
+              }
+              """);
     }
 
     [Fact]
@@ -338,7 +362,6 @@ public class MapFromTests
         var (compilation, diagnostics) = builder.Compile();
 
         // Assert
-        compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
         compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.TargetClass.g.cs")
             .GetClassDeclaration("SourceClassMapToExtensions")

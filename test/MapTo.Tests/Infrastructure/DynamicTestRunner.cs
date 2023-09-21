@@ -12,9 +12,10 @@ internal static class DynamicTestRunner
         this ITestSourceBuilder builder,
         string dynamicClassName,
         [StringSyntax("csharp")] string code,
+        IEnumerable<string>? usings = null,
         ITestOutputHelper? logger = null)
     {
-        var testCodeFile = builder.AddFile($"{dynamicClassName}Runner", ns: TestClassNamespace);
+        var testCodeFile = builder.AddFile($"{dynamicClassName}Runner", ns: TestClassNamespace, usings: usings);
         testCodeFile.AddClass(body: $$"""
                                       public static class {{dynamicClassName}}
                                       {

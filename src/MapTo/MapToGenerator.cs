@@ -38,7 +38,7 @@ public class MapToGenerator : IIncrementalGenerator
             return;
         }
 
-        var codeGenerator = new CodeGenerator(mappingContext.CompilerOptions, mappingContext.CodeGeneratorOptions, mapping);
+        var codeGenerator = new CodeGenerator(mapping, mappingContext.CompilerOptions);
         context.GenerateSource(codeGenerator);
     }
 

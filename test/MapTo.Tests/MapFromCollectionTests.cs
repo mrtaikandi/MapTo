@@ -41,15 +41,188 @@ public class MapFromCollectionTests
     }
 
     [Fact]
-    public void When_MappedPropertyTypeIsArrayOfMappedObjects_Should_MapCollectionItems()
+    public void When_MappedPropertyTypeIsArrayOfMappedObjectsWithReferenceHandlingEnabled_Should_GenerateMapItemArrays()
     {
         // Arrange
-        var builder = ScenarioBuilder.BuildAlbumAndArtistModels();
+        var builder = ScenarioBuilder.BuildAlbumAndArtistModels(TestSourceBuilderOptions.Create(analyzerConfigOptions: new Dictionary<string, string>
+        {
+            [nameof(CodeGeneratorOptions.ReferenceHandling)] = ReferenceHandling.Enabled.ToString()
+        }));
 
         // Act
-        var (_, diagnostics) = builder.Compile();
+        var (compilation, diagnostics) = builder.Compile();
 
         // Assert
         diagnostics.ShouldBeSuccessful();
+
+        var extensionClass = compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.AlbumViewModel.g.cs").GetClassDeclaration("AlbumMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldContain(
+            """
+            if (!ReferenceEquals(album.Artists, null))
+            {
+                target.Artists = MapToArtistViewModelArray(album.Artists, referenceHandler);
+            }
+            """);
+
+        extensionClass.ShouldContain(
+            """
+            private static MapTo.Tests.ArtistViewModel[] MapToArtistViewModelArray(MapTo.Tests.Artist[] sourceArray, global::System.Collections.Generic.Dictionary<int, object> referenceHandler)
+            {
+                var targetArray = new MapTo.Tests.ArtistViewModel[sourceArray.Length];
+                for (var i = 0; i < sourceArray.Length; i++)
+                {
+                    targetArray[i] = MapTo.Tests.ArtistMapToExtensions.MapToArtistViewModel(sourceArray[i], referenceHandler);
+                }
+            
+                return targetArray;
+            }
+            """);
+    }
+
+    [Fact]
+    public void When_MappedPropertyTypeIsArrayOfMappedObjectsWithReferenceHandlingDisabled_Should_GenerateMapItemArrays()
+    {
+        // Arrange
+        var builder = ScenarioBuilder.BuildSpotifyModels(TestSourceBuilderOptions.Create(analyzerConfigOptions: new Dictionary<string, string>
+        {
+            [nameof(CodeGeneratorOptions.ReferenceHandling)] = ReferenceHandling.Disabled.ToString()
+        }));
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+
+        var extensionClass = compilation.GetGeneratedFileSyntaxTree("ExternalTestData.Models.SpotifyAlbum.g.cs").GetClassDeclaration("SpotifyAlbumDtoMapToExtensions")
+            .ShouldNotBeNull();
+
+        extensionClass.ShouldContain(
+            """
+            if (!ReferenceEquals(spotifyAlbumDto.Artists, null))
+            {
+                target.Artists = MapToArtistArray(spotifyAlbumDto.Artists);
+            }
+            """);
+
+        extensionClass.ShouldContain(
+            """
+            private static ExternalTestData.Models.Artist[] MapToArtistArray(ExternalTestData.Models.ArtistDto[] sourceArray)
+            {
+                var targetArray = new ExternalTestData.Models.Artist[sourceArray.Length];
+                for (var i = 0; i < sourceArray.Length; i++)
+                {
+                    targetArray[i] = ExternalTestData.Models.ArtistDtoMapToExtensions.MapToArtist(sourceArray[i]);
+                }
+            
+                return targetArray;
+            }
+            """);
+    }
+
+    [Fact]
+    public void When_MappedPropertyTypeIsArrayOfMappedObjectsWithReferenceHandlingAuto_Should_GenerateMapItemArrays()
+    {
+        // Arrange
+        var builder = ScenarioBuilder.BuildSpotifyModels(TestSourceBuilderOptions.Create(analyzerConfigOptions: new Dictionary<string, string>
+        {
+            [nameof(CodeGeneratorOptions.ReferenceHandling)] = ReferenceHandling.Auto.ToString()
+        }));
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+
+        var extensionClass = compilation.GetGeneratedFileSyntaxTree("ExternalTestData.Models.SpotifyAlbum.g.cs")
+            .GetClassDeclaration("SpotifyAlbumDtoMapToExtensions")
+            .ShouldNotBeNull();
+
+        extensionClass.ShouldContain(
+            """
+            if (!ReferenceEquals(spotifyAlbumDto.Artists, null)) 
+            {
+                target.Artists = MapToArtistArray(spotifyAlbumDto.Artists, referenceHandler);
+            }
+            """);
+
+        extensionClass.ShouldContain(
+            """
+            private static ExternalTestData.Models.Artist[] MapToArtistArray(ExternalTestData.Models.ArtistDto[] sourceArray, global::System.Collections.Generic.Dictionary<int, object> referenceHandler)
+            {
+                var targetArray = new ExternalTestData.Models.Artist[sourceArray.Length];
+                for (var i = 0; i < sourceArray.Length; i++)
+                {
+                    targetArray[i] = ExternalTestData.Models.ArtistDtoMapToExtensions.MapToArtist(sourceArray[i], referenceHandler);
+                 }
+
+                 return targetArray;
+             }
+            """);
+
+        extensionClass.ShouldContain(
+            """
+            if (!ReferenceEquals(spotifyAlbumDto.Copyrights, null)) 
+            {
+                target.Copyrights = MapToCopyrightArray(spotifyAlbumDto.Copyrights);
+            }
+            """);
+
+        extensionClass.ShouldContain(
+            """
+            private static ExternalTestData.Models.Copyright[] MapToCopyrightArray(ExternalTestData.Models.CopyrightDto[] sourceArray)
+            {
+                var targetArray = new ExternalTestData.Models.Copyright[sourceArray.Length];
+                for (var i = 0; i < sourceArray.Length; i++)
+                {
+                    targetArray[i] = ExternalTestData.Models.CopyrightDtoMapToExtensions.MapToCopyright(sourceArray[i]);
+                }
+ 
+                return targetArray;
+            }
+            """);
+    }
+
+    [Theory]
+    [InlineData(ReferenceHandling.Auto)]
+    [InlineData(ReferenceHandling.Enabled)]
+    [InlineData(ReferenceHandling.Disabled)]
+    public void When_MappedPropertyTypeIsArrayOfPrimitivesWithCopyPrimitiveTypesEnabled_Should_GenerateMapPrimitiveArrays(ReferenceHandling referenceHandling)
+    {
+        // Arrange
+        var builder = ScenarioBuilder.BuildSpotifyModels(TestSourceBuilderOptions.Create(analyzerConfigOptions: new Dictionary<string, string>
+        {
+            [nameof(CodeGeneratorOptions.ReferenceHandling)] = referenceHandling.ToString(),
+            [nameof(CodeGeneratorOptions.CopyPrimitiveArrays)] = "true"
+        }));
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+
+        var extensionClass = compilation.GetGeneratedFileSyntaxTree("ExternalTestData.Models.SpotifyAlbum.g.cs").GetClassDeclaration("SpotifyAlbumDtoMapToExtensions")
+            .ShouldNotBeNull();
+
+        extensionClass.ShouldContain(
+            """
+            if (!ReferenceEquals(spotifyAlbumDto.AvailableMarkets, null))
+            {
+                target.AvailableMarkets = MapToStringArray(spotifyAlbumDto.AvailableMarkets);
+            }
+            """);
+
+        extensionClass.ShouldContain(
+            """
+            private static string[] MapToStringArray(string[] sourceArray)
+            {
+                var targetArray = new string[sourceArray.Length];
+                global::System.Array.Copy(sourceArray, targetArray, sourceArray.Length);
+            
+                return targetArray;
+            }
+            """);
     }
 }

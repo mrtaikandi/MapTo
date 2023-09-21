@@ -8,7 +8,7 @@ internal readonly record struct MappingContext(
     INamedTypeSymbol TargetTypeSymbol,
     SemanticModel TargetSemanticModel,
     INamedTypeSymbol SourceTypeSymbol,
-    WellKnownTypes WellKnownTypes,
+    KnownTypes KnownTypes,
     CodeGeneratorOptions CodeGeneratorOptions = default,
     CompilerOptions CompilerOptions = default)
 {
@@ -24,20 +24,24 @@ internal readonly record struct MappingContext(
 
     public static MappingContext WithOptions((MappingContext Builder, CodeGeneratorOptions Options) source, CancellationToken cancellationToken)
     {
-        var codeGenOptions = source.Options;
-        if (source.Builder.MapFromAttributeData.TryGetNamedArgument(WellKnownTypes.MapFromReferenceHandlingPropertyName, out var value))
-        {
-            codeGenOptions = codeGenOptions with
-            {
-                // Values are from src/MapTo/Resources/ReferenceHandling.cs
-                UseReferenceHandling = value.Value switch { 1 => true, 2 => false, _ => null }
-            };
-        }
-
+        var mapFromAttributeData = source.Builder.MapFromAttributeData;
         return source.Builder with
         {
-            CodeGeneratorOptions = codeGenOptions,
-            CompilerOptions = CompilerOptions.From(source.Builder.TargetSemanticModel.Compilation)
+            CompilerOptions = CompilerOptions.From(source.Builder.TargetSemanticModel.Compilation),
+            CodeGeneratorOptions = source.Options with
+            {
+                CopyPrimitiveArrays = mapFromAttributeData.TryGetNamedArgument(KnownTypes.MapFromCopyPrimitiveArraysPropertyName, out var value)
+                    ? (bool)value
+                    : source.Options.CopyPrimitiveArrays,
+
+                ReferenceHandling = mapFromAttributeData.GetNamedArgument(KnownTypes.MapFromReferenceHandlingPropertyName) switch
+                {
+                    0 => ReferenceHandling.Disabled,
+                    1 => ReferenceHandling.Enabled,
+                    2 => ReferenceHandling.Auto,
+                    _ => source.Options.ReferenceHandling
+                }
+            },
         };
     }
 
@@ -47,7 +51,7 @@ internal readonly record struct MappingContext(
 internal static class MappingContextExtensions
 {
     public static IncrementalValuesProvider<MappingContext> CreateMappingContext(this SyntaxValueProvider provider) => provider.ForAttributeWithMetadataName(
-        WellKnownTypes.MapFromAttributeFullyQualifiedName,
+        KnownTypes.MapFromAttributeFullyQualifiedName,
         static (node, _) => node is ClassDeclarationSyntax,
         static (context, _) =>
         {
@@ -57,7 +61,7 @@ internal static class MappingContextExtensions
                 TargetTypeSymbol: context.TargetSymbol as INamedTypeSymbol ?? throw new InvalidOperationException("TargetSymbol is not a ITypeSymbol"),
                 TargetSemanticModel: context.SemanticModel,
                 SourceTypeSymbol: mapFromAttribute.ConstructorArguments.First().Value as INamedTypeSymbol ?? throw new InvalidOperationException("SourceType is not a ITypeSymbol"),
-                WellKnownTypes: WellKnownTypes.Create(context.SemanticModel.Compilation))
+                KnownTypes: KnownTypes.Create(context.SemanticModel.Compilation))
             {
                 MapFromAttributeData = mapFromAttribute
             };

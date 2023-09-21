@@ -30,4 +30,24 @@ internal static class StringExtensions
 
         return constant.ToCSharpString();
     }
+
+    public static string Pluralize(this string word)
+    {
+        if (string.IsNullOrWhiteSpace(word))
+        {
+            return word;
+        }
+
+        if (word.EndsWith("s") || word.EndsWith("x") || word.EndsWith("z") || word.EndsWith("ch") || word.EndsWith("sh"))
+        {
+            return word + "es";
+        }
+
+        if (word.EndsWith("y"))
+        {
+            return word.Substring(0, word.Length - 1) + "ies";
+        }
+
+        return word + "s";
+    }
 }

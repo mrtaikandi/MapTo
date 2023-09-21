@@ -14,7 +14,7 @@ internal readonly record struct PartialClassGenerator(TargetMapping Mapping) : I
         }
 
         writer
-            .WriteCodeGeneratorAttribute()
+            .WriteGeneratedCodeAttribute()
             .WritePartialClassDefinition(Mapping)
             .WriteOpeningBracket() // Class opening bracket
             .WriteConstructor(Mapping.Constructor)

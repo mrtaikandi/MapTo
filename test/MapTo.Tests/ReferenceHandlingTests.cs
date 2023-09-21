@@ -65,15 +65,79 @@ public class ReferenceHandlingTests
         diagnostics.ShouldNotBeSuccessful(diagnostic);
     }
 
+    [Theory]
+    [InlineData(ReferenceHandling.Enabled)]
+    [InlineData(ReferenceHandling.Auto)]
+    public void When_ObjectIsSelfReferencingAndReferenceHandlingIsAutoOrEnable_Should_GenerateReferenceHandlingMethods(ReferenceHandling referenceHandling)
+    {
+        // Arrange
+        var builder = ScenarioBuilder.BuildEmployeeManagerModels(referenceHandling: referenceHandling);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+        var managerMapExtensionClass = compilation.GetClassDeclaration("ManagerMapToExtensions", "MapTo.Tests.ManagerViewModel.g.cs").ShouldNotBeNull();
+        managerMapExtensionClass.Dump(_output);
+        managerMapExtensionClass.ShouldContain(
+            """
+            [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("manager")]
+            public static ManagerViewModel? MapToManagerViewModel(this Manager? manager)
+            {
+                var referenceHandler = new global::System.Collections.Generic.Dictionary<int, object>();
+                return MapToManagerViewModel(manager, referenceHandler);
+            }
+            """);
+
+        managerMapExtensionClass.ShouldContain(
+            """
+            [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("manager")]
+            internal static ManagerViewModel? MapToManagerViewModel(Manager? manager, global::System.Collections.Generic.Dictionary<int, object> referenceHandler)
+            {
+                if (ReferenceEquals(manager, null))
+                {
+                    return null;
+                }
+            
+                if (referenceHandler.TryGetValue(manager.GetHashCode(), out var cachedTarget))
+                {
+                    return (ManagerViewModel)cachedTarget;
+                }
+            
+                var target = new ManagerViewModel(manager.Id)
+                {
+                    Level = manager.Level,
+                    EmployeeCode = manager.EmployeeCode
+                };
+            
+                referenceHandler.Add(manager.GetHashCode(), target);
+            
+                if (!ReferenceEquals(manager.Employees, null))
+                {
+                    target.Employees = manager.Employees.Select(e => MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeViewModel(e, referenceHandler)).ToList();
+                }
+            
+                if (!ReferenceEquals(manager.Manager, null))
+                {
+                    target.Manager = MapTo.Tests.ManagerMapToExtensions.MapToManagerViewModel(manager.Manager, referenceHandler);
+                }
+            
+                return target;
+            }
+            """);
+    }
+
     [Fact]
     public void When_ObjectIsSelfReferencing_Should_UseReferenceHandlingAndNotThrowStackOverflowException()
     {
         // Arrange
-        var builder = ScenarioBuilder.BuildEmployeeManagerModels();
+        var builder = ScenarioBuilder.BuildEmployeeManagerModels(referenceHandling: ReferenceHandling.Enabled);
 
         // Act
-        var (compilation, diagnostics) = builder.ExecuteAndAssertDynamicCode(
+        var (_, diagnostics) = builder.ExecuteAndAssertDynamicCode(
             dynamicClassName: "CyclicReferenceTestsRunner",
+            logger: _output,
             code: """
                   var manager = new Manager { Id = 1, EmployeeCode = "M001", Level = 100 };
                   manager.Manager = manager;
@@ -82,51 +146,13 @@ public class ReferenceHandlingTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var managerMapExtensionClass = compilation.GetClassDeclaration("ManagerMapToExtensions", "MapTo.Tests.ManagerViewModel.g.cs").ShouldNotBeNull();
-        managerMapExtensionClass.ShouldContain("""
-                                               [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("manager")]
-                                               public static ManagerViewModel? MapToManagerViewModel(this Manager? manager)
-                                               {
-                                                   var referenceHandler = new global::System.Collections.Generic.Dictionary<int, object>();
-                                                   return MapToManagerViewModel(manager, referenceHandler);
-                                               }
-                                               """);
-
-        managerMapExtensionClass.ShouldContain("""
-                                               [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("manager")]
-                                               internal static ManagerViewModel? MapToManagerViewModel(Manager? manager, global::System.Collections.Generic.Dictionary<int, object> referenceHandler)
-                                               {
-                                                   if (ReferenceEquals(manager, null))
-                                                   {
-                                                       return null;
-                                                   }
-                                               
-                                                   if (referenceHandler.TryGetValue(manager.GetHashCode(), out var cachedTarget))
-                                                   {
-                                                       return (ManagerViewModel)cachedTarget;
-                                                   }
-                                               
-                                                   var target = new ManagerViewModel(manager.Id)
-                                                   {
-                                                       Level = manager.Level,
-                                                       EmployeeCode = manager.EmployeeCode
-                                                   };
-                                               
-                                                   referenceHandler.Add(manager.GetHashCode(), target);
-                                               
-                                                   target.Employees = manager.Employees.Select(e => MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeViewModel(e, referenceHandler)).ToList();
-                                                   target.Manager = MapTo.Tests.ManagerMapToExtensions.MapToManagerViewModel(manager.Manager, referenceHandler);
-                                               
-                                                   return target;
-                                               }
-                                               """);
     }
 
     [Fact]
     public void When_ReferenceHandlingIsDisabledViaMapToAttribute_Should_NotGenerateReferenceHandlerMethod()
     {
         // Arrange
-        var builder = ScenarioBuilder.BuildEmployeeManagerModels(referenceHandling: false);
+        var builder = ScenarioBuilder.BuildEmployeeManagerModels(referenceHandling: ReferenceHandling.Disabled);
 
         // Act
         var (compilation, diagnostics) = builder.Compile();
@@ -150,14 +176,21 @@ public class ReferenceHandlingTests
             "internal static ManagerViewModel? MapToManagerViewModel(Manager? manager, global::System.Collections.Generic.Dictionary<int, object> referenceHandler)");
 
         var employeeExtensionClass = compilation.GetClassDeclaration("EmployeeMapToExtensions", "MapTo.Tests.EmployeeViewModel.g.cs");
-        employeeExtensionClass.ShouldContain("""
-                                             return new EmployeeViewModel
-                                             {
-                                                 Id = employee.Id,
-                                                 EmployeeCode = employee.EmployeeCode,
-                                                 Manager = MapTo.Tests.ManagerMapToExtensions.MapToManagerViewModel(employee.Manager)
-                                             };
-                                             """);
+        employeeExtensionClass.ShouldContain(
+            """
+            var target = new EmployeeViewModel
+            {
+                Id = employee.Id,
+                EmployeeCode = employee.EmployeeCode
+            };
+
+            if (!ReferenceEquals(employee.Manager, null))
+            {
+                target.Manager = MapTo.Tests.ManagerMapToExtensions.MapToManagerViewModel(employee.Manager);
+            }
+
+            return target;
+            """);
 
         employeeExtensionClass.ShouldNotContain(
             "internal static EmployeeViewModel? MapToEmployeeViewModel(Employee? employee, global::System.Collections.Generic.Dictionary<int, object> referenceHandler)");

@@ -23,7 +23,7 @@ internal readonly record struct CompilerOptions(
 
         return new CompilerOptions(
             compilation.Options.NullableContextOptions is NullableContextOptions.Warnings or NullableContextOptions.Enable,
-            compilation.TypeByMetadataNameExists(WellKnownTypes.NotNullIfNotNullAttribute),
+            compilation.TypeByMetadataNameExists(KnownTypes.NotNullIfNotNullAttribute),
             languageVersion >= LanguageVersion.CSharp10);
     }
 }

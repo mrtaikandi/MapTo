@@ -10,16 +10,16 @@ internal readonly record struct TargetMapping(
     SourceMapping Source,
     ConstructorMapping Constructor,
     ImmutableArray<PropertyMapping> Properties,
-    bool UseReferenceHandling,
     Location Location,
-    ImmutableArray<string> UsingDirectives);
+    ImmutableArray<string> UsingDirectives,
+    CodeGeneratorOptions Options);
 
 internal static class TargetMappingFactory
 {
     public static TargetMapping Create(MappingContext context)
     {
         var properties = PropertyMappingFactory.Create(context);
-        var (targetTypeSyntax, targetTypeSymbol, _, sourceTypeSymbol, _, _, _) = context;
+        var (targetTypeSyntax, targetTypeSymbol, _, sourceTypeSymbol, _, codeGeneratorOptions, _) = context;
 
         var mapping = new TargetMapping(
             Modifier: targetTypeSyntax.GetAccessModifier(),
@@ -29,9 +29,12 @@ internal static class TargetMappingFactory
             Source: SourceMapping.Create(sourceTypeSymbol),
             Constructor: ConstructorMappingFactory.Create(context, properties),
             Properties: properties,
-            UseReferenceHandling: context.UseReferenceHandling(properties),
             Location: targetTypeSyntax.Identifier.GetLocation(),
-            UsingDirectives: properties.SelectMany(p => p.UsingDirectives).Distinct().ToImmutableArray());
+            UsingDirectives: properties.SelectMany(p => p.UsingDirectives).Distinct().ToImmutableArray(),
+            Options: codeGeneratorOptions with
+            {
+                ReferenceHandling = context.UseReferenceHandling(properties)
+            });
 
         return mapping.IsValid(context) ? mapping : default;
     }
@@ -48,12 +51,11 @@ internal static class TargetMappingFactory
     private static bool UseFullyQualifiedName(this TargetMapping mapping) =>
         mapping.Namespace != mapping.Source.Namespace;
 
-    private static bool UseReferenceHandling(this MappingContext context, ImmutableArray<PropertyMapping> properties) =>
-        context.CodeGeneratorOptions.UseReferenceHandling switch
-        {
-            null => properties.Any(p => SymbolEqualityComparer.Default.Equals(p.Type, context.TargetTypeSymbol)) || context.TargetTypeSymbol.HasNonPrimitiveProperties(),
-            _ => context.CodeGeneratorOptions.UseReferenceHandling.Value
-        };
+    private static ReferenceHandling UseReferenceHandling(this MappingContext context, ImmutableArray<PropertyMapping> properties) =>
+        context.CodeGeneratorOptions.ReferenceHandling == ReferenceHandling.Auto &&
+        (properties.Any(p => SymbolEqualityComparer.Default.Equals(p.Type, context.TargetTypeSymbol)) || context.TargetTypeSymbol.HasNonPrimitiveProperties())
+            ? ReferenceHandling.Enabled
+            : context.CodeGeneratorOptions.ReferenceHandling;
 
     private static bool IsValid(this TargetMapping mapping, MappingContext context)
     {

@@ -1,3 +1,4 @@
+using MapTo.Configuration;
 using MapTo.Extensions;
 
 namespace MapTo.Mappings;
@@ -21,14 +22,14 @@ internal static class PropertyMappingFactory
 {
     internal static ImmutableArray<PropertyMapping> Create(MappingContext context)
     {
-        var (_, targetTypeSymbol, _, _, wellKnownTypes, _, _) = context;
+        var (_, targetTypeSymbol, _, _, knownTypes, _, _) = context;
         var isInheritFromMappedBaseClass = context.IsTargetTypeInheritFromMappedBaseClass();
-        var constructorParameters = targetTypeSymbol.GetConstructorParameters(wellKnownTypes);
+        var constructorParameters = targetTypeSymbol.GetConstructorParameters(knownTypes);
 
         return targetTypeSymbol
             .GetAllMembers(isInheritFromMappedBaseClass)
             .OfType<IPropertySymbol>()
-            .Where(p => !p.HasAttribute(wellKnownTypes.IgnorePropertyAttributeTypeSymbol))
+            .Where(p => !p.HasAttribute(knownTypes.IgnorePropertyAttributeTypeSymbol))
             .Select(p => CreatePropertyMapping(context, p, constructorParameters))
             .Where(p => p is not null)
             .Select(p => p!.Value)
@@ -37,8 +38,8 @@ internal static class PropertyMappingFactory
 
     private static PropertyMapping? CreatePropertyMapping(MappingContext context, IPropertySymbol property, IParameterSymbol[] constructorParameters)
     {
-        var (_, _, _, sourceTypeSymbol, wellKnownTypes, _, _) = context;
-        var mapPropertyAttributeTypeSymbol = wellKnownTypes.MapPropertyAttributeTypeSymbol;
+        var (_, _, _, sourceTypeSymbol, knownTypes, _, _) = context;
+        var mapPropertyAttributeTypeSymbol = knownTypes.MapPropertyAttributeTypeSymbol;
         var sourcePropertyName = property.GetSourcePropertyName(mapPropertyAttributeTypeSymbol);
         var sourceProperty = sourceTypeSymbol.FindProperty(sourcePropertyName);
 
@@ -48,20 +49,11 @@ internal static class PropertyMappingFactory
         }
 
         TypeConverterMapping? converter = null;
-        var globalUsings = ImmutableArray<string>.Empty;
-
-        if (!context.Compilation.HasCompatibleTypes(sourceProperty, property))
+        if (property.Type.IsArray() || !context.Compilation.HasCompatibleTypes(sourceProperty, property))
         {
-            converter = property.GetPropertyTypeConverter(context, sourceProperty, out var error);
-            if (converter == null)
+            converter = property.GetPropertyTypeConverter(context, sourceProperty);
+            if (converter is null)
             {
-                converter = property.GetNestedObjectMapping(context, out error);
-                globalUsings = globalUsings.Add("global::System.Linq");
-            }
-
-            if (converter is null && error is not null)
-            {
-                context.ReportDiagnostic(error);
                 return null;
             }
         }
@@ -74,7 +66,7 @@ internal static class PropertyMappingFactory
             InitializationMode: property.GetInitializationMode(context.Compilation, constructorParameters),
             ParameterName: property.Name.ToParameterNameCasing(),
             TypeConverter: converter ?? default,
-            UsingDirectives: globalUsings);
+            UsingDirectives: converter?.UsingDirectives ?? ImmutableArray<string>.Empty);
     }
 
     private static PropertyInitializationMode GetInitializationMode(this IPropertySymbol property, Compilation compilation, IParameterSymbol[] constructorParameters)
@@ -98,21 +90,21 @@ internal static class PropertyMappingFactory
         return PropertyInitializationMode.Setter;
     }
 
-    private static IParameterSymbol[] GetConstructorParameters(this INamedTypeSymbol typeSymbol, WellKnownTypes wellKnownTypes)
+    private static IParameterSymbol[] GetConstructorParameters(this INamedTypeSymbol typeSymbol, KnownTypes knownTypes)
     {
         return typeSymbol.Constructors
             .Where(c => !c.IsImplicitlyDeclared && !c.IsStatic)
-            .Where(c => c.HasAttribute(wellKnownTypes.MapConstructorAttributeTypeSymbol) || c.Parameters.Length > 0)
+            .Where(c => c.HasAttribute(knownTypes.MapConstructorAttributeTypeSymbol) || c.Parameters.Length > 0)
             .SelectMany(c => c.Parameters)
             .ToArray();
     }
 
     private static bool IsTargetTypeInheritFromMappedBaseClass(this MappingContext context)
     {
-        var (typeSyntax, _, semanticModel, _, wellKnownTypes, _, _) = context;
+        var (typeSyntax, _, semanticModel, _, knownTypes, _, _) = context;
         return typeSyntax.BaseList is not null && typeSyntax.BaseList.Types
             .Select(t => semanticModel.GetTypeInfo(t.Type).Type)
-            .Any(t => t?.GetAttribute(wellKnownTypes.MapFromAttributeTypeSymbol) is not null);
+            .Any(t => t?.GetAttribute(knownTypes.MapFromAttributeTypeSymbol) is not null);
     }
 
     private static TypeConverterMapping? GetNestedObjectMapping(this IPropertySymbol property, MappingContext context, out Diagnostic? error)
@@ -127,7 +119,7 @@ internal static class PropertyMappingFactory
         var propertyTypeName = propertyType.Name;
         var enumerableType = EnumerableType.None;
         INamedTypeSymbol? enumerableTypeSymbol = null;
-        var mapFromAttribute = propertyType.GetAttribute(context.WellKnownTypes.MapFromAttributeTypeSymbol);
+        var mapFromAttribute = propertyType.GetAttribute(context.KnownTypes.MapFromAttributeTypeSymbol);
 
         if (mapFromAttribute is null && !propertyType.IsPrimitiveType())
         {
@@ -136,7 +128,7 @@ internal static class PropertyMappingFactory
                 enumerableTypeSymbol = arrayNamedTypeSymbol;
                 enumerableType = EnumerableType.Array;
 
-                mapFromAttribute = enumerableTypeSymbol.GetAttribute(context.WellKnownTypes.MapFromAttributeTypeSymbol);
+                mapFromAttribute = enumerableTypeSymbol.GetAttribute(context.KnownTypes.MapFromAttributeTypeSymbol);
                 propertyTypeName = enumerableTypeSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
             }
             else
@@ -151,42 +143,70 @@ internal static class PropertyMappingFactory
                 }
 
                 var typeSymbol = enumerableTypeSymbol.TypeArguments.First();
-                mapFromAttribute = typeSymbol.GetAttribute(context.WellKnownTypes.MapFromAttributeTypeSymbol);
+                mapFromAttribute = typeSymbol.GetAttribute(context.KnownTypes.MapFromAttributeTypeSymbol);
                 propertyTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
             }
         }
 
-        if (mapFromAttribute?.ConstructorArguments.First().Value is not INamedTypeSymbol mappedSourcePropertyType)
+        var mappedSourcePropertyType = mapFromAttribute?.ConstructorArguments.First().Value as INamedTypeSymbol ?? enumerableTypeSymbol;
+        if (mappedSourcePropertyType is null)
         {
             return null;
         }
 
+        var referenceHandling = context.CodeGeneratorOptions.ReferenceHandling switch
+        {
+            ReferenceHandling.Disabled => false,
+            ReferenceHandling.Enabled => true,
+            ReferenceHandling.Auto when mappedSourcePropertyType.HasNonPrimitiveProperties() => true,
+            _ => false
+        };
+
+        var methodName = mappedSourcePropertyType.IsPrimitiveType()
+            ? $"{context.CodeGeneratorOptions.MapMethodPrefix}{mappedSourcePropertyType.Name}"
+            : $"{context.CodeGeneratorOptions.MapMethodPrefix}{propertyTypeName}";
+
+        var containingType = mappedSourcePropertyType.IsPrimitiveType()
+            ? "System"
+            : $"{mappedSourcePropertyType.ToDisplayString()}{context.CodeGeneratorOptions.MapExtensionClassSuffix}";
+
         return new TypeConverterMapping(
-            ContainingType: $"{mappedSourcePropertyType.ToDisplayString()}{context.CodeGeneratorOptions.MapExtensionClassSuffix}",
-            MethodName: $"{context.CodeGeneratorOptions.MapMethodPrefix}{propertyTypeName}",
+            ContainingType: containingType,
+            MethodName: methodName,
             Parameter: null,
             EnumerableElementTypeName: enumerableTypeSymbol?.Name,
             EnumerableType: enumerableType,
-            IsMapToExtensionMethod: true,
-            UsingReferenceHandler: mappedSourcePropertyType.HasNonPrimitiveProperties());
+            IsMapToExtensionMethod: mapFromAttribute is not null,
+            ReferenceHandling: referenceHandling,
+            UsingDirectives: ImmutableArray.Create("global::System.Linq"));
     }
 
-    private static TypeConverterMapping? GetPropertyTypeConverter(
-        this IPropertySymbol property,
-        MappingContext context,
-        IPropertySymbol sourceProperty,
-        out Diagnostic? error)
+    private static TypeConverterMapping? GetPropertyTypeConverter(this IPropertySymbol property, MappingContext context, IPropertySymbol sourceProperty)
     {
         TypedConstant? parameters = null;
-        (error, var converterMethodSymbol) = GetPropertyTypeConverterMethod(context, property, sourceProperty);
+        var (error, converterMethodSymbol) = GetPropertyTypeConverterMethod(context, property, sourceProperty);
         if (error is null)
         {
             (error, parameters) = GetPropertyTypeConverterAdditionalParameters(context, property, converterMethodSymbol!);
         }
 
-        return error is null
-            ? new(converterMethodSymbol!, parameters?.IsNull != false ? null : parameters.Value)
-            : null;
+        if (error is null)
+        {
+            return new(converterMethodSymbol!, parameters?.IsNull != false ? null : parameters.Value);
+        }
+
+        var converter = property.GetNestedObjectMapping(context, out var nestedObjectError);
+        if (converter is not null)
+        {
+            return converter;
+        }
+
+        if ((nestedObjectError ??= error) is not null)
+        {
+            context.ReportDiagnostic(nestedObjectError);
+        }
+
+        return null;
     }
 
     private static (Diagnostic? Error, TypedConstant? Parameters) GetPropertyTypeConverterAdditionalParameters(
@@ -194,8 +214,8 @@ internal static class PropertyMappingFactory
         IPropertySymbol property,
         IMethodSymbol converterMethodSymbol)
     {
-        var typeConverterAttribute = property.GetAttribute(context.WellKnownTypes.PropertyTypeConverterAttributeTypeSymbol);
-        var additionalParameters = typeConverterAttribute?.NamedArguments.SingleOrDefault(a => a.Key == WellKnownTypes.PropertyTypeConverterAttributeAdditionalParameters).Value;
+        var typeConverterAttribute = property.GetAttribute(context.KnownTypes.PropertyTypeConverterAttributeTypeSymbol);
+        var additionalParameters = typeConverterAttribute?.NamedArguments.SingleOrDefault(a => a.Key == KnownTypes.PropertyTypeConverterAttributeAdditionalParameters).Value;
 
         if (additionalParameters?.IsNull != false)
         {
@@ -216,7 +236,7 @@ internal static class PropertyMappingFactory
         IPropertySymbol property,
         IPropertySymbol sourceProperty)
     {
-        var typeConverterAttribute = property.GetAttribute(context.WellKnownTypes.PropertyTypeConverterAttributeTypeSymbol);
+        var typeConverterAttribute = property.GetAttribute(context.KnownTypes.PropertyTypeConverterAttributeTypeSymbol);
         var firstArgument = typeConverterAttribute?.ConstructorArguments.First();
 
         if (firstArgument?.Value is not string converterMethodName)
@@ -261,6 +281,6 @@ internal static class PropertyMappingFactory
     private static string GetSourcePropertyName(this ISymbol targetProperty, ITypeSymbol propertyAttributeTypeSymbol) => targetProperty
         .GetAttribute(propertyAttributeTypeSymbol)
         ?.NamedArguments
-        .SingleOrDefault(a => a.Key == WellKnownTypes.MapPropertyAttributeSourcePropertyName)
+        .SingleOrDefault(a => a.Key == KnownTypes.MapPropertyAttributeSourcePropertyName)
         .Value.Value as string ?? targetProperty.Name;
 }
