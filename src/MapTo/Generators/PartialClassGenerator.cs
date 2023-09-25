@@ -34,10 +34,10 @@ internal static class PartialClassGeneratorExtensions
 
         return writer
             .Write($"public {constructor.Name}(")
-            .WriteJoin(", ", constructor.Arguments.Select(a => $"{a.TypeName} {a.Name}"))
+            .WriteJoin(", ", constructor.Parameters.Select(a => $"{a.TypeName} {a.Name}"))
             .WriteClosingParenthesis()
             .WriteOpeningBracket()
-            .WriteLines(constructor.Arguments.Select(a => $"{a.Property.Name} = {a.Name};"))
+            .WriteLines(constructor.Parameters.Select(a => $"{a.Property.Name} = {a.Name};"))
             .WriteClosingBracket();
     }
 

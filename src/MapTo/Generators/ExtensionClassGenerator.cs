@@ -253,10 +253,9 @@ internal static class ExtensionClassGeneratorExtensions
     {
         var sourceType = mapping.Source.Name;
         var parameterName = sourceType.ToParameterNameCasing();
-        var properties = mapping.Properties.Where(p => p.InitializationMode == PropertyInitializationMode.Constructor);
         var hasObjectInitializer = mapping.Properties.Any(p => p.InitializationMode == PropertyInitializationMode.ObjectInitializer);
 
-        if (mapping.Constructor is { IsGenerated: false, HasArguments: false })
+        if (!mapping.Constructor.HasParameters)
         {
             writer.Write($"new {mapping.Name}");
             return hasObjectInitializer ? writer.WriteNewLine() : writer.WriteLine("();");
@@ -264,11 +263,9 @@ internal static class ExtensionClassGeneratorExtensions
 
         writer
             .Write($"new {mapping.Name}(")
-            .WriteJoin(", ", properties.Select(p => p.GetMappedProperty(parameterName, mapping.Options.CopyPrimitiveArrays)));
+            .WriteJoin(", ", mapping.Constructor.Parameters.Select(a => a.Property.GetMappedProperty(parameterName, mapping.Options.CopyPrimitiveArrays)));
 
-        return hasObjectInitializer
-            ? writer.WriteLine(")")
-            : writer.WriteLine(");");
+        return hasObjectInitializer ? writer.WriteLine(")") : writer.WriteLine(");");
     }
 
     private static CodeWriter WriteObjectInitializer(this CodeWriter writer, TargetMapping mapping)

@@ -11,13 +11,8 @@ internal readonly record struct CodeGenerator(
 {
     public string HintName => $"{Mapping.Namespace}.{Mapping.Name}.g.cs";
 
-    public string? Build()
+    public string Build()
     {
-        if (!Mapping.Properties.Any())
-        {
-            return null;
-        }
-
         var writer = new CodeWriter();
         var generators = new ICodeGenerator[]
         {
@@ -37,11 +32,6 @@ internal static class CodeGeneratorExtensions
     internal static void GenerateSource(this SourceProductionContext context, CodeGenerator generator)
     {
         var source = generator.Build();
-        if (source is null)
-        {
-            return;
-        }
-
         context.AddSource(generator.HintName, SourceText.From(source, Encoding.UTF8));
     }
 

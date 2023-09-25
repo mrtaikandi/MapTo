@@ -18,8 +18,11 @@ internal static class TargetMappingFactory
 {
     public static TargetMapping Create(MappingContext context)
     {
-        var properties = PropertyMappingFactory.Create(context);
         var (targetTypeSyntax, targetTypeSymbol, _, sourceTypeSymbol, _, codeGeneratorOptions, _) = context;
+
+        var properties = PropertyMappingFactory.Create(context);
+        var constructorMapping = ConstructorMappingFactory.Create(context, properties);
+        properties = properties.ExceptConstructorInitializers(constructorMapping);
 
         var mapping = new TargetMapping(
             Modifier: targetTypeSyntax.GetAccessModifier(),
@@ -27,7 +30,7 @@ internal static class TargetMappingFactory
             Namespace: NamespaceMapping.Create(targetTypeSymbol),
             IsPartial: targetTypeSyntax.IsPartial(),
             Source: SourceMapping.Create(sourceTypeSymbol),
-            Constructor: ConstructorMappingFactory.Create(context, properties),
+            Constructor: constructorMapping,
             Properties: properties,
             Location: targetTypeSyntax.Identifier.GetLocation(),
             UsingDirectives: properties.SelectMany(p => p.UsingDirectives).Distinct().ToImmutableArray(),

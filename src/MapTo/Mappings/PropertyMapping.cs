@@ -24,19 +24,31 @@ internal static class PropertyMappingFactory
     {
         var (_, targetTypeSymbol, _, _, knownTypes, _, _) = context;
         var isInheritFromMappedBaseClass = context.IsTargetTypeInheritFromMappedBaseClass();
-        var constructorParameters = targetTypeSymbol.GetConstructorParameters(knownTypes);
 
         return targetTypeSymbol
             .GetAllMembers(isInheritFromMappedBaseClass)
             .OfType<IPropertySymbol>()
-            .Where(p => !p.HasAttribute(knownTypes.IgnorePropertyAttributeTypeSymbol))
-            .Select(p => CreatePropertyMapping(context, p, constructorParameters))
-            .Where(p => p is not null)
-            .Select(p => p!.Value)
+            .Where(p => p.DeclaredAccessibility is Accessibility.Public or Accessibility.Internal &&
+                        !p.HasAttribute(knownTypes.CompilerGeneratedAttributeTypeSymbol) &&
+                        !p.HasAttribute(knownTypes.IgnorePropertyAttributeTypeSymbol))
+            .Select(p => CreatePropertyMapping(context, p))
+            .WhereNotNull()
             .ToImmutableArray();
     }
 
-    private static PropertyMapping? CreatePropertyMapping(MappingContext context, IPropertySymbol property, IParameterSymbol[] constructorParameters)
+    internal static ImmutableArray<PropertyMapping> ExceptConstructorInitializers(this ImmutableArray<PropertyMapping> properties, ConstructorMapping constructor)
+    {
+        if (!constructor.HasParameters)
+        {
+            return properties;
+        }
+
+        return properties
+            .Where(prop => !constructor.Parameters.Any(param => param.IsEqual(prop)))
+            .ToImmutableArray();
+    }
+
+    private static PropertyMapping? CreatePropertyMapping(MappingContext context, IPropertySymbol property)
     {
         var (_, _, _, sourceTypeSymbol, knownTypes, _, _) = context;
         var mapPropertyAttributeTypeSymbol = knownTypes.MapPropertyAttributeTypeSymbol;
@@ -63,41 +75,19 @@ internal static class PropertyMappingFactory
             Type: property.GetTypeNamedSymbol(),
             SourceName: sourceProperty.Name,
             SourceType: sourceProperty.GetTypeNamedSymbol(),
-            InitializationMode: property.GetInitializationMode(context.Compilation, constructorParameters),
+            InitializationMode: property.GetInitializationMode(),
             ParameterName: property.Name.ToParameterNameCasing(),
             TypeConverter: converter ?? default,
             UsingDirectives: converter?.UsingDirectives ?? ImmutableArray<string>.Empty);
     }
 
-    private static PropertyInitializationMode GetInitializationMode(this IPropertySymbol property, Compilation compilation, IParameterSymbol[] constructorParameters)
+    private static PropertyInitializationMode GetInitializationMode(this IPropertySymbol property) => property.SetMethod switch
     {
-        var propertyName = property.Name.ToParameterNameCasing();
-        if (constructorParameters.Any(p => p.Name == propertyName && compilation.HasCompatibleTypes(p.Type, property.Type)))
-        {
-            return PropertyInitializationMode.Constructor;
-        }
-
-        if (property.SetMethod == null)
-        {
-            return PropertyInitializationMode.Constructor;
-        }
-
-        if (property.SetMethod is { IsInitOnly: true } || property.Type.IsPrimitiveType())
-        {
-            return PropertyInitializationMode.ObjectInitializer;
-        }
-
-        return PropertyInitializationMode.Setter;
-    }
-
-    private static IParameterSymbol[] GetConstructorParameters(this INamedTypeSymbol typeSymbol, KnownTypes knownTypes)
-    {
-        return typeSymbol.Constructors
-            .Where(c => !c.IsImplicitlyDeclared && !c.IsStatic)
-            .Where(c => c.HasAttribute(knownTypes.MapConstructorAttributeTypeSymbol) || c.Parameters.Length > 0)
-            .SelectMany(c => c.Parameters)
-            .ToArray();
-    }
+        null => PropertyInitializationMode.Constructor,
+        { IsInitOnly: true } => PropertyInitializationMode.ObjectInitializer,
+        { IsInitOnly: false } when property.Type.IsPrimitiveType(includeNullable: true) => PropertyInitializationMode.ObjectInitializer,
+        _ => PropertyInitializationMode.Setter
+    };
 
     private static bool IsTargetTypeInheritFromMappedBaseClass(this MappingContext context)
     {

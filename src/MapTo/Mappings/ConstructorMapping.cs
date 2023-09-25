@@ -1,66 +1,69 @@
-﻿namespace MapTo.Mappings;
+﻿using MapTo.Extensions;
 
-internal readonly record struct ConstructorMapping(string Name, bool IsGenerated, ImmutableArray<ConstructorArgumentMapping> Arguments)
+namespace MapTo.Mappings;
+
+internal readonly record struct ConstructorMapping(string Name, bool IsGenerated, ImmutableArray<ConstructorParameterMapping> Parameters)
 {
-    public bool HasArguments => Arguments.Length > 0;
+    public bool HasParameters => !Parameters.IsDefaultOrEmpty;
 }
 
 internal static class ConstructorMappingFactory
 {
     public static ConstructorMapping Create(MappingContext context, ImmutableArray<PropertyMapping> properties)
     {
-        var (targetType, targetTypeSymbol, _, _, _, _, _) = context;
+        var (targetType, targetTypeSymbol, _, _, knownTypes, _, _) = context;
         var constructorName = targetType.Identifier.ValueText;
 
-        var readonlyProperties = properties.Where(p => p.InitializationMode == PropertyInitializationMode.Constructor).ToArray();
-        if (readonlyProperties.Length == 0)
+        var constructor = targetTypeSymbol.Constructors.SingleOrDefault(c => c.HasAttribute(knownTypes.MapConstructorAttributeTypeSymbol));
+
+        if (constructor == null)
         {
-            // If there are no properties to initialize in the constructor, then we don't need to do anything.
-            return new ConstructorMapping(constructorName, false, ImmutableArray<ConstructorArgumentMapping>.Empty);
+            // Checking if there is a constructor that has matching parameters with the properties
+            var constructors = targetTypeSymbol.Constructors
+                .Where(c => c is { IsStatic: false, Parameters.Length: > 0 })
+                .OrderByDescending(c => c.Parameters.Length)
+                .ToArray();
+
+            constructor = constructors.FirstOrDefault(c => c.Parameters.All(param => properties.Any(param.IsEqual))) ?? constructors.FirstOrDefault();
         }
 
-        var constructors = targetTypeSymbol.Constructors.Where(c => !c.IsImplicitlyDeclared && !c.IsStatic).ToArray();
-        if (constructors.Length == 0)
+        if (constructor is null)
         {
+            var constructorProperties = properties.Where(p => p.InitializationMode == PropertyInitializationMode.Constructor).ToArray();
             return new ConstructorMapping(
                 constructorName,
-                true,
-                readonlyProperties.Select(p => new ConstructorArgumentMapping(p.ParameterName, p.Type, p, Location.None)).ToImmutableArray());
+                constructorProperties.Length > 0,
+                constructorProperties.Select(p => new ConstructorParameterMapping(p.ParameterName, p.Type, p, Location.None)).ToImmutableArray());
         }
 
-        var argumentMappings = GetArgumentMappings(context, constructors, readonlyProperties);
+        var argumentMappings = constructor.GetArgumentMappings(properties);
         return argumentMappings.IsValid(context) ? new ConstructorMapping(constructorName, false, argumentMappings) : default;
     }
 
-    private static ImmutableArray<ConstructorArgumentMapping> GetArgumentMappings(MappingContext context, IEnumerable<IMethodSymbol> constructors, PropertyMapping[] properties)
-    {
-        var (_, _, semanticModel, _, wellKnownTypes, _, _) = context;
-        var argumentMappings = constructors
-            .Where(c => c.HasAttribute(wellKnownTypes.MapConstructorAttributeTypeSymbol) || c.Parameters.Length == properties.Length)
-            .Select(c => GetArgumentMappings(c, semanticModel.Compilation, properties))
-            .FirstOrDefault(a => a.Length > 0);
+    internal static bool IsEqual(this IParameterSymbol parameter, PropertyMapping property) =>
+        parameter.Name.ToParameterNameCasing() == property.ParameterName && SymbolEqualityComparer.Default.Equals(parameter.Type, property.Type);
 
-        return argumentMappings;
-    }
+    internal static bool IsEqual(this ConstructorParameterMapping parameter, PropertyMapping property) =>
+        parameter.Name.ToParameterNameCasing() == property.ParameterName && SymbolEqualityComparer.Default.Equals(parameter.Type, property.Type);
 
-    private static ImmutableArray<ConstructorArgumentMapping> GetArgumentMappings(IMethodSymbol constructor, Compilation compilation, PropertyMapping[] properties)
+    private static ImmutableArray<ConstructorParameterMapping> GetArgumentMappings(this IMethodSymbol constructor, ImmutableArray<PropertyMapping> properties)
     {
-        var arguments = ImmutableArray.CreateBuilder<ConstructorArgumentMapping>();
+        var arguments = ImmutableArray.CreateBuilder<ConstructorParameterMapping>();
         foreach (var parameter in constructor.Parameters)
         {
-            var property = properties.SingleOrDefault(p => p.ParameterName == parameter.Name && compilation.HasCompatibleTypes(parameter.Type, p.Type));
+            var property = properties.SingleOrDefault(prop => parameter.IsEqual(prop));
             if (property == default)
             {
-                return ImmutableArray<ConstructorArgumentMapping>.Empty;
+                return ImmutableArray<ConstructorParameterMapping>.Empty;
             }
 
-            arguments.Add(new ConstructorArgumentMapping(parameter.Name, parameter.Type, property, parameter.Locations.FirstOrDefault() ?? Location.None));
+            arguments.Add(new ConstructorParameterMapping(parameter.Name, parameter.Type, property, parameter.Locations.FirstOrDefault() ?? Location.None));
         }
 
         return arguments.ToImmutable();
     }
 
-    private static bool IsValid(this ImmutableArray<ConstructorArgumentMapping> argumentMappings, MappingContext context)
+    private static bool IsValid(this ImmutableArray<ConstructorParameterMapping> argumentMappings, MappingContext context)
     {
         var targetType = context.TargetTypeSyntax;
         var targetTypeSymbol = context.TargetTypeSymbol;

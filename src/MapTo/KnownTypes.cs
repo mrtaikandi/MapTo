@@ -5,7 +5,8 @@ internal record KnownTypes(
     INamedTypeSymbol IgnorePropertyAttributeTypeSymbol,
     INamedTypeSymbol MapPropertyAttributeTypeSymbol,
     INamedTypeSymbol MapConstructorAttributeTypeSymbol,
-    INamedTypeSymbol PropertyTypeConverterAttributeTypeSymbol)
+    INamedTypeSymbol PropertyTypeConverterAttributeTypeSymbol,
+    INamedTypeSymbol CompilerGeneratedAttributeTypeSymbol)
 {
     internal const string MapToNamespace = "MapTo";
 
@@ -35,5 +36,6 @@ internal record KnownTypes(
         compilation.GetTypeByMetadataNameOrThrow(IgnorePropertyAttributeFullyQualifiedName),
         compilation.GetTypeByMetadataNameOrThrow(MapPropertyAttributeFullyQualifiedName),
         compilation.GetTypeByMetadataNameOrThrow(MapConstructorAttributeFullyQualifiedName),
-        compilation.GetTypeByMetadataNameOrThrow(PropertyTypeConverterAttributeFullyQualifiedName));
+        compilation.GetTypeByMetadataNameOrThrow(PropertyTypeConverterAttributeFullyQualifiedName),
+        compilation.GetTypeByMetadataNameOrThrow("System.Runtime.CompilerServices.CompilerGeneratedAttribute"));
 }

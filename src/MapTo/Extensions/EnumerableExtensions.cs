@@ -11,4 +11,7 @@ internal static class EnumerableExtensions
     }
 
     internal static bool IsEmpty<T>(this IEnumerable<T> enumerable) => !enumerable.Any();
+
+    internal static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> enumerable)
+        where T : struct => enumerable.Where(item => item is not null).Select(item => item!.Value);
 }

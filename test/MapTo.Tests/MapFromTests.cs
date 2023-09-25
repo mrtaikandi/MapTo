@@ -261,37 +261,6 @@ public class MapFromTests
     }
 
     [Fact]
-    public void When_TargetWithReadOnlyPropertyAndConstructor_Should_NotCreateConstructorAndUseConstructorInitializer()
-    {
-        // Arrange
-        var builder = new TestSourceBuilder();
-        var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
-            .WithProperty<int?>("Id", propertyType: PropertyType.ReadOnly | PropertyType.AutoProperty)
-            .WithProperty<string>("Name")
-            .WithConstructor("""
-                             public TargetClass(int id)
-                             {
-                                 Id = id;
-                             }
-                             """);
-
-        // Act
-        var (compilation, diagnostics) = builder.Compile();
-
-        // Assert
-        diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions")
-            .ShouldContain("""
-                           return new TargetClass(sourceClass.Id)
-                           {
-                               Name = sourceClass.Name
-                           };
-                           """);
-    }
-
-    [Fact]
     public void When_TargetWithReadOnlyPropertyAndNoConstructor_Should_CreateConstructorForReadOnlyProperties()
     {
         // Arrange
@@ -314,30 +283,6 @@ public class MapFromTests
                               Id = id;
                           }
                       """);
-    }
-
-    [Fact]
-    public void When_TargetWithReadOnlyPropertyIsNotPartial_Should_ReportDiagnostic()
-    {
-        // Arrange
-        var builder = new TestSourceBuilder();
-        var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", attributes: "[MapFrom(typeof(SourceClass))]")
-            .WithProperty<int>("Id", propertyType: PropertyType.ReadOnly | PropertyType.AutoProperty)
-            .WithProperty<string>("Name");
-
-        // Act
-        var (compilation, diagnostics) = builder.Compile();
-
-        // Assert
-        var targetClassDeclaration = compilation.GetClassDeclaration("TargetClass");
-        targetClassDeclaration.ShouldNotBeNull();
-        var expectedError = DiagnosticsFactory.MissingPartialKeywordOnTargetClassError(
-            targetClassDeclaration.Identifier.GetLocation(),
-            targetClassDeclaration.Identifier.ValueText);
-
-        diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
     [Fact]
