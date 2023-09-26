@@ -1,6 +1,8 @@
 <Project>
     <ItemGroup>
-        <CompilerVisibleProperty Include="MapTo_ConstructorAccessModifier"/>
         <CompilerVisibleProperty Include="MapTo_MapMethodPrefix"/>
+        <CompilerVisibleProperty Include="MapTo_MapExtensionClassSuffix"/>
+        <CompilerVisibleProperty Include="MapTo_ReferenceHandling"/>
+        <CompilerVisibleProperty Include="MapTo_CopyPrimitiveArrays"/>
     </ItemGroup>
 </Project>

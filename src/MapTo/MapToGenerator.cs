@@ -1,9 +1,6 @@
-using System.Reflection;
-using System.Text;
 using MapTo.Configuration;
 using MapTo.Generators;
 using MapTo.Mappings;
-using Microsoft.CodeAnalysis.Text;
 
 namespace MapTo;
 
@@ -16,8 +13,6 @@ public class MapToGenerator : IIncrementalGenerator
     /// <inheritdoc />
     public void Initialize(IncrementalGeneratorInitializationContext initContext)
     {
-        initContext.RegisterPostInitializationOutput(RegisterResources);
-
         var mappingOptions = initContext.AnalyzerConfigOptionsProvider
             .Select(CodeGeneratorOptions.Create);
 
@@ -40,21 +35,5 @@ public class MapToGenerator : IIncrementalGenerator
 
         var codeGenerator = new CodeGenerator(mapping, mappingContext.CompilerOptions);
         context.GenerateSource(codeGenerator);
-    }
-
-    private static void RegisterResources(IncrementalGeneratorPostInitializationContext context)
-    {
-        var assembly = Assembly.GetExecutingAssembly();
-        var sources = assembly.GetManifestResourceNames()
-            .Where(x => x.StartsWith("MapTo.Resources."));
-
-        foreach (var source in sources)
-        {
-            using var resourceStream = assembly.GetManifestResourceStream(source) ?? throw new InvalidOperationException("Unable to get resource stream.");
-            using var streamReader = new StreamReader(resourceStream);
-
-            var name = Path.GetFileNameWithoutExtension(source);
-            context.AddSource($"{name}.g.cs", SourceText.From(streamReader.ReadToEnd(), Encoding.UTF8));
-        }
     }
 }
