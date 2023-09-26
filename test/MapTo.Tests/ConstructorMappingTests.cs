@@ -204,4 +204,34 @@ public class ConstructorMappingTests
             .GetClassDeclaration("SourceClassMapToExtensions")
             .ShouldContain("return new TargetClass(sourceClass.Id);");
     }
+
+    [Fact]
+    public void When_TargetHasInitMappedProperty_Should_UseObjectInitializer()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        var sourceFile = builder.AddFile();
+
+        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
+            .WithProperty<int>("Id", propertyType: PropertyType.AutoProperty | PropertyType.InitProperty)
+            .WithProperty<string>("Name", attribute: "[IgnoreProperty]");
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        compilation.Dump(_output);
+        diagnostics.ShouldBeSuccessful();
+
+        compilation
+            .GetClassDeclaration("SourceClassMapToExtensions")
+            .ShouldContain(
+                """
+                return new TargetClass
+                {
+                    Id = sourceClass.Id
+                };
+                """);
+    }
 }

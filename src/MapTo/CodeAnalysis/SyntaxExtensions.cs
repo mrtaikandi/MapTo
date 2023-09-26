@@ -5,7 +5,7 @@ namespace MapTo.CodeAnalysis;
 
 internal static class SyntaxExtensions
 {
-    public static AccessModifier GetAccessModifier(this ClassDeclarationSyntax syntax) => syntax.Modifiers.FirstOrDefault().Kind() switch
+    public static AccessModifier GetAccessModifier(this TypeDeclarationSyntax syntax) => syntax.Modifiers.FirstOrDefault().Kind() switch
     {
         SyntaxKind.PublicKeyword => AccessModifier.Public,
         SyntaxKind.PrivateKeyword => AccessModifier.Private,

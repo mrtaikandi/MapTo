@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace MapTo.Mappings;
 
 internal readonly record struct MappingContext(
-    ClassDeclarationSyntax TargetTypeSyntax,
+    TypeDeclarationSyntax TargetTypeSyntax,
     INamedTypeSymbol TargetTypeSymbol,
     SemanticModel TargetSemanticModel,
     INamedTypeSymbol SourceTypeSymbol,
@@ -52,12 +52,12 @@ internal static class MappingContextExtensions
 {
     public static IncrementalValuesProvider<MappingContext> CreateMappingContext(this SyntaxValueProvider provider) => provider.ForAttributeWithMetadataName(
         KnownTypes.MapFromAttributeFullyQualifiedName,
-        static (node, _) => node is ClassDeclarationSyntax,
+        static (node, _) => node is ClassDeclarationSyntax or RecordDeclarationSyntax,
         static (context, _) =>
         {
             var mapFromAttribute = context.Attributes.Single();
             return new MappingContext(
-                TargetTypeSyntax: context.TargetNode as ClassDeclarationSyntax ?? throw new InvalidOperationException("TargetNode is not a ClassDeclarationSyntax"),
+                TargetTypeSyntax: context.TargetNode as TypeDeclarationSyntax ?? throw new InvalidOperationException("TargetNode is not a ClassDeclarationSyntax"),
                 TargetTypeSymbol: context.TargetSymbol as INamedTypeSymbol ?? throw new InvalidOperationException("TargetSymbol is not a ITypeSymbol"),
                 TargetSemanticModel: context.SemanticModel,
                 SourceTypeSymbol: mapFromAttribute.ConstructorArguments.First().Value as INamedTypeSymbol ?? throw new InvalidOperationException("SourceType is not a ITypeSymbol"),

@@ -20,7 +20,7 @@ internal static class ConstructorMappingFactory
         {
             // Checking if there is a constructor that has matching parameters with the properties
             var constructors = targetTypeSymbol.Constructors
-                .Where(c => c is { IsStatic: false, Parameters.Length: > 0 })
+                .Where(c => c is { DeclaredAccessibility: Accessibility.Public or Accessibility.Internal, IsStatic: false, Parameters.Length: > 0 })
                 .OrderByDescending(c => c.Parameters.Length)
                 .ToArray();
 
