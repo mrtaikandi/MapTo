@@ -1,7 +1,7 @@
-﻿using MappingLibrariesBenchmark.Mappings;
-using MappingLibrariesBenchmark.Models;
+﻿using MapTo.Benchmarks.Mappings;
+using MapTo.Benchmarks.Models;
 
-namespace MappingLibrariesBenchmark.Scenarios;
+namespace MapTo.Benchmarks.Scenarios;
 
 [MemoryDiagnoser]
 [KeepBenchmarkFiles(false)]

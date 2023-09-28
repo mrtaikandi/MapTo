@@ -1,9 +1,9 @@
 ﻿using AutoMapper;
-using MappingLibrariesBenchmark.Mappings;
-using MappingLibrariesBenchmark.Models;
 using Mapster;
+using MapTo.Benchmarks.Mappings;
+using MapTo.Benchmarks.Models;
 
-namespace MappingLibrariesBenchmark.Scenarios;
+namespace MapTo.Benchmarks.Scenarios;
 
 [SimpleJob(RunStrategy.Throughput)]
 [MemoryDiagnoser]

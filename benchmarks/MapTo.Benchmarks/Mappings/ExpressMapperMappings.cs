@@ -1,7 +1,7 @@
 ﻿using ExpressMapper;
-using MappingLibrariesBenchmark.Models;
+using MapTo.Benchmarks.Models;
 
-namespace MappingLibrariesBenchmark.Mappings;
+namespace MapTo.Benchmarks.Mappings;
 
 public class ExpressMapperMappings
 {

@@ -1,8 +1,6 @@
 ﻿#nullable disable
 
-using MapTo;
-
-namespace MappingLibrariesBenchmark.Models;
+namespace MapTo.Benchmarks.Models;
 
 [MapFrom(typeof(SpotifyAlbumDto))]
 public partial class SpotifyAlbum

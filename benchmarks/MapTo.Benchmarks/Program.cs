@@ -1,5 +1,5 @@
 ﻿using BenchmarkDotNet.Running;
-using MappingLibrariesBenchmark.Scenarios;
+using MapTo.Benchmarks.Scenarios;
 
 var config = DefaultConfig.Instance
     .WithOptions(ConfigOptions.DisableOptimizationsValidator)

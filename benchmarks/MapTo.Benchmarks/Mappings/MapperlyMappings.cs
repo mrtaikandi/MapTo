@@ -1,7 +1,7 @@
-﻿using MappingLibrariesBenchmark.Models;
+﻿using MapTo.Benchmarks.Models;
 using Riok.Mapperly.Abstractions;
 
-namespace MappingLibrariesBenchmark.Mappings;
+namespace MapTo.Benchmarks.Mappings;
 
 [Mapper]
 public partial class MapperlyMappings

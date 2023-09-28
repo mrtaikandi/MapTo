@@ -3,7 +3,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Newtonsoft.Json;
 
-namespace MappingLibrariesBenchmark.Models;
+namespace MapTo.Benchmarks.Models;
 
 public partial class SpotifyAlbumDto
 {
