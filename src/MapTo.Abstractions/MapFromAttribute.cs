@@ -41,4 +41,16 @@ public sealed class MapFromAttribute : Attribute
     /// force no reference handling.
     /// </summary>
     public ReferenceHandling ReferenceHandling { get; set; }
+
+    /// <summary>
+    /// Gets or sets the name of the method to call before mapping the property.
+    /// </summary>
+    /// <value>The name of the method to call before mapping the property.</value>
+    public string? BeforeMap { get; set; }
+
+    /// <summary>
+    /// Gets or sets the name of the method to call after mapping the property.
+    /// </summary>
+    /// <value>The name of the method to call after mapping the property.</value>
+    public string? AfterMap { get; set; }
 }

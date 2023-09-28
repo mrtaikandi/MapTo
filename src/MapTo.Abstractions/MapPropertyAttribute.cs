@@ -10,5 +10,5 @@ public sealed class MapPropertyAttribute : Attribute
     /// Gets or sets the name of the source property to map to.
     /// </summary>
     /// <value>The name of the source property to map to.</value>
-    public string? SourcePropertyName { get; set; }
+    public string? From { get; set; }
 }

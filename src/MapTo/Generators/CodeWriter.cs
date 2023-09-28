@@ -115,11 +115,15 @@ internal sealed class CodeWriter : IDisposable
         return this;
     }
 
-    public CodeWriter WriteLineIf(bool condition, string? value = null)
+    public CodeWriter WriteLineIf(bool condition, string? value = null, string? elseValue = null)
     {
         if (condition)
         {
             WriteLine(value);
+        }
+        else if (elseValue != null)
+        {
+            WriteLine(elseValue);
         }
 
         return this;

@@ -12,6 +12,9 @@ internal static class SymbolExtensions
     public static AttributeData? GetAttribute(this ISymbol symbol, ITypeSymbol attributeSymbol) =>
         symbol.GetAttributes(attributeSymbol).FirstOrDefault();
 
+    public static AttributeData? GetAttribute<T>(this ISymbol symbol)
+        where T : Attribute => symbol.GetAttribute(typeof(T).FullName!);
+
     public static AttributeData? GetAttribute(this ISymbol symbol, string fullyQualifiedAttributeName) =>
         symbol.GetAttributes().FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == fullyQualifiedAttributeName);
 

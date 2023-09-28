@@ -30,11 +30,11 @@ internal readonly record struct MappingContext(
             CompilerOptions = CompilerOptions.From(source.Builder.TargetSemanticModel.Compilation),
             CodeGeneratorOptions = source.Options with
             {
-                CopyPrimitiveArrays = mapFromAttributeData.TryGetNamedArgument(KnownTypes.MapFromCopyPrimitiveArraysPropertyName, out var value)
+                CopyPrimitiveArrays = mapFromAttributeData.TryGetNamedArgument(nameof(MapFromAttribute.CopyPrimitiveArrays), out var value)
                     ? (bool)value
                     : source.Options.CopyPrimitiveArrays,
 
-                ReferenceHandling = mapFromAttributeData.GetNamedArgument(KnownTypes.MapFromReferenceHandlingPropertyName) switch
+                ReferenceHandling = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.ReferenceHandling)) switch
                 {
                     0 => ReferenceHandling.Disabled,
                     1 => ReferenceHandling.Enabled,
@@ -51,7 +51,7 @@ internal readonly record struct MappingContext(
 internal static class MappingContextExtensions
 {
     public static IncrementalValuesProvider<MappingContext> CreateMappingContext(this SyntaxValueProvider provider) => provider.ForAttributeWithMetadataName(
-        KnownTypes.MapFromAttributeFullyQualifiedName,
+        typeof(MapFromAttribute).FullName!,
         static (node, _) => node is ClassDeclarationSyntax or RecordDeclarationSyntax,
         static (context, _) =>
         {

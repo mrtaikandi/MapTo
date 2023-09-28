@@ -55,4 +55,7 @@ internal static class CodeWriterExtensions
 
         return writer.WriteLineIf(hasUsings);
     }
+
+    public static CodeWriter WriteLineComment(this CodeWriter writer, string comment) =>
+        writer.WriteLine($"// {comment}");
 }

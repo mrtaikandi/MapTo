@@ -1,4 +1,5 @@
 ﻿using MapTo.Configuration;
+using MapTo.Extensions;
 
 namespace MapTo.Mappings;
 
@@ -12,6 +13,8 @@ internal readonly record struct TargetMapping(
     ImmutableArray<PropertyMapping> Properties,
     Location Location,
     ImmutableArray<string> UsingDirectives,
+    MethodMapping BeforeMapMethod,
+    MethodMapping AfterMapMethod,
     CodeGeneratorOptions Options);
 
 internal static class TargetMappingFactory
@@ -34,6 +37,8 @@ internal static class TargetMappingFactory
             Properties: properties,
             Location: targetTypeSyntax.Identifier.GetLocation(),
             UsingDirectives: properties.SelectMany(p => p.UsingDirectives).Distinct().ToImmutableArray(),
+            BeforeMapMethod: targetTypeSymbol.GetBeforeMapMethod(context),
+            AfterMapMethod: targetTypeSymbol.GetAfterMapMethod(context),
             Options: codeGeneratorOptions with
             {
                 ReferenceHandling = context.UseReferenceHandling(properties)
@@ -66,6 +71,141 @@ internal static class TargetMappingFactory
         {
             context.ReportDiagnostic(DiagnosticsFactory.MissingPartialKeywordOnTargetClassError(mapping.Location, mapping.Name));
             return false;
+        }
+
+        return true;
+    }
+
+    private static MethodMapping GetBeforeMapMethod(this ITypeSymbol targetTypeSymbol, MappingContext context)
+    {
+        var compilation = context.Compilation;
+        var mapFromAttribute = context.MapFromAttributeData;
+
+        var methodName = mapFromAttribute.GetNamedArgument<string?>(nameof(MapFromAttribute.BeforeMap));
+        if (methodName is null)
+        {
+            return default;
+        }
+
+        var methodSymbol = methodName.Contains(".")
+            ? compilation.GetMethodSymbolByFullyQualifiedName(methodName.AsSpan())
+            : targetTypeSymbol.GetMembers(methodName).OfType<IMethodSymbol>().SingleOrDefault();
+
+        return !methodSymbol.ValidateBeforeMapMethod(context)
+            ? default
+            : new MethodMapping(
+                ContainingType: methodSymbol.ContainingType.ToDisplayString(),
+                MethodName: methodSymbol.Name,
+                Parameter: methodSymbol.Parameters.Select(p => p.Name.ToSourceCodeString()).ToImmutableArray(),
+                ReturnsVoid: methodSymbol.ReturnsVoid);
+    }
+
+    private static MethodMapping GetAfterMapMethod(this ITypeSymbol targetTypeSymbol, MappingContext context)
+    {
+        var compilation = context.Compilation;
+        var mapFromAttribute = context.MapFromAttributeData;
+
+        var methodName = mapFromAttribute.GetNamedArgument<string?>(nameof(MapFromAttribute.AfterMap));
+        if (methodName is null)
+        {
+            return default;
+        }
+
+        var methodSymbol = methodName.Contains(".")
+            ? compilation.GetMethodSymbolByFullyQualifiedName(methodName.AsSpan())
+            : targetTypeSymbol.GetMembers(methodName).OfType<IMethodSymbol>().SingleOrDefault();
+
+        return !methodSymbol.ValidateAfterMapMethod(context)
+            ? default
+            : new MethodMapping(
+                ContainingType: methodSymbol.ContainingType.ToDisplayString(),
+                MethodName: methodSymbol.Name,
+                Parameter: methodSymbol.Parameters.Select(p => p.Name.ToSourceCodeString()).ToImmutableArray(),
+                ReturnsVoid: methodSymbol.ReturnsVoid);
+    }
+
+    private static bool ValidateBeforeMapMethod([NotNullWhen(true)] this IMethodSymbol? methodSymbol, MappingContext context)
+    {
+        var sourceTypeSymbol = context.SourceTypeSymbol;
+        var compilation = context.Compilation;
+        var mapFromAttribute = context.MapFromAttributeData;
+        var compilerOptions = context.CompilerOptions;
+
+        if (methodSymbol is null)
+        {
+            context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodNotFoundError(mapFromAttribute, nameof(MapFromAttribute.BeforeMap)));
+            return false;
+        }
+
+        var methodParameter = methodSymbol.Parameters.FirstOrDefault();
+        if (methodParameter is not null)
+        {
+            if (methodSymbol.Parameters.Length > 1 || !compilation.HasCompatibleTypes(sourceTypeSymbol, methodParameter.Type))
+            {
+                context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodInvalidParameterError(mapFromAttribute, nameof(MapFromAttribute.BeforeMap), sourceTypeSymbol));
+                return false;
+            }
+
+            if (compilerOptions.NullableReferenceTypes && methodParameter.NullableAnnotation is not NullableAnnotation.Annotated)
+            {
+                context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodMissingParameterNullabilityAnnotationError(mapFromAttribute, nameof(MapFromAttribute.BeforeMap)));
+                return false;
+            }
+        }
+
+        if (!methodSymbol.ReturnsVoid)
+        {
+            if (!compilation.HasCompatibleTypes(methodSymbol.ReturnType, sourceTypeSymbol))
+            {
+                context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodInvalidReturnTypeError(mapFromAttribute, nameof(MapFromAttribute.BeforeMap), sourceTypeSymbol));
+                return false;
+            }
+
+            if (methodSymbol.Parameters.IsDefaultOrEmpty)
+            {
+                context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodMissingParameterError(mapFromAttribute, nameof(MapFromAttribute.BeforeMap), sourceTypeSymbol));
+                return false;
+            }
+
+            if (compilerOptions.NullableReferenceTypes && methodSymbol.ReturnType.NullableAnnotation is not NullableAnnotation.Annotated)
+            {
+                context.ReportDiagnostic(
+                    DiagnosticsFactory.BeforeOrAfterMapMethodMissingReturnTypeNullabilityAnnotationError(mapFromAttribute, nameof(MapFromAttribute.BeforeMap)));
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool ValidateAfterMapMethod([NotNullWhen(true)] this IMethodSymbol? methodSymbol, MappingContext context)
+    {
+        var targetTypeSymbol = context.TargetTypeSymbol;
+        var compilation = context.Compilation;
+        var mapFromAttribute = context.MapFromAttributeData;
+        var compilerOptions = context.CompilerOptions;
+
+        if (methodSymbol is null)
+        {
+            context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodNotFoundError(mapFromAttribute, nameof(MapFromAttribute.AfterMap)));
+            return false;
+        }
+
+        var methodParameter = methodSymbol.Parameters.FirstOrDefault();
+        if (methodParameter is not null)
+        {
+            if (methodSymbol.Parameters.Length > 1 || !compilation.HasCompatibleTypes(targetTypeSymbol, methodParameter.Type))
+            {
+                context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodInvalidParameterError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), targetTypeSymbol));
+                return false;
+            }
+
+            if (compilerOptions.NullableReferenceTypes && methodParameter.NullableAnnotation is not NullableAnnotation.Annotated)
+            {
+                context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodMissingParameterNullabilityAnnotationError(mapFromAttribute, nameof(MapFromAttribute.AfterMap)));
+                return false;
+            }
         }
 
         return true;

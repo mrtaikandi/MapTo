@@ -16,6 +16,7 @@ internal record TestPropertyBuilder(string Type, string Name, AccessModifier Acc
         var autoProperty = PropertyType.HasFlag(PropertyType.AutoProperty);
         var initProperty = PropertyType.HasFlag(PropertyType.InitProperty);
         var readOnly = PropertyType.HasFlag(PropertyType.ReadOnly);
+        var hasDefaultValue = DefaultValue is not null;
 
         writer.WriteLineIf(hasBackingField, $"private {Type} {backingField};");
         writer.WriteLineIf(hasBackingField && attributes.Any());
@@ -33,8 +34,7 @@ internal record TestPropertyBuilder(string Type, string Name, AccessModifier Acc
                 .Write(" get;")
                 .WriteIf(initProperty, " init;")
                 .WriteIf(!readOnly && !initProperty, " set;")
-                .WriteLine(" }")
-                .WriteIf(DefaultValue is not null, $" = {DefaultValue};");
+                .WriteLineIf(hasDefaultValue, $" }} = {DefaultValue};", " }");
         }
         else
         {

@@ -101,25 +101,33 @@ internal static class ExtensionClassGeneratorExtensions
 
         if (mapping.Options.ReferenceHandling == ReferenceHandling.Enabled)
         {
-            writer.WriteLine("var referenceHandler = new global::System.Collections.Generic.Dictionary<int, object>();");
-            writer.WriteLine($"return {methodName}({parameterName}, referenceHandler);");
+            writer
+                .WriteBeforeMapMethodCall(mapping)
+                .WriteLine("var referenceHandler = new global::System.Collections.Generic.Dictionary<int, object>();")
+                .WriteLine($"return {methodName}({parameterName}, referenceHandler);");
         }
         else
         {
             var hasSetterProperties = mapping.Properties.Any(p => p.InitializationMode == PropertyInitializationMode.Setter);
+            var hasTargetVariable = hasSetterProperties || mapping.AfterMapMethod != default;
 
             writer
+                .WriteBeforeMapMethodCall(mapping)
                 .WriteParameterNullCheck(mapping.Source.Name.ToParameterNameCasing())
                 .WriteLine()
-                .WriteIf(hasSetterProperties, "var target = ", "return ")
+                .WriteIf(hasTargetVariable, "var target = ", "return ")
                 .WriteConstructorInitializer(mapping)
                 .WriteObjectInitializer(mapping);
 
             if (hasSetterProperties)
             {
+                writer.WriteLine().WritePropertySetters(mapping, "target", "referenceHandler");
+            }
+
+            if (hasTargetVariable)
+            {
                 writer
-                    .WriteLine()
-                    .WritePropertySetters(mapping, "target", "referenceHandler")
+                    .WriteAfterMapMethodCall(mapping)
                     .WriteLine("return target;");
             }
         }
@@ -208,6 +216,7 @@ internal static class ExtensionClassGeneratorExtensions
             .WriteLine($"referenceHandler.Add({parameterName}.GetHashCode(), target);")
             .WriteLine()
             .WritePropertySetters(mapping, "target", "referenceHandler")
+            .WriteAfterMapMethodCall(mapping)
             .WriteLine("return target;")
             .WriteClosingBracket();
     }
@@ -217,7 +226,7 @@ internal static class ExtensionClassGeneratorExtensions
 
     private static string GetMappedProperty(this PropertyMapping property, string parameterName, bool copyPrimitiveArrays, string? referenceHandlerInstanceName = null)
     {
-        parameterName = $"{parameterName}.{property.Name}";
+        parameterName = $"{parameterName}.{property.SourceName}";
         if (!property.HasTypeConverter)
         {
             return parameterName;
@@ -319,4 +328,25 @@ internal static class ExtensionClassGeneratorExtensions
 
         return writer;
     }
+
+    private static CodeWriter WriteBeforeMapMethodCall(this CodeWriter writer, TargetMapping mapping)
+    {
+        var beforeMapMethod = mapping.BeforeMapMethod;
+        var parameterName = mapping.Source.Name.ToParameterNameCasing();
+
+        return beforeMapMethod switch
+        {
+            { MethodName: null } => writer,
+            { Parameter.IsDefaultOrEmpty: true } => writer.Write(beforeMapMethod.MethodFullName).WriteLine("();").WriteLine(),
+            { Parameter.IsDefaultOrEmpty: false, ReturnsVoid: true } => writer.WriteLine($"{beforeMapMethod.MethodFullName}({parameterName});").WriteLine(),
+            { Parameter.IsDefaultOrEmpty: false, ReturnsVoid: false } => writer.WriteLine($"{parameterName} = {beforeMapMethod.MethodFullName}({parameterName});").WriteLine()
+        };
+    }
+
+    private static CodeWriter WriteAfterMapMethodCall(this CodeWriter writer, TargetMapping mapping) => mapping.AfterMapMethod switch
+    {
+        { MethodName: null } => writer,
+        { Parameter.IsDefaultOrEmpty: true } => writer.WriteLine().Write(mapping.AfterMapMethod.MethodFullName).WriteLine("();").WriteLine(),
+        { Parameter.IsDefaultOrEmpty: false } => writer.WriteLine().WriteLine($"{mapping.AfterMapMethod.MethodFullName}(target);").WriteLine(),
+    };
 }

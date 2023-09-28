@@ -60,14 +60,9 @@ internal static class PropertyMappingFactory
             return null;
         }
 
-        TypeConverterMapping? converter = null;
-        if (property.Type.IsArray() || !context.Compilation.HasCompatibleTypes(sourceProperty, property))
+        if (!property.TryGetTypeConverter(sourceProperty, context, out var converter))
         {
-            converter = property.GetPropertyTypeConverter(context, sourceProperty);
-            if (converter is null)
-            {
-                return null;
-            }
+            return null;
         }
 
         return new(
@@ -77,25 +72,22 @@ internal static class PropertyMappingFactory
             SourceType: sourceProperty.GetTypeNamedSymbol(),
             InitializationMode: property.GetInitializationMode(),
             ParameterName: property.Name.ToParameterNameCasing(),
-            TypeConverter: converter ?? default,
-            UsingDirectives: converter?.UsingDirectives ?? ImmutableArray<string>.Empty);
+            TypeConverter: converter.Value,
+            UsingDirectives: converter.Value.UsingDirectives ?? ImmutableArray<string>.Empty);
     }
+
+    private static IPropertySymbol? FindProperty(this ITypeSymbol typeSymbol, string propertyName) => typeSymbol
+        .GetAllMembers()
+        .OfType<IPropertySymbol>()
+        .SingleOrDefault(p => p.Name == propertyName);
 
     private static PropertyInitializationMode GetInitializationMode(this IPropertySymbol property) => property.SetMethod switch
     {
         null => PropertyInitializationMode.Constructor,
         { IsInitOnly: true } => PropertyInitializationMode.ObjectInitializer,
-        { IsInitOnly: false } when property.Type.IsPrimitiveType(includeNullable: true) => PropertyInitializationMode.ObjectInitializer,
+        { IsInitOnly: false } when property.Type.IsPrimitiveType(true) => PropertyInitializationMode.ObjectInitializer,
         _ => PropertyInitializationMode.Setter
     };
-
-    private static bool IsTargetTypeInheritFromMappedBaseClass(this MappingContext context)
-    {
-        var (typeSyntax, _, semanticModel, _, knownTypes, _, _) = context;
-        return typeSyntax.BaseList is not null && typeSyntax.BaseList.Types
-            .Select(t => semanticModel.GetTypeInfo(t.Type).Type)
-            .Any(t => t?.GetAttribute(knownTypes.MapFromAttributeTypeSymbol) is not null);
-    }
 
     private static TypeConverterMapping? GetNestedObjectMapping(this IPropertySymbol property, MappingContext context, out Diagnostic? error)
     {
@@ -161,14 +153,14 @@ internal static class PropertyMappingFactory
             : $"{mappedSourcePropertyType.ToDisplayString()}{context.CodeGeneratorOptions.MapExtensionClassSuffix}";
 
         return new TypeConverterMapping(
-            ContainingType: containingType,
-            MethodName: methodName,
-            Parameter: null,
-            EnumerableElementTypeName: enumerableTypeSymbol?.Name,
-            EnumerableType: enumerableType,
-            IsMapToExtensionMethod: mapFromAttribute is not null,
-            ReferenceHandling: referenceHandling,
-            UsingDirectives: ImmutableArray.Create("global::System.Linq"));
+            containingType,
+            methodName,
+            null,
+            enumerableTypeSymbol?.Name,
+            enumerableType,
+            mapFromAttribute is not null,
+            referenceHandling,
+            ImmutableArray.Create("global::System.Linq"));
     }
 
     private static TypeConverterMapping? GetPropertyTypeConverter(this IPropertySymbol property, MappingContext context, IPropertySymbol sourceProperty)
@@ -205,7 +197,7 @@ internal static class PropertyMappingFactory
         IMethodSymbol converterMethodSymbol)
     {
         var typeConverterAttribute = property.GetAttribute(context.KnownTypes.PropertyTypeConverterAttributeTypeSymbol);
-        var additionalParameters = typeConverterAttribute?.NamedArguments.SingleOrDefault(a => a.Key == KnownTypes.PropertyTypeConverterAttributeAdditionalParameters).Value;
+        var additionalParameters = typeConverterAttribute?.NamedArguments.SingleOrDefault(a => a.Key == nameof(PropertyTypeConverterAttribute.Parameters)).Value;
 
         if (additionalParameters?.IsNull != false)
         {
@@ -263,14 +255,34 @@ internal static class PropertyMappingFactory
         return (null, converterMethodSymbol);
     }
 
-    private static IPropertySymbol? FindProperty(this ITypeSymbol typeSymbol, string propertyName) => typeSymbol
-        .GetAllMembers()
-        .OfType<IPropertySymbol>()
-        .SingleOrDefault(p => p.Name == propertyName);
-
     private static string GetSourcePropertyName(this ISymbol targetProperty, ITypeSymbol propertyAttributeTypeSymbol) => targetProperty
         .GetAttribute(propertyAttributeTypeSymbol)
-        ?.NamedArguments
-        .SingleOrDefault(a => a.Key == KnownTypes.MapPropertyAttributeSourcePropertyName)
-        .Value.Value as string ?? targetProperty.Name;
+        .GetNamedArgument(nameof(MapPropertyAttribute.From), defaultValue: targetProperty.Name);
+
+    private static bool IsTargetTypeInheritFromMappedBaseClass(this MappingContext context)
+    {
+        var (typeSyntax, _, semanticModel, _, knownTypes, _, _) = context;
+        return typeSyntax.BaseList is not null && typeSyntax.BaseList.Types
+            .Select(t => semanticModel.GetTypeInfo(t.Type).Type)
+            .Any(t => t?.GetAttribute(knownTypes.MapFromAttributeTypeSymbol) is not null);
+    }
+
+    private static bool TryGetTypeConverter(
+        this IPropertySymbol property,
+        IPropertySymbol sourceProperty,
+        MappingContext context,
+        [NotNullWhen(true)] out TypeConverterMapping? converter)
+    {
+        converter = default(TypeConverterMapping);
+        if (property.Type.IsArray() || !context.Compilation.HasCompatibleTypes(sourceProperty, property))
+        {
+            converter = property.GetPropertyTypeConverter(context, sourceProperty);
+            if (converter is null)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }

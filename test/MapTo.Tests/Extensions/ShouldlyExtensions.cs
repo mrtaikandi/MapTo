@@ -115,9 +115,25 @@ internal static partial class ShouldlyExtensions
 
         Assert.Equal(expectedError.Id, actualDiagnostics.Id);
         Assert.Equal(expectedError.Descriptor.Id, actualDiagnostics.Descriptor.Id);
-        Assert.Equal(expectedError.Descriptor.Description, actualDiagnostics.Descriptor.Description);
+        Assert.Equal(expectedError.Descriptor.MessageFormat, actualDiagnostics.Descriptor.MessageFormat);
         Assert.Equal(expectedError.Descriptor.Title, actualDiagnostics.Descriptor.Title);
         Assert.Equal(expectedError.Location.ToDisplayString(), actualDiagnostics.Location.ToDisplayString());
+    }
+
+    internal static void ShouldNotBeSuccessful(this ImmutableArray<Diagnostic> diagnostics, string diagnosticId, string? diagnosticMessage = null)
+    {
+        var actualDiagnostics = diagnostics.SingleOrDefault(d => d.Id == diagnosticId);
+        if (actualDiagnostics is null)
+        {
+            throw new XunitException($"Expected to find a diagnostic with the id '{diagnosticId}' but found none.");
+        }
+
+        Assert.Equal(diagnosticId, actualDiagnostics.Id);
+
+        if (diagnosticMessage is not null)
+        {
+            Assert.Equal(diagnosticMessage, actualDiagnostics.GetMessage());
+        }
     }
 
     internal static void ShouldNotContain(this ClassDeclarationSyntax? classDeclaration, [StringSyntax("csharp")] string expected)

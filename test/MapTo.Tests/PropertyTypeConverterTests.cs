@@ -169,14 +169,15 @@ public class PropertyTypeConverterTests
         var (compilation, diagnostics) = builder.Compile();
 
         // Assert
+        var sourceClassDeclaration = compilation.GetClassDeclaration("SourceClass").ShouldNotBeNull();
+        var sourceSemanticModel = compilation.GetSemanticModel(sourceClassDeclaration.SyntaxTree);
+        var sourcePropertySymbol = (sourceSemanticModel.GetDeclaredSymbol(sourceClassDeclaration.Members[0]) as IPropertySymbol).ShouldNotBeNull();
+
         var targetClassDeclaration = compilation.GetClassDeclaration("TargetClass").ShouldNotBeNull();
-        var semanticModel = compilation.GetSemanticModel(targetClassDeclaration.SyntaxTree);
+        var targetSemanticModel = compilation.GetSemanticModel(targetClassDeclaration.SyntaxTree);
+        var targetMethodSymbol = (targetSemanticModel.GetDeclaredSymbol(targetClassDeclaration.Members[2]) as IMethodSymbol).ShouldNotBeNull();
 
-        var propertySymbol = (semanticModel.GetDeclaredSymbol(targetClassDeclaration.Members[0]) as IPropertySymbol).ShouldNotBeNull();
-        var methodSymbol = semanticModel.GetDeclaredSymbol(targetClassDeclaration.Members[2]) as IMethodSymbol;
-
-        methodSymbol.ShouldNotBeNull();
-        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.PropertyTypeConverterMethodInputTypeCompatibilityError(propertySymbol, methodSymbol));
+        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.PropertyTypeConverterMethodInputTypeCompatibilityError(sourcePropertySymbol, targetMethodSymbol));
     }
 
     [Theory]
