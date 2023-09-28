@@ -16,7 +16,7 @@ public class MapRecordTests
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
 
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
         sourceFile.AddClass(
             body: """
                   [MapFrom(typeof(SourceClass))]

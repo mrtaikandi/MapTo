@@ -17,8 +17,8 @@ public class PropertyTypeConverterTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name");
 
@@ -35,8 +35,8 @@ public class PropertyTypeConverterTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<string>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<string>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id", propertyType: PropertyType.ReadOnly | PropertyType.AutoProperty)
             .WithProperty<string>("Name");
 
@@ -63,8 +63,8 @@ public class PropertyTypeConverterTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<string>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<string>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id", attribute: "[PropertyTypeConverter(\"StringToIntTypeConverter\")]")
             .WithProperty<string>("Name")
             .WithStaticMethod("int", "StringToIntTypeConverter", parameters: new[] { "string source" }, body: "return int.Parse(source);");
@@ -82,8 +82,8 @@ public class PropertyTypeConverterTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<string>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<string>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id", attribute: "[PropertyTypeConverter(\"RandomMethod\")]")
             .WithProperty<string>("Name");
 
@@ -110,8 +110,8 @@ public class PropertyTypeConverterTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<string>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<string>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id", attribute: "[PropertyTypeConverter(\"StringToIntTypeConverter\")]")
             .WithProperty<string>("Name")
             .WithMethod("int", "StringToIntTypeConverter", parameters: new[] { "string source" }, body: "return int.Parse(source);");
@@ -135,8 +135,8 @@ public class PropertyTypeConverterTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<string>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<string>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id", attribute: "[PropertyTypeConverter(\"StringToIntTypeConverter\")]")
             .WithProperty<string>("Name")
             .WithStaticMethod("double", "StringToIntTypeConverter", parameters: new[] { "string source" }, body: "return int.Parse(source);");
@@ -161,8 +161,8 @@ public class PropertyTypeConverterTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<string>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<string>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id", attribute: "[PropertyTypeConverter(\"StringToIntTypeConverter\")]")
             .WithProperty<string>("Name")
             .WithStaticMethod("int", "StringToIntTypeConverter", parameters: new[] { "long source" }, body: "return int.Parse(source.ToString());");
@@ -190,8 +190,8 @@ public class PropertyTypeConverterTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<string>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<string>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id", attribute: "[PropertyTypeConverter(\"StringToIntTypeConverter\", Parameters = new[] { \"g\" })]")
             .WithProperty<string>("Name")
             .WithStaticMethod("int", "StringToIntTypeConverter", parameters: new[] { "string source", $"{type} parameters" }, body: "return int.Parse(source.ToString());");
@@ -214,8 +214,8 @@ public class PropertyTypeConverterTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<string>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<string>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id", attribute: "[PropertyTypeConverter(\"StringToIntTypeConverter\", Parameters = new[] { \"g\" })]")
             .WithProperty<string>("Name")
             .WithStaticMethod("int", "StringToIntTypeConverter", parameters: new[] { "string source" }, body: "return int.Parse(source.ToString());");
@@ -241,8 +241,8 @@ public class PropertyTypeConverterTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile(supportNullableReferenceTypes: true);
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<double>("Id").WithProperty<int>("Index");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<double>("Id").WithProperty<int>("Index");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id", attribute: """[PropertyTypeConverter("DoubleToIntTypeConverter", Parameters = new object[] { "g", 2 })]""")
             .WithProperty<int>("Index")
             .WithStaticMethod("int", "DoubleToIntTypeConverter", parameters: new[] { "double source", $"{type} parameters" }, body: "return 10;");
@@ -263,8 +263,8 @@ public class PropertyTypeConverterTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile(supportNullableReferenceTypes: true);
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty("string?", "Id", defaultValue: "string.Empty");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty("string?", "Id", defaultValue: "string.Empty");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id", attribute: """[PropertyTypeConverter("StringToIntTypeConverter")]""")
             .WithProperty<int>("Index")
             .WithStaticMethod("int", "StringToIntTypeConverter", parameters: new[] { "string source" }, body: "return int.Parse(source);");

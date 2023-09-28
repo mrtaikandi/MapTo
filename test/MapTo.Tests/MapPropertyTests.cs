@@ -15,8 +15,8 @@ public class MapPropertyTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id")
             .WithProperty<string>("FullName");
 
@@ -43,8 +43,8 @@ public class MapPropertyTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id")
             .WithProperty<string>("FullName", attribute: attribute);
 

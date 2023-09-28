@@ -17,15 +17,15 @@ public class MapFromCollectionTests
         var globalUsings = new[] { "System.Collections.Generic" };
 
         var nestedSourceFile = builder.AddFile(usings: globalUsings);
-        nestedSourceFile.AddClass(AccessModifier.Public, "Employee").WithProperty<int>("Id").WithProperty<string>("Name");
-        nestedSourceFile.AddClass(AccessModifier.Public, "Manager").WithProperty<int>("Id").WithProperty<string>("Name").WithProperty("List<Employee>", "Employees");
+        nestedSourceFile.AddClass(Accessibility.Public, "Employee").WithProperty<int>("Id").WithProperty<string>("Name");
+        nestedSourceFile.AddClass(Accessibility.Public, "Manager").WithProperty<int>("Id").WithProperty<string>("Name").WithProperty("List<Employee>", "Employees");
 
         var sourceFile = builder.AddFile(usings: globalUsings);
-        sourceFile.AddClass(AccessModifier.Public, "EmployeeModel", partial: true, attributes: "[MapFrom(typeof(Employee))]")
+        sourceFile.AddClass(Accessibility.Public, "EmployeeModel", partial: true, attributes: "[MapFrom(typeof(Employee))]")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name");
 
-        sourceFile.AddClass(AccessModifier.Public, "ManagerModel", partial: true, attributes: "[MapFrom(typeof(Manager))]")
+        sourceFile.AddClass(Accessibility.Public, "ManagerModel", partial: true, attributes: "[MapFrom(typeof(Manager))]")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
             .WithProperty("List<EmployeeModel>", "Employees");
@@ -141,7 +141,7 @@ public class MapFromCollectionTests
 
         extensionClass.ShouldContain(
             """
-            if (!ReferenceEquals(spotifyAlbumDto.Artists, null)) 
+            if (!ReferenceEquals(spotifyAlbumDto.Artists, null))
             {
                 target.Artists = MapToArtistArray(spotifyAlbumDto.Artists, referenceHandler);
             }
@@ -156,14 +156,14 @@ public class MapFromCollectionTests
                 {
                     targetArray[i] = ExternalTestData.Models.ArtistDtoMapToExtensions.MapToArtist(sourceArray[i], referenceHandler);
                  }
-
+            
                  return targetArray;
              }
             """);
 
         extensionClass.ShouldContain(
             """
-            if (!ReferenceEquals(spotifyAlbumDto.Copyrights, null)) 
+            if (!ReferenceEquals(spotifyAlbumDto.Copyrights, null))
             {
                 target.Copyrights = MapToCopyrightArray(spotifyAlbumDto.Copyrights);
             }
@@ -178,7 +178,7 @@ public class MapFromCollectionTests
                 {
                     targetArray[i] = ExternalTestData.Models.CopyrightDtoMapToExtensions.MapToCopyright(sourceArray[i]);
                 }
- 
+            
                 return targetArray;
             }
             """);

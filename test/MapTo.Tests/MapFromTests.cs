@@ -129,8 +129,8 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int?>("Id", propertyType: PropertyType.ReadOnly | PropertyType.AutoProperty)
             .WithProperty<string>("Name");
 
@@ -269,8 +269,8 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int?>("Id", propertyType: PropertyType.ReadOnly | PropertyType.AutoProperty)
             .WithProperty<string>("Name");
 
@@ -295,14 +295,14 @@ public class MapFromTests
         var builder = new TestSourceBuilder();
 
         var nestedSourceFile = builder.AddFile();
-        nestedSourceFile.AddClass(AccessModifier.Public, "NestedSourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        nestedSourceFile.AddClass(AccessModifier.Public, "NestedTargetClass", partial: true, attributes: "[MapFrom(typeof(NestedSourceClass))]")
+        nestedSourceFile.AddClass(Accessibility.Public, "NestedSourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        nestedSourceFile.AddClass(Accessibility.Public, "NestedTargetClass", partial: true, attributes: "[MapFrom(typeof(NestedSourceClass))]")
             .WithProperty<int>("Id", propertyType: PropertyType.ReadOnly | PropertyType.AutoProperty)
             .WithProperty<string>("Name");
 
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Prop1").WithProperty("NestedSourceClass", "Prop2");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Prop1").WithProperty("NestedSourceClass", "Prop2");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Prop1")
             .WithProperty("NestedTargetClass", "Prop2");
 
@@ -322,8 +322,8 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "InvalidMethodName")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "InvalidMethodName")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name");
 
@@ -344,16 +344,16 @@ public class MapFromTests
     [Theory]
     [InlineData("Protected")]
     [InlineData("Private")]
-    public void When_BeforeMapMethodFoundButIsInaccessible_Should_ReportDiagnostics(string beforeMapAccessModifier)
+    public void When_BeforeMapMethodFoundButIsInaccessible_Should_ReportDiagnostics(string beforeMapAccessibility)
     {
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
-            .WithStaticVoidMethod("CustomBeforeMapMethod", string.Empty, Enum.Parse<AccessModifier>(beforeMapAccessModifier));
+            .WithStaticVoidMethod("CustomBeforeMapMethod", string.Empty, Enum.Parse<Accessibility>(beforeMapAccessibility));
 
         // Act
         var (compilation, _) = builder.Compile(assertOutputCompilation: false);
@@ -370,13 +370,13 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: $"""[MapFrom(typeof(SourceClass), BeforeMap = "{beforeMapMethod}")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: $"""[MapFrom(typeof(SourceClass), BeforeMap = "{beforeMapMethod}")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name");
 
         var externalFile = builder.AddFile("Helpers", ns: "ThirdParty.Utilities");
-        externalFile.AddClass(AccessModifier.Public, "HelperClass")
+        externalFile.AddClass(Accessibility.Public, "HelperClass")
             .WithStaticVoidMethod("CustomBeforeMapMethod", string.Empty);
 
         // Act
@@ -394,8 +394,8 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
             .WithStaticVoidMethod("CustomBeforeMapMethod", string.Empty, parameters: new[] { "SourceClass sourceClass", "string additionalParameter" });
@@ -423,8 +423,8 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
             .WithStaticVoidMethod("CustomBeforeMapMethod", string.Empty, parameters: new[] { "TargetClass sourceClass" });
@@ -449,16 +449,16 @@ public class MapFromTests
     [Theory]
     [InlineData("Public")]
     [InlineData("Internal")]
-    public void When_BeforeMapMethodFoundHasNoParameterAndIsVoid_Should_CallBeforeMapping(string beforeMapAccessModifier)
+    public void When_BeforeMapMethodFoundHasNoParameterAndIsVoid_Should_CallBeforeMapping(string beforeMapAccessibility)
     {
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
-            .WithStaticVoidMethod("CustomBeforeMapMethod", string.Empty, Enum.Parse<AccessModifier>(beforeMapAccessModifier));
+            .WithStaticVoidMethod("CustomBeforeMapMethod", string.Empty, Enum.Parse<Accessibility>(beforeMapAccessibility));
 
         // Act
         var (compilation, diagnostics) = builder.Compile();
@@ -475,8 +475,8 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: false));
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
             .WithStaticVoidMethod("CustomBeforeMapMethod", string.Empty, parameters: new[] { "SourceClass source" });
@@ -497,8 +497,8 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: false));
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
             .WithStaticMethod("TargetClass", "CustomBeforeMapMethod", string.Empty, parameters: new[] { "SourceClass sourceClass" });
@@ -526,9 +526,9 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: false));
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
         sourceFile.AddClass(body: "public class SourceSubClass : SourceClass { }");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
             .WithStaticMethod("SourceSubClass", "CustomBeforeMapMethod", "throw new System.NotImplementedException();", parameters: new[] { "SourceClass source" });
@@ -548,9 +548,9 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
         sourceFile.AddClass(body: "public class SourceSubClass : SourceClass { }");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
             .WithStaticMethod("SourceSubClass", "CustomBeforeMapMethod", "throw new System.NotImplementedException();", parameters: null);
@@ -577,9 +577,9 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: false));
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
         sourceFile.AddClass(body: "public class SourceSubClass : SourceClass { }");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceSubClass), BeforeMap = "CustomBeforeMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceSubClass), BeforeMap = "CustomBeforeMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
             .WithStaticMethod("SourceSubClass", "CustomBeforeMapMethod", "throw new System.NotImplementedException();", parameters: new[] { "SourceClass source" });
@@ -599,8 +599,8 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: true));
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
             .WithStaticVoidMethod("CustomBeforeMapMethod", "throw new System.NotImplementedException();", parameters: new[] { "SourceClass sourceClass" });
@@ -626,8 +626,8 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: true));
         var sourceFile = builder.AddFile(supportNullableReferenceTypes: true);
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name", defaultValue: "string.Empty");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name", defaultValue: "string.Empty");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name", defaultValue: "string.Empty")
             .WithStaticVoidMethod("CustomBeforeMapMethod", "throw new System.NotImplementedException();", parameters: new[] { "SourceClass? sourceClass" });
@@ -647,8 +647,8 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: true));
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
             .WithStaticMethod("SourceClass", "CustomBeforeMapMethod", "throw new System.NotImplementedException();", parameters: new[] { "SourceClass? sourceClass" });
@@ -674,8 +674,8 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: true));
         var sourceFile = builder.AddFile(supportNullableReferenceTypes: true);
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name", defaultValue: "string.Empty");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name", defaultValue: "string.Empty");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name", defaultValue: "string.Empty")
             .WithStaticMethod("SourceClass?", "CustomBeforeMapMethod", "throw new System.NotImplementedException();", parameters: new[] { "SourceClass? sourceClass" });
@@ -695,8 +695,8 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "InvalidMethodName")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "InvalidMethodName")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name");
 
@@ -717,16 +717,16 @@ public class MapFromTests
     [Theory]
     [InlineData("Protected")]
     [InlineData("Private")]
-    public void When_AfterMapMethodFoundButIsInaccessible_Should_ReportDiagnostics(string beforeMapAccessModifier)
+    public void When_AfterMapMethodFoundButIsInaccessible_Should_ReportDiagnostics(string beforeMapAccessibility)
     {
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
-            .WithStaticVoidMethod("CustomAfterMapMethod", string.Empty, Enum.Parse<AccessModifier>(beforeMapAccessModifier));
+            .WithStaticVoidMethod("CustomAfterMapMethod", string.Empty, Enum.Parse<Accessibility>(beforeMapAccessibility));
 
         // Act
         var (compilation, _) = builder.Compile(assertOutputCompilation: false);
@@ -744,13 +744,13 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: $"""[MapFrom(typeof(SourceClass), AfterMap = "{beforeMapMethod}")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: $"""[MapFrom(typeof(SourceClass), AfterMap = "{beforeMapMethod}")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name");
 
         var externalFile = builder.AddFile("Helpers", ns: "ThirdParty.Utilities");
-        externalFile.AddClass(AccessModifier.Public, "HelperClass")
+        externalFile.AddClass(Accessibility.Public, "HelperClass")
             .WithStaticVoidMethod("CustomAfterMapMethod", string.Empty);
 
         // Act
@@ -768,8 +768,8 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
             .WithStaticVoidMethod("CustomAfterMapMethod", string.Empty, parameters: new[] { "TargetClass target", "string additionalParameter" });
@@ -797,8 +797,8 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: false));
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
             .WithStaticVoidMethod("CustomAfterMapMethod", string.Empty, parameters: new[] { "SourceClass sourceClass" });
@@ -823,16 +823,16 @@ public class MapFromTests
     [Theory]
     [InlineData("Public")]
     [InlineData("Internal")]
-    public void When_AfterMapMethodFoundHasNoParameterAndIsVoid_Should_CallBeforeMapping(string beforeMapAccessModifier)
+    public void When_AfterMapMethodFoundHasNoParameterAndIsVoid_Should_CallBeforeMapping(string beforeMapAccessibility)
     {
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
-            .WithStaticVoidMethod("CustomAfterMapMethod", string.Empty, Enum.Parse<AccessModifier>(beforeMapAccessModifier));
+            .WithStaticVoidMethod("CustomAfterMapMethod", string.Empty, Enum.Parse<Accessibility>(beforeMapAccessibility));
 
         // Act
         var (compilation, diagnostics) = builder.Compile();
@@ -849,8 +849,8 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: false));
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
             .WithStaticVoidMethod("CustomAfterMapMethod", string.Empty, parameters: new[] { "TargetClass target" });
@@ -870,9 +870,9 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: false));
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
         sourceFile.AddClass(body: "public class SourceSubClass : SourceClass { }");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
             .WithStaticMethod("SourceSubClass", "CustomAfterMapMethod", "throw new System.NotImplementedException();", parameters: new[] { "TargetClass target" });
@@ -892,8 +892,8 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: true));
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
             .WithStaticVoidMethod("CustomAfterMapMethod", "throw new System.NotImplementedException();", parameters: new[] { "TargetClass target" });
@@ -919,8 +919,8 @@ public class MapFromTests
         // Arrange
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: true));
         var sourceFile = builder.AddFile(supportNullableReferenceTypes: true);
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name", defaultValue: "string.Empty");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name", defaultValue: "string.Empty");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name", defaultValue: "string.Empty")
             .WithStaticVoidMethod("CustomAfterMapMethod", "throw new System.NotImplementedException();", parameters: new[] { "TargetClass? target" });

@@ -18,14 +18,14 @@ public class ReferenceHandlingTests
         var builder = new TestSourceBuilder();
 
         var nestedSourceFile = builder.AddFile();
-        nestedSourceFile.AddClass(AccessModifier.Public, "NestedSourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        nestedSourceFile.AddClass(AccessModifier.Public, "NestedTargetClass", partial: true, attributes: "[MapFrom(typeof(NestedSourceClass))]")
+        nestedSourceFile.AddClass(Accessibility.Public, "NestedSourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        nestedSourceFile.AddClass(Accessibility.Public, "NestedTargetClass", partial: true, attributes: "[MapFrom(typeof(NestedSourceClass))]")
             .WithProperty<int>("Id", propertyType: PropertyType.ReadOnly | PropertyType.AutoProperty)
             .WithProperty<string>("Name");
 
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Prop1").WithProperty("NestedSourceClass", "Prop2");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Prop1").WithProperty("NestedSourceClass", "Prop2");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Prop1")
             .WithProperty("NestedTargetClass", "Prop2");
 
@@ -46,11 +46,11 @@ public class ReferenceHandlingTests
         var builder = new TestSourceBuilder();
 
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass")
             .WithConstructor("public SourceClass(SourceClass prop1) => Prop1 = prop1;")
             .WithProperty("SourceClass", "Prop1");
 
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithConstructor("public TargetClass(TargetClass prop1) => Prop1 = prop1;")
             .WithProperty("TargetClass", "Prop1");
 

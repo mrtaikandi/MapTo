@@ -17,8 +17,8 @@ public class ConstructorMappingTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id", propertyType: PropertyType.ReadOnly | PropertyType.AutoProperty)
             .WithProperty<string>("Name")
             .WithConstructor("""
@@ -48,8 +48,8 @@ public class ConstructorMappingTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int?>("Id", propertyType: PropertyType.ReadOnly | PropertyType.AutoProperty)
             .WithProperty<string>("Name");
 
@@ -73,8 +73,8 @@ public class ConstructorMappingTests
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id", propertyType: PropertyType.ReadOnly | PropertyType.AutoProperty)
             .WithProperty<string>("Name");
 
@@ -97,8 +97,8 @@ public class ConstructorMappingTests
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
 
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id", propertyType: PropertyType.ReadOnly | PropertyType.AutoProperty)
             .WithProperty<string>("Name", propertyType: PropertyType.ReadOnly | PropertyType.AutoProperty)
             .WithConstructor("public TargetClass(string name, int id) => (Name, Id) = (name, id);")
@@ -121,8 +121,8 @@ public class ConstructorMappingTests
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
 
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name").WithProperty<int>("Prop");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name").WithProperty<int>("Prop");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
             .WithProperty<int>("IgnoreMe", attribute: "[IgnoreProperty]")
@@ -156,8 +156,8 @@ public class ConstructorMappingTests
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
 
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int?>("Id")
             .WithProperty<string>("Name")
             .WithConstructor("public TargetClass(int id) => Id = id;")
@@ -188,8 +188,8 @@ public class ConstructorMappingTests
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
 
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name", attribute: "[IgnoreProperty]")
             .WithConstructor("public TargetClass(int id) => Id = id;")
@@ -214,8 +214,8 @@ public class ConstructorMappingTests
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
 
-        sourceFile.AddClass(AccessModifier.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(AccessModifier.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int>("Id", propertyType: PropertyType.AutoProperty | PropertyType.InitProperty)
             .WithProperty<string>("Name", attribute: "[IgnoreProperty]");
 

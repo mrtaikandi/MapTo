@@ -4,7 +4,7 @@ using MapTo.Generators;
 
 namespace MapTo.Tests.SourceBuilders;
 
-internal record TestPropertyBuilder(string Type, string Name, AccessModifier AccessModifier, PropertyType PropertyType, IEnumerable<string>? Attributes, string? DefaultValue)
+internal record TestPropertyBuilder(string Type, string Name, Accessibility Accessibility, PropertyType PropertyType, IEnumerable<string>? Attributes, string? DefaultValue)
     : ITestPropertyBuilder
 {
     /// <inheritdoc />
@@ -29,7 +29,7 @@ internal record TestPropertyBuilder(string Type, string Name, AccessModifier Acc
         if (autoProperty)
         {
             writer
-                .Write($"{AccessModifier.ToLowercaseString()} {Type} {Name}")
+                .Write($"{Accessibility.ToLowercaseString()} {Type} {Name}")
                 .Write(" {")
                 .Write(" get;")
                 .WriteIf(initProperty, " init;")
@@ -39,7 +39,7 @@ internal record TestPropertyBuilder(string Type, string Name, AccessModifier Acc
         else
         {
             writer
-                .WriteLine($"{AccessModifier.ToLowercaseString()} {Type} {Name}")
+                .WriteLine($"{Accessibility.ToLowercaseString()} {Type} {Name}")
                 .WriteOpeningBracket()
                 .WriteLine($"get => {backingField};")
                 .WriteLineIf(!readOnly, $"set => {backingField} = value;")
@@ -54,7 +54,7 @@ internal static class PropertyBuilderExtensions
     {
         foreach (var (type, name) in properties)
         {
-            builder.WithProperty(type, name, AccessModifier.Public, PropertyType.ReadOnly & PropertyType.AutoProperty);
+            builder.WithProperty(type, name, Accessibility.Public, PropertyType.ReadOnly & PropertyType.AutoProperty);
         }
 
         return builder;
@@ -80,30 +80,30 @@ internal static class PropertyBuilderExtensions
     internal static ITestClassBuilder WithProperty<T>(
         this ITestClassBuilder builder,
         string name,
-        AccessModifier accessModifier = AccessModifier.Public,
+        Accessibility accessibility = Accessibility.Public,
         PropertyType propertyType = PropertyType.AutoProperty,
         [StringSyntax("csharp")] string? defaultValue = null,
         [StringSyntax("csharp")] string? attribute = null) =>
-        builder.WithProperty<T>(name, accessModifier, propertyType, attribute is null ? null : new[] { attribute }, defaultValue);
+        builder.WithProperty<T>(name, accessibility, propertyType, attribute is null ? null : new[] { attribute }, defaultValue);
 
     internal static ITestClassBuilder WithProperty<T>(
         this ITestClassBuilder builder,
         string name,
-        AccessModifier accessModifier,
+        Accessibility accessibility,
         PropertyType propertyType,
         IEnumerable<string>? attributes,
         [StringSyntax("csharp")] string? defaultValue = null) =>
-        builder.WithProperty(typeof(T).GetFriendlyName(), name, accessModifier, propertyType, defaultValue, attributes);
+        builder.WithProperty(typeof(T).GetFriendlyName(), name, accessibility, propertyType, defaultValue, attributes);
 
     internal static ITestClassBuilder WithProperty(
         this ITestClassBuilder builder,
         string type,
         string name,
-        AccessModifier accessModifier = AccessModifier.Public,
+        Accessibility accessibility = Accessibility.Public,
         PropertyType propertyType = PropertyType.AutoProperty,
         [StringSyntax("csharp")] string? defaultValue = null,
         [StringSyntax("csharp")] IEnumerable<string>? attributes = null) =>
-        WithProperty(builder, new TestPropertyBuilder(type, name, accessModifier, propertyType, attributes, defaultValue));
+        WithProperty(builder, new TestPropertyBuilder(type, name, accessibility, propertyType, attributes, defaultValue));
 
     internal static ITestClassBuilder WithProperty(this ITestClassBuilder builder, TestPropertyBuilder propertyBuilder)
     {

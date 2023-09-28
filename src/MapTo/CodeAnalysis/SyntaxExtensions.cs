@@ -1,15 +1,14 @@
-﻿using MapTo.Configuration;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MapTo.CodeAnalysis;
 
 internal static class SyntaxExtensions
 {
-    public static AccessModifier GetAccessModifier(this TypeDeclarationSyntax syntax) => syntax.Modifiers.FirstOrDefault().Kind() switch
+    public static Accessibility GetAccessibility(this TypeDeclarationSyntax syntax) => syntax.Modifiers.FirstOrDefault().Kind() switch
     {
-        SyntaxKind.PublicKeyword => AccessModifier.Public,
-        SyntaxKind.PrivateKeyword => AccessModifier.Private,
-        _ => AccessModifier.Internal
+        SyntaxKind.PublicKeyword => Accessibility.Public,
+        SyntaxKind.PrivateKeyword => Accessibility.Private,
+        _ => Accessibility.Internal
     };
 
     public static AttributeSyntax? GetAttribute(this TypeDeclarationSyntax typeDeclarationSyntax, string attributeName)

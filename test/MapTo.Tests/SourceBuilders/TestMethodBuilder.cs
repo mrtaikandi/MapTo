@@ -7,7 +7,7 @@ namespace MapTo.Tests.SourceBuilders;
 internal record TestMethodBuilder(
         string ReturnType,
         string Name,
-        AccessModifier AccessModifier,
+        Accessibility Accessibility,
         bool Static,
         bool Async,
         bool Partial,
@@ -23,7 +23,7 @@ internal record TestMethodBuilder(
 
         writer
             .WriteLines(Attributes)
-            .Write(AccessModifier.ToLowercaseString())
+            .Write(Accessibility.ToLowercaseString())
             .WriteIf(Static, " static")
             .WriteIf(Async, " async")
             .WriteIf(Partial, " partial")
@@ -50,7 +50,7 @@ internal static class MethodBuilderExtensions
         [StringSyntax("csharp")] string returnType,
         string name,
         [StringSyntax("csharp")] string body,
-        AccessModifier accessModifier = AccessModifier.Public,
+        Accessibility accessibility = Accessibility.Public,
         bool isStatic = false,
         bool isAsync = false,
         bool isPartial = false,
@@ -58,7 +58,7 @@ internal static class MethodBuilderExtensions
         [StringSyntax("csharp")] IEnumerable<string>? parameters = null)
     {
         builder.AddMember(
-            new TestMethodBuilder(returnType, name, accessModifier, isStatic, isAsync, isPartial, attributes ?? Array.Empty<string>(), parameters ?? Array.Empty<string>(), body));
+            new TestMethodBuilder(returnType, name, accessibility, isStatic, isAsync, isPartial, attributes ?? Array.Empty<string>(), parameters ?? Array.Empty<string>(), body));
 
         return builder;
     }
@@ -68,7 +68,7 @@ internal static class MethodBuilderExtensions
         [StringSyntax("csharp")] string returnType,
         string name,
         [StringSyntax("csharp")] string body = "",
-        AccessModifier accessModifier = AccessModifier.Public,
+        Accessibility accessibility = Accessibility.Public,
         bool isAsync = false,
         bool isPartial = false,
         [StringSyntax("csharp")] string? attribute = null,
@@ -76,7 +76,7 @@ internal static class MethodBuilderExtensions
     {
         var attributes = attribute is null ? null : new[] { attribute };
         var parameters = parameter is null ? null : new[] { parameter };
-        return builder.WithMethod(returnType, name, body, accessModifier, true, isAsync, isPartial, attributes, parameters);
+        return builder.WithMethod(returnType, name, body, accessibility, true, isAsync, isPartial, attributes, parameters);
     }
 
     internal static ITestClassBuilder WithStaticMethod(
@@ -84,33 +84,33 @@ internal static class MethodBuilderExtensions
         [StringSyntax("csharp")] string returnType,
         string name,
         [StringSyntax("csharp")] string body,
-        AccessModifier accessModifier = AccessModifier.Public,
+        Accessibility accessibility = Accessibility.Public,
         bool isAsync = false,
         bool isPartial = false,
         [StringSyntax("csharp")] IEnumerable<string>? attributes = null,
         [StringSyntax("csharp")] IEnumerable<string>? parameters = null) =>
-        builder.WithMethod(returnType, name, body, accessModifier, true, isAsync, isPartial, attributes, parameters);
+        builder.WithMethod(returnType, name, body, accessibility, true, isAsync, isPartial, attributes, parameters);
 
     internal static ITestClassBuilder WithStaticVoidMethod(
         this ITestClassBuilder builder,
         string name,
         [StringSyntax("csharp")] string body,
-        AccessModifier accessModifier = AccessModifier.Public,
+        Accessibility accessibility = Accessibility.Public,
         bool isAsync = false,
         bool isPartial = false,
         [StringSyntax("csharp")] IEnumerable<string>? attributes = null,
         [StringSyntax("csharp")] IEnumerable<string>? parameters = null) =>
-        builder.WithVoidMethod(name, body, accessModifier, true, isAsync, isPartial, attributes, parameters);
+        builder.WithVoidMethod(name, body, accessibility, true, isAsync, isPartial, attributes, parameters);
 
     internal static ITestClassBuilder WithVoidMethod(
         this ITestClassBuilder builder,
         string name,
         [StringSyntax("csharp")] string body,
-        AccessModifier accessModifier = AccessModifier.Public,
+        Accessibility accessibility = Accessibility.Public,
         bool isStatic = false,
         bool isAsync = false,
         bool isPartial = false,
         [StringSyntax("csharp")] IEnumerable<string>? attributes = null,
         [StringSyntax("csharp")] IEnumerable<string>? parameters = null) =>
-        builder.WithMethod("void", name, body, accessModifier, isStatic, isAsync, isPartial, attributes, parameters);
+        builder.WithMethod("void", name, body, accessibility, isStatic, isAsync, isPartial, attributes, parameters);
 }

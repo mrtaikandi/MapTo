@@ -5,7 +5,7 @@ using MapTo.Extensions;
 namespace MapTo.Mappings;
 
 internal readonly record struct TargetMapping(
-    AccessModifier Modifier,
+    Accessibility Modifier,
     string Name,
     NamespaceMapping Namespace,
     bool IsPartial,
@@ -29,7 +29,7 @@ internal static class TargetMappingFactory
         properties = properties.ExceptConstructorInitializers(constructorMapping);
 
         var mapping = new TargetMapping(
-            Modifier: targetTypeSyntax.GetAccessModifier(),
+            Modifier: targetTypeSyntax.GetAccessibility(),
             Name: targetTypeSyntax.Identifier.Text,
             Namespace: NamespaceMapping.Create(targetTypeSymbol),
             IsPartial: targetTypeSyntax.IsPartial(),
