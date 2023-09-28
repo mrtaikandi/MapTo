@@ -41,29 +41,48 @@ internal readonly record struct MappingContext(
                     2 => ReferenceHandling.Auto,
                     _ => source.Options.ReferenceHandling
                 }
-            },
+            }
         };
     }
 
     internal void ReportDiagnostic(Diagnostic diagnostic) => _diagnostics.Add(diagnostic);
+
+    /// <inheritdoc />
+    public bool Equals(MappingContext other)
+    {
+        return TargetTypeSyntax == other.TargetTypeSyntax &&
+               SymbolEqualityComparer.IncludeNullability.Equals(TargetTypeSymbol, other.TargetTypeSymbol) &&
+               SymbolEqualityComparer.IncludeNullability.Equals(SourceTypeSymbol, other.SourceTypeSymbol) &&
+               CodeGeneratorOptions == other.CodeGeneratorOptions &&
+               CompilerOptions == other.CompilerOptions;
+    }
+
+    /// <inheritdoc />
+    public override int GetHashCode() => HashCode.Combine(
+        TargetTypeSyntax.GetHashCode(),
+        SymbolEqualityComparer.IncludeNullability.GetHashCode(TargetTypeSymbol),
+        SymbolEqualityComparer.IncludeNullability.GetHashCode(SourceTypeSymbol),
+        CodeGeneratorOptions.GetHashCode(),
+        CompilerOptions.GetHashCode());
 }
 
 internal static class MappingContextExtensions
 {
     public static IncrementalValuesProvider<MappingContext> CreateMappingContext(this SyntaxValueProvider provider) => provider.ForAttributeWithMetadataName(
-        typeof(MapFromAttribute).FullName!,
-        static (node, _) => node is ClassDeclarationSyntax or RecordDeclarationSyntax,
-        static (context, _) =>
-        {
-            var mapFromAttribute = context.Attributes.Single();
-            return new MappingContext(
-                TargetTypeSyntax: context.TargetNode as TypeDeclarationSyntax ?? throw new InvalidOperationException("TargetNode is not a ClassDeclarationSyntax"),
-                TargetTypeSymbol: context.TargetSymbol as INamedTypeSymbol ?? throw new InvalidOperationException("TargetSymbol is not a ITypeSymbol"),
-                TargetSemanticModel: context.SemanticModel,
-                SourceTypeSymbol: mapFromAttribute.ConstructorArguments.First().Value as INamedTypeSymbol ?? throw new InvalidOperationException("SourceType is not a ITypeSymbol"),
-                KnownTypes: KnownTypes.Create(context.SemanticModel.Compilation))
+            typeof(MapFromAttribute).FullName!,
+            static (node, _) => node is ClassDeclarationSyntax or RecordDeclarationSyntax,
+            static (context, _) =>
             {
-                MapFromAttributeData = mapFromAttribute
-            };
-        });
+                var mapFromAttribute = context.Attributes.Single();
+                return new MappingContext(
+                    TargetTypeSyntax: context.TargetNode as TypeDeclarationSyntax ?? throw new InvalidOperationException("TargetNode is not a ClassDeclarationSyntax"),
+                    TargetTypeSymbol: context.TargetSymbol as INamedTypeSymbol ?? throw new InvalidOperationException("TargetSymbol is not a ITypeSymbol"),
+                    TargetSemanticModel: context.SemanticModel,
+                    SourceTypeSymbol: mapFromAttribute.ConstructorArguments.First().Value as INamedTypeSymbol ?? throw new InvalidOperationException("SourceType is not a ITypeSymbol"),
+                    KnownTypes: KnownTypes.Create(context.SemanticModel.Compilation))
+                {
+                    MapFromAttributeData = mapFromAttribute
+                };
+            })
+        .WithTrackingName(nameof(CreateMappingContext));
 }

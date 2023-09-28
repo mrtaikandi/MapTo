@@ -37,7 +37,7 @@ public class MapFromCollectionTests
         diagnostics.ShouldBeSuccessful();
         compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.ManagerModel.g.cs")
             .GetClassDeclaration("ManagerMapToExtensions")
-            .ShouldContain("Employees = manager.Employees.Select(MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeModel).ToList()");
+            .ShouldContain("Employees = manager.Employees.Select(global::MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeModel).ToList()");
     }
 
     [Fact]
@@ -66,12 +66,12 @@ public class MapFromCollectionTests
 
         extensionClass.ShouldContain(
             """
-            private static MapTo.Tests.ArtistViewModel[] MapToArtistViewModelArray(MapTo.Tests.Artist[] sourceArray, global::System.Collections.Generic.Dictionary<int, object> referenceHandler)
+            private static global::MapTo.Tests.ArtistViewModel[] MapToArtistViewModelArray(global::MapTo.Tests.Artist[] sourceArray, global::System.Collections.Generic.Dictionary<int, object> referenceHandler)
             {
-                var targetArray = new MapTo.Tests.ArtistViewModel[sourceArray.Length];
+                var targetArray = new global::MapTo.Tests.ArtistViewModel[sourceArray.Length];
                 for (var i = 0; i < sourceArray.Length; i++)
                 {
-                    targetArray[i] = MapTo.Tests.ArtistMapToExtensions.MapToArtistViewModel(sourceArray[i], referenceHandler);
+                    targetArray[i] = global::MapTo.Tests.ArtistMapToExtensions.MapToArtistViewModel(sourceArray[i], referenceHandler);
                 }
             
                 return targetArray;
@@ -107,12 +107,12 @@ public class MapFromCollectionTests
 
         extensionClass.ShouldContain(
             """
-            private static ExternalTestData.Models.Artist[] MapToArtistArray(ExternalTestData.Models.ArtistDto[] sourceArray)
+            private static global::ExternalTestData.Models.Artist[] MapToArtistArray(global::ExternalTestData.Models.ArtistDto[] sourceArray)
             {
-                var targetArray = new ExternalTestData.Models.Artist[sourceArray.Length];
+                var targetArray = new global::ExternalTestData.Models.Artist[sourceArray.Length];
                 for (var i = 0; i < sourceArray.Length; i++)
                 {
-                    targetArray[i] = ExternalTestData.Models.ArtistDtoMapToExtensions.MapToArtist(sourceArray[i]);
+                    targetArray[i] = global::ExternalTestData.Models.ArtistDtoMapToExtensions.MapToArtist(sourceArray[i]);
                 }
             
                 return targetArray;
@@ -149,12 +149,12 @@ public class MapFromCollectionTests
 
         extensionClass.ShouldContain(
             """
-            private static ExternalTestData.Models.Artist[] MapToArtistArray(ExternalTestData.Models.ArtistDto[] sourceArray, global::System.Collections.Generic.Dictionary<int, object> referenceHandler)
+            private static global::ExternalTestData.Models.Artist[] MapToArtistArray(global::ExternalTestData.Models.ArtistDto[] sourceArray, global::System.Collections.Generic.Dictionary<int, object> referenceHandler)
             {
-                var targetArray = new ExternalTestData.Models.Artist[sourceArray.Length];
+                var targetArray = new global::ExternalTestData.Models.Artist[sourceArray.Length];
                 for (var i = 0; i < sourceArray.Length; i++)
                 {
-                    targetArray[i] = ExternalTestData.Models.ArtistDtoMapToExtensions.MapToArtist(sourceArray[i], referenceHandler);
+                    targetArray[i] = global::ExternalTestData.Models.ArtistDtoMapToExtensions.MapToArtist(sourceArray[i], referenceHandler);
                  }
             
                  return targetArray;
@@ -171,12 +171,12 @@ public class MapFromCollectionTests
 
         extensionClass.ShouldContain(
             """
-            private static ExternalTestData.Models.Copyright[] MapToCopyrightArray(ExternalTestData.Models.CopyrightDto[] sourceArray)
+            private static global::ExternalTestData.Models.Copyright[] MapToCopyrightArray(global::ExternalTestData.Models.CopyrightDto[] sourceArray)
             {
-                var targetArray = new ExternalTestData.Models.Copyright[sourceArray.Length];
+                var targetArray = new global::ExternalTestData.Models.Copyright[sourceArray.Length];
                 for (var i = 0; i < sourceArray.Length; i++)
                 {
-                    targetArray[i] = ExternalTestData.Models.CopyrightDtoMapToExtensions.MapToCopyright(sourceArray[i]);
+                    targetArray[i] = global::ExternalTestData.Models.CopyrightDtoMapToExtensions.MapToCopyright(sourceArray[i]);
                 }
             
                 return targetArray;

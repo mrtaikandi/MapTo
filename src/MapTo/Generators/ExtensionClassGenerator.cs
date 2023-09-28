@@ -39,7 +39,7 @@ internal static class ExtensionClassGeneratorExtensions
             const string ParameterName = "sourceArray";
             var returnType = $"{property.TypeName}[]";
             var methodName = property.GetMapArrayMethodName();
-            var sourceType = $"{property.SourceType.ToDisplayString()}[]";
+            var sourceType = $"{property.SourceType.FullName}[]";
             var typeConverter = property.TypeConverter;
             var propertyMap = typeConverter switch
             {
@@ -148,9 +148,9 @@ internal static class ExtensionClassGeneratorExtensions
         foreach (var property in properties)
         {
             const string ParameterName = "sourceArray";
-            var returnType = $"{property.TypeName}[]";
+            var returnType = $"{property.Type.FullName}[]";
             var methodName = property.GetMapArrayMethodName();
-            var sourceType = $"{property.SourceType.ToDisplayString()}[]";
+            var sourceType = $"{property.SourceType.FullName}[]";
 
             writer
                 .WriteLine()
@@ -164,7 +164,7 @@ internal static class ExtensionClassGeneratorExtensions
                 .Write(ParameterName)
                 .WriteClosingParenthesis()
                 .WriteOpeningBracket() // Method opening bracket
-                .WriteLine($"var targetArray = new {property.TypeName}[{ParameterName}.Length];")
+                .WriteLine($"var targetArray = new {property.Type.FullName}[{ParameterName}.Length];")
                 .WriteLine("global::System.Array.Copy(sourceArray, targetArray, sourceArray.Length);")
                 .WriteLine()
                 .WriteLine("return targetArray;")

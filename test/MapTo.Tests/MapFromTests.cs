@@ -313,7 +313,7 @@ public class MapFromTests
         diagnostics.ShouldBeSuccessful();
         compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.TargetClass.g.cs")
             .GetClassDeclaration("SourceClassMapToExtensions")
-            .ShouldContain("Prop2 = MapTo.Tests.NestedSourceClassMapToExtensions.MapToNestedTargetClass(sourceClass.Prop2)");
+            .ShouldContain("Prop2 = global::MapTo.Tests.NestedSourceClassMapToExtensions.MapToNestedTargetClass(sourceClass.Prop2)");
     }
 
     [Fact]
@@ -539,7 +539,7 @@ public class MapFromTests
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation.GetClassDeclaration("SourceClassMapToExtensions")
-            .ShouldContain("sourceClass = MapTo.Tests.TargetClass.CustomBeforeMapMethod(sourceClass);");
+            .ShouldContain("sourceClass = global::MapTo.Tests.TargetClass.CustomBeforeMapMethod(sourceClass);");
     }
 
     [Fact]
@@ -590,7 +590,7 @@ public class MapFromTests
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation.GetClassDeclaration("SourceSubClassMapToExtensions")
-            .ShouldContain("sourceSubClass = MapTo.Tests.TargetClass.CustomBeforeMapMethod(sourceSubClass);");
+            .ShouldContain("sourceSubClass = global::MapTo.Tests.TargetClass.CustomBeforeMapMethod(sourceSubClass);");
     }
 
     [Fact]
@@ -686,7 +686,7 @@ public class MapFromTests
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation.GetClassDeclaration("SourceClassMapToExtensions")
-            .ShouldContain("sourceClass = MapTo.Tests.TargetClass.CustomBeforeMapMethod(sourceClass);");
+            .ShouldContain("sourceClass = global::MapTo.Tests.TargetClass.CustomBeforeMapMethod(sourceClass);");
     }
 
     [Fact]

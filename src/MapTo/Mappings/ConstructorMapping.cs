@@ -42,10 +42,10 @@ internal static class ConstructorMappingFactory
     }
 
     internal static bool IsEqual(this IParameterSymbol parameter, PropertyMapping property) =>
-        parameter.Name.ToParameterNameCasing() == property.ParameterName && SymbolEqualityComparer.Default.Equals(parameter.Type, property.Type);
+        parameter.Name.ToParameterNameCasing() == property.ParameterName && parameter.Type.ToTypeMapping() == property.Type;
 
     internal static bool IsEqual(this ConstructorParameterMapping parameter, PropertyMapping property) =>
-        parameter.Name.ToParameterNameCasing() == property.ParameterName && SymbolEqualityComparer.Default.Equals(parameter.Type, property.Type);
+        parameter.Name.ToParameterNameCasing() == property.ParameterName && parameter.Type == property.Type;
 
     private static ImmutableArray<ConstructorParameterMapping> GetArgumentMappings(this IMethodSymbol constructor, ImmutableArray<PropertyMapping> properties)
     {
@@ -58,7 +58,7 @@ internal static class ConstructorMappingFactory
                 return ImmutableArray<ConstructorParameterMapping>.Empty;
             }
 
-            arguments.Add(new ConstructorParameterMapping(parameter.Name, parameter.Type, property, parameter.GetLocation() ?? Location.None));
+            arguments.Add(new ConstructorParameterMapping(parameter.Name, parameter.Type.ToTypeMapping(), property, parameter.GetLocation() ?? Location.None));
         }
 
         return arguments.ToImmutable();
@@ -66,19 +66,19 @@ internal static class ConstructorMappingFactory
 
     private static bool IsValid(this ImmutableArray<ConstructorParameterMapping> argumentMappings, MappingContext context)
     {
-        var targetType = context.TargetTypeSyntax;
-        var targetTypeSymbol = context.TargetTypeSymbol;
+        var targetTypeSyntax = context.TargetTypeSyntax;
+        var targetType = context.TargetTypeSymbol.ToTypeMapping();
 
         if (argumentMappings.IsDefaultOrEmpty)
         {
-            context.ReportDiagnostic(DiagnosticsFactory.MissingConstructorOnTargetClassError(targetType, targetType.Identifier.ValueText));
+            context.ReportDiagnostic(DiagnosticsFactory.MissingConstructorOnTargetClassError(targetTypeSyntax, targetTypeSyntax.Identifier.ValueText));
             return false;
         }
 
-        var selfReferencingParameter = argumentMappings.FirstOrDefault(a => SymbolEqualityComparer.Default.Equals(a.Type, targetTypeSymbol));
+        var selfReferencingParameter = argumentMappings.FirstOrDefault(a => a.Type == targetType);
         if (selfReferencingParameter != default)
         {
-            context.ReportDiagnostic(DiagnosticsFactory.SelfReferencingConstructorMappingError(selfReferencingParameter.Location, targetType.Identifier.ValueText));
+            context.ReportDiagnostic(DiagnosticsFactory.SelfReferencingConstructorMappingError(selfReferencingParameter.Location, targetTypeSyntax.Identifier.ValueText));
             return false;
         }
 

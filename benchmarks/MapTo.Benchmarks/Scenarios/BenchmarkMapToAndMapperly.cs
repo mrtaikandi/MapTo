@@ -3,11 +3,9 @@ using MapTo.Benchmarks.Models;
 
 namespace MapTo.Benchmarks.Scenarios;
 
+[InProcess]
 [MemoryDiagnoser]
-[KeepBenchmarkFiles(false)]
-[SimpleJob(RunStrategy.Throughput)]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
-[GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByMethod)]
 public class BenchmarkMapToAndMapperly
 {
     private readonly MapperlyMappings _mapperlyMappings;

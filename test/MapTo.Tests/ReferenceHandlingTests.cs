@@ -36,7 +36,7 @@ public class ReferenceHandlingTests
         diagnostics.ShouldBeSuccessful();
         compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.TargetClass.g.cs")
             .GetClassDeclaration("SourceClassMapToExtensions")
-            .ShouldContain("Prop2 = MapTo.Tests.NestedSourceClassMapToExtensions.MapToNestedTargetClass(sourceClass.Prop2)");
+            .ShouldContain("Prop2 = global::MapTo.Tests.NestedSourceClassMapToExtensions.MapToNestedTargetClass(sourceClass.Prop2)");
     }
 
     [Fact]
@@ -116,12 +116,12 @@ public class ReferenceHandlingTests
             
                 if (!ReferenceEquals(manager.Employees, null))
                 {
-                    target.Employees = manager.Employees.Select(e => MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeViewModel(e, referenceHandler)).ToList();
+                    target.Employees = manager.Employees.Select(e => global::MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeViewModel(e, referenceHandler)).ToList();
                 }
             
                 if (!ReferenceEquals(manager.Manager, null))
                 {
-                    target.Manager = MapTo.Tests.ManagerMapToExtensions.MapToManagerViewModel(manager.Manager, referenceHandler);
+                    target.Manager = global::MapTo.Tests.ManagerMapToExtensions.MapToManagerViewModel(manager.Manager, referenceHandler);
                 }
             
                 return target;
@@ -187,7 +187,7 @@ public class ReferenceHandlingTests
 
             if (!ReferenceEquals(employee.Manager, null))
             {
-                target.Manager = MapTo.Tests.ManagerMapToExtensions.MapToManagerViewModel(employee.Manager);
+                target.Manager = global::MapTo.Tests.ManagerMapToExtensions.MapToManagerViewModel(employee.Manager);
             }
 
             return target;

@@ -4,6 +4,7 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
+        <IsPackable>false</IsPackable>
         <EmitCompilerGeneratedFiles>false</EmitCompilerGeneratedFiles>
 
         <MapTo_ReferenceHandling>Disabled</MapTo_ReferenceHandling>
@@ -20,10 +21,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="AgileObjects.AgileMapper"/>
         <PackageReference Include="AutoMapper"/>
         <PackageReference Include="BenchmarkDotNet"/>
-        <PackageReference Include="HolopaMir.ExpressMapper"/>
         <PackageReference Include="Mapster"/>
         <PackageReference Include="Newtonsoft.Json"/>
         <PackageReference Include="TinyMapper"/>

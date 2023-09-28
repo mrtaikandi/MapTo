@@ -14,12 +14,14 @@ public class MapToGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext initContext)
     {
         var mappingOptions = initContext.AnalyzerConfigOptionsProvider
-            .Select(CodeGeneratorOptions.Create);
+            .Select(CodeGeneratorOptions.Create)
+            .WithTrackingName("CreateCodeGeneratorOptions");
 
         var mappingContext = initContext.SyntaxProvider
             .CreateMappingContext()
             .Combine(mappingOptions)
-            .Select(MappingContext.WithOptions);
+            .Select(MappingContext.WithOptions)
+            .WithTrackingName("ApplyCodeGeneratorOptions");
 
         initContext.RegisterSourceOutput(mappingContext, Execute);
     }

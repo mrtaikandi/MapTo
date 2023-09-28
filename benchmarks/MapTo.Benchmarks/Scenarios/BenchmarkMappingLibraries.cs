@@ -5,10 +5,8 @@ using MapTo.Benchmarks.Models;
 
 namespace MapTo.Benchmarks.Scenarios;
 
-[SimpleJob(RunStrategy.Throughput)]
+[InProcess]
 [MemoryDiagnoser]
-[KeepBenchmarkFiles(false)]
-[GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByMethod)]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 public class BenchmarkMappingLibraries
 {
@@ -23,7 +21,6 @@ public class BenchmarkMappingLibraries
         _spotifyAlbumDto = SpotifyAlbumDto.FromJson(json);
         _autoMapper = AutomapperMappings.Configure();
         TinyMapperMappings.Configure();
-        ExpressMapperMappings.Configure();
         _mapperlyMappings = MapperlyMappings.Configure();
     }
 
@@ -40,21 +37,9 @@ public class BenchmarkMappingLibraries
     }
 
     [Benchmark]
-    public SpotifyAlbum AgileMapper()
-    {
-        return AgileObjects.AgileMapper.Mapper.Map(_spotifyAlbumDto).ToANew<SpotifyAlbum>();
-    }
-
-    [Benchmark]
     public SpotifyAlbum AutoMapper()
     {
         return _autoMapper.Map<SpotifyAlbum>(_spotifyAlbumDto);
-    }
-
-    [Benchmark]
-    public SpotifyAlbum ExpressMapper()
-    {
-        return global::ExpressMapper.Mapper.Map<SpotifyAlbumDto, SpotifyAlbum>(_spotifyAlbumDto);
     }
 
     [Benchmark]

@@ -11,6 +11,7 @@
         <PackageId>MapTo</PackageId>
         <Description>An object to object mapping generator using Roslyn source generator without any reflections.</Description>
         <PackageVersion>$(Version)</PackageVersion>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>Mapper SourceGenerator Roslyn</PackageTags>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -29,6 +30,7 @@
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="All" />
         <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="All" />
         <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="All" />
+        <PackageReference Include="Microsoft.Bcl.HashCode" PrivateAssets="All" />
     </ItemGroup>
 
     <ItemGroup>
@@ -43,6 +45,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
         <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false"/>
         <None Include="$(OutputPath)\$(AssemblyName).Abstractions.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false"/>
         <None Include="$(OutputPath)\$(AssemblyName).Abstractions.dll" Pack="true" PackagePath="lib\netstandard2.0" Visible="false"/>

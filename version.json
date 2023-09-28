@@ -13,7 +13,8 @@
     "!MapTo.sln.DotSettings",
     "!nuget.config",
     "!stylecop.json",
-    "!stylecop.ruleset"
+    "!stylecop.ruleset",
+    "!.github/**"
   ],
   "cloudBuild": {
     "buildNumber": {

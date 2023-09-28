@@ -1,6 +1,5 @@
 ﻿using MapTo.Configuration;
 using MapTo.Diagnostics;
-using MapTo.Extensions;
 
 namespace MapTo.Mappings;
 
@@ -60,11 +59,14 @@ internal static class TargetMappingFactory
     private static bool UseFullyQualifiedName(this TargetMapping mapping) =>
         mapping.Namespace != mapping.Source.Namespace;
 
-    private static ReferenceHandling UseReferenceHandling(this MappingContext context, ImmutableArray<PropertyMapping> properties) =>
-        context.CodeGeneratorOptions.ReferenceHandling == ReferenceHandling.Auto &&
-        (properties.Any(p => SymbolEqualityComparer.Default.Equals(p.Type, context.TargetTypeSymbol)) || context.TargetTypeSymbol.HasNonPrimitiveProperties())
-            ? ReferenceHandling.Enabled
-            : context.CodeGeneratorOptions.ReferenceHandling;
+    private static ReferenceHandling UseReferenceHandling(this MappingContext context, ImmutableArray<PropertyMapping> properties)
+    {
+        var targetType = context.TargetTypeSymbol.ToTypeMapping();
+        return context.CodeGeneratorOptions.ReferenceHandling == ReferenceHandling.Auto &&
+               properties.Any(p => p.Type == targetType || context.TargetTypeSymbol.HasNonPrimitiveProperties())
+                   ? ReferenceHandling.Enabled
+                   : context.CodeGeneratorOptions.ReferenceHandling;
+    }
 
     private static bool IsValid(this TargetMapping mapping, MappingContext context)
     {
@@ -94,11 +96,7 @@ internal static class TargetMappingFactory
 
         return !methodSymbol.ValidateBeforeMapMethod(context)
             ? default
-            : new MethodMapping(
-                ContainingType: methodSymbol.ContainingType.ToDisplayString(),
-                MethodName: methodSymbol.Name,
-                Parameter: methodSymbol.Parameters.Select(p => p.Name.ToSourceCodeString()).ToImmutableArray(),
-                ReturnsVoid: methodSymbol.ReturnsVoid);
+            : MethodMapping.Create(methodSymbol);
     }
 
     private static MethodMapping GetAfterMapMethod(this ITypeSymbol targetTypeSymbol, MappingContext context)
@@ -118,11 +116,7 @@ internal static class TargetMappingFactory
 
         return !methodSymbol.ValidateAfterMapMethod(context)
             ? default
-            : new MethodMapping(
-                ContainingType: methodSymbol.ContainingType.ToDisplayString(),
-                MethodName: methodSymbol.Name,
-                Parameter: methodSymbol.Parameters.Select(p => p.Name.ToSourceCodeString()).ToImmutableArray(),
-                ReturnsVoid: methodSymbol.ReturnsVoid);
+            : MethodMapping.Create(methodSymbol);
     }
 
     private static bool ValidateBeforeMapMethod([NotNullWhen(true)] this IMethodSymbol? methodSymbol, MappingContext context)

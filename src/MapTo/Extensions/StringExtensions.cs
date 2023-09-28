@@ -25,7 +25,7 @@ internal static class StringExtensions
         if (constant.Kind == TypedConstantKind.Array)
         {
             Debug.Assert(constant.Type != null, "constant.Type != null");
-            return $"new {constant.Type!.ToDisplayString()} {{ {string.Join(", ", constant.Values.Select(v => v.ToCSharpString()))} }}";
+            return $"new {constant.Type!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {{ {string.Join(", ", constant.Values.Select(v => v.ToCSharpString()))} }}";
         }
 
         return constant.ToCSharpString();

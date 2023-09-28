@@ -6,15 +6,15 @@ namespace MapTo.Mappings;
 
 internal readonly record struct PropertyMapping(
     string Name,
-    INamedTypeSymbol Type,
+    TypeMapping Type,
     string SourceName,
-    INamedTypeSymbol SourceType,
+    TypeMapping SourceType,
     PropertyInitializationMode InitializationMode,
     string ParameterName,
     TypeConverterMapping TypeConverter,
     ImmutableArray<string> UsingDirectives)
 {
-    public string TypeName => Type.ToDisplayString();
+    public string TypeName => Type.FullName;
 
     public bool HasTypeConverter => TypeConverter != default;
 }
@@ -68,9 +68,9 @@ internal static class PropertyMappingFactory
 
         return new(
             Name: property.Name,
-            Type: property.GetTypeNamedSymbol(),
+            Type: property.GetTypeNamedSymbol().ToTypeMapping(),
             SourceName: sourceProperty.Name,
-            SourceType: sourceProperty.GetTypeNamedSymbol(),
+            SourceType: sourceProperty.GetTypeNamedSymbol().ToTypeMapping(),
             InitializationMode: property.GetInitializationMode(),
             ParameterName: property.Name.ToParameterNameCasing(),
             TypeConverter: converter.Value,
@@ -151,7 +151,7 @@ internal static class PropertyMappingFactory
 
         var containingType = mappedSourcePropertyType.IsPrimitiveType()
             ? "System"
-            : $"{mappedSourcePropertyType.ToDisplayString()}{context.CodeGeneratorOptions.MapExtensionClassSuffix}";
+            : $"{mappedSourcePropertyType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}{context.CodeGeneratorOptions.MapExtensionClassSuffix}";
 
         return new TypeConverterMapping(
             containingType,

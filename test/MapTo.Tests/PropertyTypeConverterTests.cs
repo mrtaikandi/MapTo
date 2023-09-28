@@ -254,7 +254,7 @@ public class PropertyTypeConverterTests
         diagnostics.ShouldBeSuccessful();
 
         var targetClassDeclaration = compilation.GetClassDeclaration("SourceClassMapToExtensions", "MapTo.Tests.TargetClass.g.cs").ShouldNotBeNull();
-        targetClassDeclaration.ShouldContain("""Id = MapTo.Tests.TargetClass.DoubleToIntTypeConverter(sourceClass.Id, new object[] { "g", 2 })""");
+        targetClassDeclaration.ShouldContain("""Id = global::MapTo.Tests.TargetClass.DoubleToIntTypeConverter(sourceClass.Id, new object[] { "g", 2 })""");
     }
 
     [Fact]

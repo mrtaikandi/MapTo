@@ -20,7 +20,7 @@ internal readonly record struct TypeConverterMapping(
     ImmutableArray<string>? UsingDirectives = null)
 {
     public TypeConverterMapping(IMethodSymbol method, TypedConstant? parameters)
-        : this(method.ContainingType.ToDisplayString(), method.Name, parameters?.ToSourceCodeString()) { }
+        : this(method.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), method.Name, parameters?.ToSourceCodeString()) { }
 
     [MemberNotNullWhen(true, nameof(Parameter))]
     public bool HasParameter => Parameter is not null;
