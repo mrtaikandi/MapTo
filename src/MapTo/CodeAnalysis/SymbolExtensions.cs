@@ -116,9 +116,9 @@ internal static class SymbolExtensions
               targetProperty.NullableAnnotation == NullableAnnotation.Annotated)));
     }
 
-    public static SyntaxNode? GetSyntaxNode(this ISymbol symbol) =>
-        symbol.Locations.FirstOrDefault() is { } location ? location.SourceTree?.GetRoot().FindNode(location.SourceSpan) : null;
-
     public static bool HasNonPrimitiveProperties(this ITypeSymbol typeSymbol) =>
         !typeSymbol.IsPrimitiveType() && typeSymbol.GetAllMembers().OfType<IPropertySymbol>().Any(p => !p.Type.IsPrimitiveType(true));
+
+    public static Location? GetLocation(this ISymbol? symbol) =>
+        symbol?.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation();
 }

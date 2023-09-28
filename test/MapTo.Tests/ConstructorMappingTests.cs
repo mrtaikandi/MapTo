@@ -1,4 +1,6 @@
-﻿namespace MapTo.Tests;
+﻿using MapTo.Diagnostics;
+
+namespace MapTo.Tests;
 
 public class ConstructorMappingTests
 {

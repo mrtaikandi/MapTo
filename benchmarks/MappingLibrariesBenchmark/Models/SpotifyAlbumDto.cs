@@ -1,5 +1,6 @@
 ﻿#nullable disable
 
+using System.Diagnostics.CodeAnalysis;
 using Newtonsoft.Json;
 
 namespace MappingLibrariesBenchmark.Models;
@@ -183,6 +184,7 @@ public partial class SpotifyAlbumDto
     public static SpotifyAlbumDto FromJson(string json) => JsonConvert.DeserializeObject<SpotifyAlbumDto>(json, Converter.Settings);
 }
 
+[SuppressMessage("StyleCop.CSharp.OrderingRules", "SA1204:Static elements should appear before instance elements", Justification = "Reviewed.")]
 public static class Serialize
 {
     public static string ToJson(this SpotifyAlbumDto self) => JsonConvert.SerializeObject(self, Converter.Settings);

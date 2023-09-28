@@ -1,4 +1,6 @@
-﻿namespace MapTo.Tests;
+﻿using MapTo.Diagnostics;
+
+namespace MapTo.Tests;
 
 public class ReferenceHandlingTests
 {
@@ -56,11 +58,11 @@ public class ReferenceHandlingTests
         var (compilation, diagnostics) = builder.Compile(assertOutputCompilation: true);
 
         // Assert
+        compilation.Dump(_output);
         var targetClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
-        targetClassDeclaration.Dump(_output);
         var constructorDeclarationSyntax = targetClassDeclaration.DescendantNodes().OfType<ConstructorDeclarationSyntax>().Single();
         var parameter = constructorDeclarationSyntax.ParameterList.Parameters.First();
-        var diagnostic = DiagnosticsFactory.SelfReferencingConstructorMappingError(parameter.Identifier.GetLocation(), "TargetClass");
+        var diagnostic = DiagnosticsFactory.SelfReferencingConstructorMappingError(parameter.GetLocation(), "TargetClass");
 
         diagnostics.ShouldNotBeSuccessful(diagnostic);
     }
@@ -79,7 +81,6 @@ public class ReferenceHandlingTests
         // Assert
         diagnostics.ShouldBeSuccessful();
         var managerMapExtensionClass = compilation.GetClassDeclaration("ManagerMapToExtensions", "MapTo.Tests.ManagerViewModel.g.cs").ShouldNotBeNull();
-        managerMapExtensionClass.Dump(_output);
         managerMapExtensionClass.ShouldContain(
             """
             [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("manager")]

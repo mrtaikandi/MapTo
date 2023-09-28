@@ -1,0 +1,30 @@
+#nullable enable
+
+MapTo.Configuration.ReferenceHandling
+MapTo.Configuration.ReferenceHandling.Auto = 2 -> MapTo.Configuration.ReferenceHandling
+MapTo.Configuration.ReferenceHandling.Disabled = 0 -> MapTo.Configuration.ReferenceHandling
+MapTo.Configuration.ReferenceHandling.Enabled = 1 -> MapTo.Configuration.ReferenceHandling
+MapTo.IgnorePropertyAttribute
+MapTo.IgnorePropertyAttribute.IgnorePropertyAttribute() -> void
+MapTo.MapConstructorAttribute
+MapTo.MapConstructorAttribute.MapConstructorAttribute() -> void
+MapTo.MapFromAttribute
+MapTo.MapFromAttribute.AfterMap.get -> string?
+MapTo.MapFromAttribute.AfterMap.set -> void
+MapTo.MapFromAttribute.BeforeMap.get -> string?
+MapTo.MapFromAttribute.BeforeMap.set -> void
+MapTo.MapFromAttribute.CopyPrimitiveArrays.get -> bool
+MapTo.MapFromAttribute.CopyPrimitiveArrays.set -> void
+MapTo.MapFromAttribute.MapFromAttribute(System.Type! sourceType) -> void
+MapTo.MapFromAttribute.ReferenceHandling.get -> MapTo.Configuration.ReferenceHandling
+MapTo.MapFromAttribute.ReferenceHandling.set -> void
+MapTo.MapFromAttribute.SourceType.get -> System.Type!
+MapTo.MapPropertyAttribute
+MapTo.MapPropertyAttribute.From.get -> string?
+MapTo.MapPropertyAttribute.From.set -> void
+MapTo.MapPropertyAttribute.MapPropertyAttribute() -> void
+MapTo.PropertyTypeConverterAttribute
+MapTo.PropertyTypeConverterAttribute.MethodName.get -> string!
+MapTo.PropertyTypeConverterAttribute.Parameters.get -> object![]?
+MapTo.PropertyTypeConverterAttribute.Parameters.set -> void
+MapTo.PropertyTypeConverterAttribute.PropertyTypeConverterAttribute(string! methodName) -> void

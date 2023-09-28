@@ -1,31 +1,25 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
-        <Nullable>enable</Nullable>
-        <LangVersion>latest</LangVersion>
-        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <EnablePackageValidation>true</EnablePackageValidation>
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
-        <ImplicitUsings>true</ImplicitUsings>
-        <DefineConstants>$(DefineConstants);ROSLYN4_4_OR_GREATER</DefineConstants>
-        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-
-        <AssemblyName>MapTo</AssemblyName>
-        <Description>An object to object mapping generator using Roslyn source generator.</Description>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <IncludeSymbols>true</IncludeSymbols>
-        <PackageId>MapTo</PackageId>
-        <PackageLicenseFile>LICENSE</PackageLicenseFile>
-        <PackageProjectUrl>https://github.com/mrtaikandi/mapto</PackageProjectUrl>
-        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-        <PackageVersion>$(Version)</PackageVersion>
-        <PublishRepositoryUrl>true</PublishRepositoryUrl>
-        <RepositoryUrl>https://github.com/mrtaikandi/mapto</RepositoryUrl>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-        <RootNamespace>MapTo</RootNamespace>
         <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
         <EnableNETAnalyzers>True</EnableNETAnalyzers>
-        <AnalysisLevel>none</AnalysisLevel>
+        
+        <AssemblyName>MapTo</AssemblyName>
+        <PackageId>MapTo</PackageId>
+        <Description>An object to object mapping generator using Roslyn source generator without any reflections.</Description>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <PackageVersion>$(Version)</PackageVersion>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/mrtaikandi/mapto</PackageProjectUrl>
+        <PackageTags>Mapper SourceGenerator</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <RepositoryUrl>https://github.com/mrtaikandi/mapto</RepositoryUrl>
+
     </PropertyGroup>
 
     <ItemGroup>
@@ -37,20 +31,36 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="All" />
         <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="All" />
+        <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="All" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\MapTo.Abstractions\MapTo.Abstractions.csproj" PrivateAssets="All" />
-        <Compile Include="..\MapTo.Abstractions\CompilerServices\*.cs" Link="CompilerServices\*.cs" />
+        <ProjectReference Include="..\MapTo.Abstractions\MapTo.Abstractions.csproj" PrivateAssets="All"/>
+        <Compile Include="..\MapTo.Abstractions\CompilerServices\*.cs" Link="CompilerServices\*.cs"/>
+        <Compile Remove="bin\Debug\netstandard2.0\**" />
+        <Compile Remove="bin\**" />
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="..\..\LICENSE" Pack="true" PackagePath="" Visible="false" />
-        <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-        <None Include="$(OutputPath)\$(AssemblyName).Abstractions.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-        <None Include="$(OutputPath)\$(AssemblyName).Abstractions.dll" Pack="true" PackagePath="lib\netstandard2.0" Visible="true" />
-        <None Include="$(OutputPath)\$(AssemblyName).Abstractions.xml" Pack="true" PackagePath="lib\netstandard2.0" Visible="true" />
-        <None Include="MapTo.props" Pack="true" PackagePath="build" Visible="false" />
+        <AdditionalFiles Include="$(MSBuildThisFileDirectory)\BannedSymbols.txt" />
+        <AdditionalFiles Include="$(MSBuildThisFileDirectory)\AnalyzerReleases.Shipped.md" />
+        <AdditionalFiles Include="$(MSBuildThisFileDirectory)\AnalyzerReleases.Unshipped.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+        <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false"/>
+        <None Include="$(OutputPath)\$(AssemblyName).Abstractions.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false"/>
+        <None Include="$(OutputPath)\$(AssemblyName).Abstractions.dll" Pack="true" PackagePath="lib\netstandard2.0" Visible="true"/>
+        <None Include="$(OutputPath)\$(AssemblyName).Abstractions.xml" Pack="true" PackagePath="lib\netstandard2.0" Visible="true"/>
+        <None Include="MapTo.props" Pack="true" PackagePath="build" Visible="false"/>
+        <None Remove="bin\Debug\netstandard2.0\**" />
+        <None Remove="bin\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="bin\Debug\netstandard2.0\**" />
+      <EmbeddedResource Remove="bin\**" />
     </ItemGroup>
 
 </Project>

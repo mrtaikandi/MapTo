@@ -1,4 +1,5 @@
-﻿using MapTo.Extensions;
+﻿using MapTo.Diagnostics;
+using MapTo.Extensions;
 
 namespace MapTo.Mappings;
 
@@ -57,7 +58,7 @@ internal static class ConstructorMappingFactory
                 return ImmutableArray<ConstructorParameterMapping>.Empty;
             }
 
-            arguments.Add(new ConstructorParameterMapping(parameter.Name, parameter.Type, property, parameter.Locations.FirstOrDefault() ?? Location.None));
+            arguments.Add(new ConstructorParameterMapping(parameter.Name, parameter.Type, property, parameter.GetLocation() ?? Location.None));
         }
 
         return arguments.ToImmutable();
@@ -70,7 +71,7 @@ internal static class ConstructorMappingFactory
 
         if (argumentMappings.IsDefaultOrEmpty)
         {
-            context.ReportDiagnostic(DiagnosticsFactory.MissingConstructorOnTargetClassError(targetType.GetLocation(), targetType.Identifier.ValueText));
+            context.ReportDiagnostic(DiagnosticsFactory.MissingConstructorOnTargetClassError(targetType, targetType.Identifier.ValueText));
             return false;
         }
 

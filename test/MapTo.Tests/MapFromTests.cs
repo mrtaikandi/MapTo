@@ -1,4 +1,5 @@
 ﻿using MapTo.CodeAnalysis;
+using MapTo.Diagnostics;
 
 namespace MapTo.Tests;
 
