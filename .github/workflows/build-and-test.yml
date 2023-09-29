@@ -3,7 +3,11 @@ name: Build and Test
 on:
   workflow_call:
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+  push:
+    branches:
+      - 'dev-*'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
