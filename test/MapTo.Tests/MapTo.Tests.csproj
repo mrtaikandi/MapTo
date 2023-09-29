@@ -1,37 +1,40 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net5.0</TargetFramework>
-
+        <TargetFramework>net7.0</TargetFramework>
         <IsPackable>false</IsPackable>
-
         <Nullable>enable</Nullable>
+        <ImplicitUsings>true</ImplicitUsings>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <NoWarn>$(NoWarn);SA1118</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.1">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="3.8.0" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+        <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="All" />
     </ItemGroup>
-    
+
     <ItemGroup>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
-        <PackageReference Include="Shouldly" Version="4.0.3" />
-        <PackageReference Include="xunit" Version="2.4.1" />
-        <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-            <PrivateAssets>all</PrivateAssets>
-        </PackageReference>
-        <PackageReference Include="coverlet.collector" Version="3.0.3">
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-            <PrivateAssets>all</PrivateAssets>
-        </PackageReference>
+        <PackageReference Include="DiffPlex" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="Shouldly" />
+        <PackageReference Include="xunit" />
+        <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
+        <PackageReference Include="coverlet.collector" PrivateAssets="All" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\MapTo\MapTo.csproj" />
+        <ProjectReference Include="..\..\src\MapTo.Abstractions\MapTo.Abstractions.csproj" />
+    </ItemGroup>
+
+
+    <ItemGroup>
+      <Compile Remove="TestData\SpotifyAlbumDto.cs" />
+      <None Include="TestData\SpotifyAlbumDto.cs" CopyToOutputDirectory="PreserveNewest" />
+
+      <Compile Remove="TestData\SpotifyAlbum.cs" />
+      <None Include="TestData\SpotifyAlbum.cs" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
 </Project>

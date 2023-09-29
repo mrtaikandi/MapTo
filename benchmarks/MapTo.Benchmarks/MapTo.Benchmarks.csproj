@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Import Project="..\..\src\MapTo\MapTo.props" />
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <IsPackable>false</IsPackable>
+        <EmitCompilerGeneratedFiles>false</EmitCompilerGeneratedFiles>
+
+        <MapTo_ReferenceHandling>Disabled</MapTo_ReferenceHandling>
+    </PropertyGroup>
+    
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <WarningsAsErrors>;NU1605;SYSLIB0011;CS8785;CS8784</WarningsAsErrors>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Update="Data\SpotifyAlbum.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="AutoMapper"/>
+        <PackageReference Include="BenchmarkDotNet"/>
+        <PackageReference Include="Mapster"/>
+        <PackageReference Include="Newtonsoft.Json"/>
+        <PackageReference Include="TinyMapper"/>
+        <PackageReference Include="Riok.Mapperly"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\MapTo\MapTo.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\..\src\MapTo.Abstractions\MapTo.Abstractions.csproj" OutputItemType="Analyzer" />
+    </ItemGroup>
+
+</Project>

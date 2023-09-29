@@ -1,0 +1,13 @@
+name: Build Solution
+description: Build the project
+
+runs:
+  using: "composite"
+  steps:
+    - name: Restore dependencies
+      shell: bash
+      run: dotnet restore
+
+    - name: Build
+      shell: bash
+      run: dotnet build --no-restore -c ${{ env.BUILD_CONFIGURATION }} /p:TreatWarningsAsErrors=true

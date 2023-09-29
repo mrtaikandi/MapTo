@@ -1,0 +1,42 @@
+name: Publish Packages
+
+on:
+  push:
+    branches: [ master ]
+
+env:
+  DEPLOY_TO_NUGET: false
+  BUILD_CONFIGURATION: Release
+  DOTNET_VERSION: '7.0.x'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run-tests:
+    uses: ./.github/workflows/tests.yml
+    name: Run All Tests
+    
+  deploy:
+    runs-on: ubuntu-latest
+    name: Build and publish nuget packages
+    needs: run-tests
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
+
+      - name: Set up Environment
+        uses: ./.github/actions/setup
+
+      - name: Building Solution
+        uses: ./.github/actions/build
+        
+      - name: Building & Deploy Nuget Package
+        uses: ./.github/actions/pack
+        with: 
+          deploy: ${{ env.DEPLOY_TO_NUGET }}
+          tag-commit: ${{ env.DEPLOY_TO_NUGET }}
+          nuget-key: ${{ secrets.NUGET_API_KEY }}

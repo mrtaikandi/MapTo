@@ -1,73 +1,41 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using MapTo.Extensions;
-using MapTo.Sources;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+using MapTo.Configuration;
+using MapTo.Generators;
+using MapTo.Mappings;
 
-namespace MapTo
+namespace MapTo;
+
+/// <summary>
+/// MapTo source generator.
+/// </summary>
+[Generator]
+public class MapToGenerator : IIncrementalGenerator
 {
-    /// <summary>
-    /// MapTo source generator.
-    /// </summary>
-    [Generator]
-    public class MapToGenerator : ISourceGenerator
+    /// <inheritdoc />
+    public void Initialize(IncrementalGeneratorInitializationContext initContext)
     {
-        /// <inheritdoc />
-        public void Initialize(GeneratorInitializationContext context)
+        var mappingOptions = initContext.AnalyzerConfigOptionsProvider
+            .Select(CodeGeneratorOptions.Create)
+            .WithTrackingName("CreateCodeGeneratorOptions");
+
+        var mappingContext = initContext.SyntaxProvider
+            .CreateMappingContext()
+            .Combine(mappingOptions)
+            .Select(MappingContext.WithOptions)
+            .WithTrackingName("ApplyCodeGeneratorOptions");
+
+        initContext.RegisterSourceOutput(mappingContext, Execute);
+    }
+
+    private static void Execute(SourceProductionContext context, MappingContext mappingContext)
+    {
+        var mapping = TargetMappingFactory.Create(mappingContext);
+        if (mappingContext.HasError)
         {
-            context.RegisterForSyntaxNotifications(() => new MapToSyntaxReceiver());
+            context.ReportDiagnostics(mappingContext.Diagnostics);
+            return;
         }
 
-        /// <inheritdoc />
-        public void Execute(GeneratorExecutionContext context)
-        {
-            try
-            {
-                var options = SourceGenerationOptions.From(context);
-
-                var compilation = context.Compilation
-                    .AddSource(ref context, MapFromAttributeSource.Generate(options))
-                    .AddSource(ref context, IgnorePropertyAttributeSource.Generate(options))
-                    .AddSource(ref context, ITypeConverterSource.Generate(options))
-                    .AddSource(ref context, MapTypeConverterAttributeSource.Generate(options))
-                    .AddSource(ref context, MapPropertyAttributeSource.Generate(options))
-                    .AddSource(ref context, MappingContextSource.Generate(options));
-
-                if (context.SyntaxReceiver is MapToSyntaxReceiver receiver && receiver.CandidateTypes.Any())
-                {
-                    AddGeneratedMappingsClasses(context, compilation, receiver.CandidateTypes, options);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-                throw;
-            }
-        }
-
-        private static void AddGeneratedMappingsClasses(GeneratorExecutionContext context, Compilation compilation, IEnumerable<TypeDeclarationSyntax> candidateTypes, SourceGenerationOptions options)
-        {
-            foreach (var typeDeclarationSyntax in candidateTypes)
-            {
-                var mappingContext = MappingContext.Create(compilation, options, typeDeclarationSyntax);
-                mappingContext.Diagnostics.ForEach(context.ReportDiagnostic);
-
-                if (mappingContext.Model is null)
-                {
-                    continue;
-                }
-
-                var (source, hintName) = typeDeclarationSyntax switch
-                {
-                    ClassDeclarationSyntax => MapClassSource.Generate(mappingContext.Model),
-                    RecordDeclarationSyntax => MapRecordSource.Generate(mappingContext.Model),
-                    _ => throw new ArgumentOutOfRangeException()
-                };
-
-                context.AddSource(hintName, source);
-            }
-        }
+        var codeGenerator = new CodeGenerator(mapping, mappingContext.CompilerOptions);
+        context.GenerateSource(codeGenerator);
     }
 }

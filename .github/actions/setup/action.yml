@@ -1,0 +1,35 @@
+name: Setup Environment
+
+runs:
+  using: "composite"
+  steps:
+    - name: Verifying environment variables
+      run: |
+        if [ -z "${{ env.BUILD_CONFIGURATION }}" ]; then
+          echo "::error::BUILD_CONFIGURATION environment variable is not set. Create an environment variable named BUILD_CONFIGURATION and set it to 'Debug' or 'Release'."
+          exit 1
+        fi
+        if [ -z "${{ env.DOTNET_VERSION }}" ]; then
+          echo "::error::DOTNET_VERSION environment variable is not set. Using 7.0.x instead."          
+        fi
+      shell: bash
+        
+    - name: Configurations
+      run: echo "::notice::BUILD_CONFIGURATION=${{ env.BUILD_CONFIGURATION }}; DOTNET_VERSION=${{ env.DOTNET_VERSION }};"
+      shell: bash
+      
+    - name: Setting .NET environment variables
+      run: |
+        echo "DOTNET_SKIP_FIRST_TIME_EXPERIENCE=true" >> $GITHUB_ENV
+        echo "DOTNET_NOLOGO=true" >> $GITHUB_ENV
+      shell: bash    
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION || '7.0.x' }}
+
+    - name: Setup Nerdbank.GitVersioning
+      uses: dotnet/nbgv@master
+      with:
+        setAllVars: true
