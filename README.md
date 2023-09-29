@@ -4,7 +4,7 @@
 
 A convention based object to object mapper using [Roslyn source generator](https://github.com/dotnet/roslyn/blob/master/docs/features/source-generators.md).
 
-MapTo is a library to programmatically generate the necessary code to map one object to another during compile-time, eliminating the need to use reflection to map objects and make it much faster in runtime. It provides compile-time safety checks and ease of use by leveraging extension methods.
+MapTo is a library that programmatically generates the necessary code to map one object to another during compile-time. It eliminates the need to use reflection to map objects and makes it much faster in runtime. It provides compile-time safety checks and ease of use by leveraging extension methods.
 
 
 ## Installation
@@ -13,43 +13,73 @@ dotnet add package MapTo --prerelease
 ```
 
 ## Usage
-MapTo relies on a set of attributes to instruct it on how to generate the mappings. To start, declare the destination class as `partial`  and annotate it with `MapFrom` attribute. As its name implies, `MapFrom` attribute tells the library what the source class you want to map from is.
+Unlike other libraries that require a separate class to define the mappings, `MapTo` uses attributes to define and instruct it on generating the mappings. To start, declare the target class and annotate it with the `MapFrom` attribute to specify the source class.
 
-```c#
+``
 using MapTo;
 
-namespace App.ViewModels
+namespace App.ViewModels;
+
+[MapFrom(typeof(App.Data.Models.User))]
+public class UserViewModel 
 {
-    [MapFrom(typeof(App.Data.Models.User))]
-    public partial class UserViewModel 
-    {
-        public string FirstName { get; }
+    public string FirstName { get; init; }
+
+    public string LastName { get; init; }
     
-        public string LastName { get; }
-        
-        [IgnoreProperty]
-        public string FullName { get; set; }
-    }
+    [IgnoreProperty]
+    public string FullName { get; set; }
 }
 ```
 
-To get an instance of `UserViewModel` from the `User` class, you can use any of the following methods:
+To get an instance of `UserViewModel` from the `User` class, you can use the generated extension method:
 
 ```c#
 var user = new User(id: 10) { FirstName = "John", LastName = "Doe" };
 
 var vm = user.ToUserViewModel(); // A generated extension method for User class.
-
-// OR
-vm = new UserViewModel(user); // A generated contructor.
-
-// OR
-vm = UserViewModel.From(user); // A generated factory method.
 ```
 
-> Please refer to [sample console app](https://github.com/mrtaikandi/MapTo/tree/master/test/TestConsoleApp) for a more complete example.
+Sometimes, the target class (UserViewModel in this case) might have read-only properties that need to be set during the mapping. To do that, you can define the properties without setters and declare the target class as partial. Changing the class to partial will allow the `MapTo` generator to create the necessary constructor to initialize the read-only properties.
+
+```c#
+[MapFrom(typeof(App.Data.Models.User))]
+public partial class UserViewModel 
+{
+    public int Id { get; }
+    
+    public string FirstName { get; init; }
+
+    public string LastName { get; init; }
+    
+    [IgnoreProperty]
+    public string FullName { get; set; }
+}
+```
 
 ## Available Attributes
+
+### MapFrom
+As mentioned above, this attribute is used to specify the source class. It also can be used to specify custom methods to run on before or after the mapping process.
+
+```c#
+[MapFrom(typeof(App.Data.Models.User), BeforeMap = nameof(RunBeforeMap), AfterMap = nameof(RunAfterMap))]
+public partial class UserViewModel
+{
+    public int Id { get; }
+
+    ...
+    
+    // The BeforeMap method can also return a `User` type. If so, 
+    // the returned value will be used as the source object.
+    // Or it can return `null` to skip the mapping process and return `null` to 
+    // the extension method's caller.
+    private static void RunBeforeMap(User? source) { /* ... */ }
+    
+    private static void RunAfterMap(UserViewModel target) { /* ... */ }
+}
+```
+
 ### IgnoreProperty
 By default, MapTo will include all properties with the same name (case-sensitive), whether read-only or not, in the mapping unless annotating them with the `IgnoreProperty` attribute.
 ```c#
@@ -58,17 +88,26 @@ public string FullName { get; set; }
 ``` 
 
 ### MapProperty
-This attribute gives you more control over the way the annotated property should get mapped. For instance, if the annotated property should use a property in the source class with a different name.
+This attribute gives you more control over how the annotated property should get mapped. For instance, if the annotated property should use a property in the source class with a different name.
 
 ```c#
-[MapProperty(SourcePropertyName = "Id")]
+[MapProperty(From = "Id")]
 public int Key { get; set; }
 ```
 
-### MapTypeConverter
-A compilation error gets raised by default if the source and destination properties types are not implicitly convertible, but to convert the incompatible source type to the desired destination type, `MapTypeConverter` can be used.
+### PropertyTypeConverter
+A compilation error gets raised by default if the source and destination properties types are not implicitly convertible, but to convert the incompatible source type to the desired destination type, `PropertyTypeConverterAttribute` can be used.
 
-This attribute will accept a type that implements `ITypeConverter<in TSource, out TDestination>` interface.
+This attribute will accept a static method within the target class or another class to convert the source type to the destination type. The method must have the following signature:
+
+```c#
+public static TDestination Convert(TSource source)
+
+// or
+
+public static TDestination Convert(TSource source, object[]? parameters)
+
+```
 
 ```c#
 [MapFrom(typeof(User))]
@@ -79,13 +118,10 @@ public partial class UserViewModel
     [IgnoreProperty]
     public ProfileViewModel Profile { get; set; }
     
-    [MapTypeConverter(typeof(IdConverter))]
-    [MapProperty(SourcePropertyName = nameof(User.Id))]    
+    [MapProperty(From = nameof(User.Id))]    
+    [PropertyTypeConverter(nameof(IntToHexConverter))]
     public string Key { get; }
 
-    private class IdConverter : ITypeConverter<int, string>
-    {
-        public string Convert(int source, object[] converterParameters) => $"{source:X}";
-    }
+    private static string IntToHexConverter(int source) => $"{source:X}"; // The converter method.
 }
 ```
