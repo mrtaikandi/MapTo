@@ -1,8 +1,7 @@
 name: Publish Packages
 
 on:
-  push:
-    branches: [ master ]
+  workflow_dispatch:  
 
 env:
   DEPLOY_TO_NUGET: false
