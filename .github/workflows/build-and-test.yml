@@ -31,7 +31,7 @@ jobs:
         dotnet-version: '7.0.x'
     - uses: dotnet/nbgv@master
       with:
-        setAllVars: true
+        setAllVars: true    
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
