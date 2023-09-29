@@ -16,6 +16,9 @@ jobs:
   run-tests:
     uses: ./.github/workflows/tests.yml
     name: Run All Tests
+    with: 
+      build-configuration: ${{ env.BUILD_CONFIGURATION }}
+      dotnet-version: ${{ env.DOTNET_VERSION }}
     
   deploy:
     runs-on: ubuntu-latest
