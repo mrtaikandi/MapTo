@@ -15,7 +15,7 @@ dotnet add package MapTo --prerelease
 ## Usage
 Unlike other libraries that require a separate class to define the mappings, `MapTo` uses attributes to define and instruct it on generating the mappings. To start, declare the target class and annotate it with the `MapFrom` attribute to specify the source class.
 
-``
+```c#
 using MapTo;
 
 namespace App.ViewModels;
@@ -106,7 +106,6 @@ public static TDestination Convert(TSource source)
 // or
 
 public static TDestination Convert(TSource source, object[]? parameters)
-
 ```
 
 ```c#
