@@ -1,11 +1,13 @@
-﻿namespace MapTo.Tests;
+﻿using System.Diagnostics;
+
+namespace MapTo.Tests;
 
 internal static class ScenarioBuilder
 {
-    internal const string TestDataRelativeFolder = @"..\..\..\TestData";
+    internal const string TestDataRelativeFolder = "TestData";
 
     internal static readonly string GeneratedCodeAttribute =
-        $"""[global::System.CodeDom.Compiler.GeneratedCodeAttribute("MapTo", "{typeof(MapToGenerator).Assembly.GetName().Version}")]""";
+        $"""[global::System.CodeDom.Compiler.GeneratedCodeAttribute("MapTo", "{FileVersionInfo.GetVersionInfo(typeof(MapToGenerator).Assembly.Location).FileVersion}")]""";
 
     private const string AllowNull = "global::System.Diagnostics.CodeAnalysis.AllowNull";
     private const string ExpectedFileName = "ExpectedGeneratedFile";
