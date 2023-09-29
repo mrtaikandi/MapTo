@@ -16,7 +16,7 @@ inputs:
   nuget-source:
     description: "The nuget source URL"
     required: false
-    default: "https://api.nuget.org"
+    default: "https://api.nuget.org/v3/index.json"
   tag-commit:
     description: "Tag the commit"
     required: false
