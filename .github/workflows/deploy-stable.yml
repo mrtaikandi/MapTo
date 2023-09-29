@@ -4,7 +4,7 @@ on:
   workflow_dispatch:  
 
 env:
-  DEPLOY_TO_NUGET: false
+  DEPLOY_TO_NUGET: true
   BUILD_CONFIGURATION: Release
   DOTNET_VERSION: '7.0.x'
 
