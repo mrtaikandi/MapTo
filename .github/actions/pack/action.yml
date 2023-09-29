@@ -1,0 +1,40 @@
+name: Pack
+description: Build and deploy to nuget package
+
+inputs:
+  deploy:
+    description: "Deploy to nuget package"
+    required: true
+    default: "false"
+  project-file-path:
+    description: "The project file path"
+    required: false
+    default: "src/MapTo/MapTo.csproj"
+  nuget-key:
+    description: "The nuget key"
+    required: true
+  nuget-source:
+    description: "The nuget source URL"
+    required: false
+    default: "https://api.nuget.org"
+  tag-commit:
+    description: "Tag the commit"
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Build nuget package
+      shell: bash
+      run: dotnet pack --no-restore -c ${{ env.BUILD_CONFIGURATION }}
+
+    - name: Deploy nuget package
+      if: ${{ inputs.deploy == 'true' }}
+      shell: bash
+      run: dotnet nuget push ${{ inputs.project-file-path }} -k ${{ inputs.nuget-key }} -s ${{ inputs.nuget-source }} --skip-duplicate
+
+    - name: Tag commit
+      if: ${{ inputs.tag-commit == 'true' }}
+      shell: bash
+      run: git tag ${{ env.NBGV_NuGetPackageVersion }} && git push origin ${{ env.NBGV_NuGetPackageVersion }}

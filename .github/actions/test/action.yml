@@ -1,0 +1,9 @@
+name: Running Tests
+description: Run all tests
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run all tests
+      shell: bash
+      run: dotnet test --no-build -c ${{ env.BUILD_CONFIGURATION }} /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
