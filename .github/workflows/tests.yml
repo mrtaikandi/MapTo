@@ -21,8 +21,8 @@ on:
     branches:
       - 'dev-*'
 env:
-  BUILD_CONFIGURATION: ${{ github.event.inputs.build-configuration || 'Debug' }}
-  DOTNET_VERSION: ${{ github.event.inputs.dotnet-version || '7.0.x' }}
+  BUILD_CONFIGURATION: ${{ inputs.build-configuration || 'Debug' }}
+  DOTNET_VERSION: ${{ inputs.dotnet-version || '7.0.x' }}
   
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
