@@ -19,7 +19,7 @@ on:
       - '**'
   push:
     branches:
-      - 'dev-*'
+      - 'dev/**'
 env:
   BUILD_CONFIGURATION: ${{ inputs.build-configuration || 'Debug' }}
   DOTNET_VERSION: ${{ inputs.dotnet-version || '7.0.x' }}
