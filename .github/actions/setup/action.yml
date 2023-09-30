@@ -2,7 +2,7 @@ name: Setup Environment
 
 inputs: 
   working-directory:
-    description: "The working directory. Used to determine the the project versioning."
+    description: "The working directory. Used to determine the project versioning."
     required: false
     default: "src/"
 
