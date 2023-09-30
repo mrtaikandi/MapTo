@@ -37,7 +37,7 @@ To get an instance of `UserViewModel` from the `User` class, you can use the gen
 ```c#
 var user = new User(id: 10) { FirstName = "John", LastName = "Doe" };
 
-var vm = user.ToUserViewModel(); // A generated extension method for User class.
+var vm = user.MapToUserViewModel(); // A generated extension method for User class.
 ```
 
 Sometimes, the target class (UserViewModel in this case) might have read-only properties that need to be set during the mapping. To do that, you can define the properties without setters and declare the target class as partial. Changing the class to partial will allow the `MapTo` generator to create the necessary constructor to initialize the read-only properties.
