@@ -29,9 +29,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:    
-  run-tests:
+  unit-tests:
     runs-on: ubuntu-latest
-    name: Run All Tests
+    name: Unit Tests
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
