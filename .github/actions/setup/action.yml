@@ -1,5 +1,11 @@
 name: Setup Environment
 
+inputs: 
+  working-directory:
+    description: "The working directory. Used to determine the the project versioning."
+    required: false
+    default: "src/"
+
 runs:
   using: "composite"
   steps:
@@ -32,4 +38,5 @@ runs:
     - name: Setup Nerdbank.GitVersioning
       uses: dotnet/nbgv@master
       with:
+        path: ${{ inputs.working-directory }}
         setAllVars: true
