@@ -38,3 +38,9 @@ runs:
       if: ${{ inputs.tag-commit == 'true' }}
       shell: bash
       run: git tag ${{ env.NBGV_NuGetPackageVersion }} && git push origin ${{ env.NBGV_NuGetPackageVersion }}
+
+    - name: Summary
+      run: |
+        echo "::notice::Deployed ${{ inputs.project-folder }}/bin/Release/MapTo.${{ env.NBGV_NuGetPackageVersion }}.nupkg"
+        echo "::notice::Tagged commit ${{ env.NBGV_NuGetPackageVersion }}"
+      shell: bash
