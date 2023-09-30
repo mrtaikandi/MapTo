@@ -6,10 +6,10 @@ inputs:
     description: "Deploy to nuget package"
     required: true
     default: "false"
-  project-file-path:
-    description: "The project file path"
+  project-folder:
+    description: "The project folder"
     required: false
-    default: "src/MapTo/MapTo.csproj"
+    default: "src/MapTo"
   nuget-key:
     description: "The nuget key"
     required: true
@@ -32,7 +32,7 @@ runs:
     - name: Deploy nuget package
       if: ${{ inputs.deploy == 'true' }}
       shell: bash
-      run: dotnet nuget push ${{ inputs.project-file-path }} -k ${{ inputs.nuget-key }} -s ${{ inputs.nuget-source }} --skip-duplicate
+      run: dotnet nuget push ${{ inputs.project-folder }}/bin/Release/MapTo.${{ env.NBGV_NuGetPackageVersion }}.nupkg -k ${{ inputs.nuget-key }} -s ${{ inputs.nuget-source }} --skip-duplicate
 
     - name: Tag commit
       if: ${{ inputs.tag-commit == 'true' }}
