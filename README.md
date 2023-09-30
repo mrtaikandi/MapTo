@@ -98,7 +98,7 @@ public int Key { get; set; }
 ### PropertyTypeConverter
 A compilation error gets raised by default if the source and destination properties types are not implicitly convertible, but to convert the incompatible source type to the desired destination type, `PropertyTypeConverterAttribute` can be used.
 
-This attribute will accept a static method within the target class or another class to convert the source type to the destination type. The method must have the following signature:
+This attribute will accept a static method in the target class or another class to convert the source type to the destination type. The method must have the following signature:
 
 ```c#
 public static TDestination Convert(TSource source)
