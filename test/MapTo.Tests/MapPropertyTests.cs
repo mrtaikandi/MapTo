@@ -24,7 +24,6 @@ public class MapPropertyTests
         var (compilation, diagnostics) = builder.Compile();
 
         // Assert
-        compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
         compilation.GetClassDeclaration("SourceClassMapToExtensions")
             .ShouldContain("""

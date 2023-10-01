@@ -404,7 +404,6 @@ public class MapFromTests
         var (compilation, diagnostics) = builder.Compile(assertOutputCompilation: false);
 
         // Assert
-        compilation.Dump(_output);
         var sourceTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.SourceClass").ShouldNotBeNull();
 
         var extensionClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
@@ -433,7 +432,6 @@ public class MapFromTests
         var (compilation, diagnostics) = builder.Compile(assertOutputCompilation: false);
 
         // Assert
-        compilation.Dump(_output);
         var sourceTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.SourceClass").ShouldNotBeNull();
 
         var extensionClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
@@ -485,7 +483,6 @@ public class MapFromTests
         var (compilation, diagnostics) = builder.Compile();
 
         // Assert
-        compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
         compilation.GetClassDeclaration("SourceClassMapToExtensions")
             .ShouldContain("MapTo.Tests.TargetClass.CustomBeforeMapMethod(sourceClass);");
@@ -507,7 +504,6 @@ public class MapFromTests
         var (compilation, diagnostics) = builder.Compile(assertOutputCompilation: false);
 
         // Assert
-        compilation.Dump(_output);
         var sourceTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.SourceClass").ShouldNotBeNull();
 
         var extensionClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
@@ -732,7 +728,6 @@ public class MapFromTests
         var (compilation, _) = builder.Compile(assertOutputCompilation: false);
 
         // Assert
-        compilation.Dump(_output);
         compilation.GetDiagnostics().ShouldNotBeSuccessful("CS0122", "'TargetClass.CustomAfterMapMethod()' is inaccessible due to its protection level");
     }
 
@@ -778,7 +773,6 @@ public class MapFromTests
         var (compilation, diagnostics) = builder.Compile(assertOutputCompilation: false);
 
         // Assert
-        compilation.Dump(_output);
         var targetTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.TargetClass").ShouldNotBeNull();
 
         var extensionClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
@@ -807,7 +801,6 @@ public class MapFromTests
         var (compilation, diagnostics) = builder.Compile(assertOutputCompilation: false);
 
         // Assert
-        compilation.Dump(_output);
         var targetTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.TargetClass").ShouldNotBeNull();
 
         var extensionClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();

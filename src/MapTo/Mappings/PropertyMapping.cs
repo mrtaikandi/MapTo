@@ -70,7 +70,7 @@ internal static class PropertyMappingFactory
             Name: property.Name,
             Type: property.GetTypeNamedSymbol().ToTypeMapping(),
             SourceName: sourceProperty.Name,
-            SourceType: sourceProperty.GetTypeNamedSymbol().ToTypeMapping(),
+            SourceType: sourceProperty.Type.ToTypeMapping(),
             InitializationMode: property.GetInitializationMode(),
             ParameterName: property.Name.ToParameterNameCasing(),
             TypeConverter: converter.Value,
@@ -117,7 +117,15 @@ internal static class PropertyMappingFactory
             else
             {
                 enumerableTypeSymbol = propertyType as INamedTypeSymbol;
-                enumerableType = EnumerableType.List;
+                enumerableType = enumerableTypeSymbol switch
+                {
+                    { IsGenericType: true, ConstructedFrom.SpecialType: SpecialType.System_Collections_Generic_ICollection_T } => EnumerableType.List,
+                    { IsGenericType: true, ConstructedFrom.SpecialType: SpecialType.System_Collections_Generic_IEnumerable_T } => EnumerableType.Enumerable,
+                    { IsGenericType: true, ConstructedFrom.SpecialType: SpecialType.System_Collections_Generic_IList_T } => EnumerableType.List,
+                    { IsGenericType: true, ConstructedFrom.SpecialType: SpecialType.System_Collections_Generic_IReadOnlyCollection_T } => EnumerableType.ReadOnlyCollection,
+                    { IsGenericType: true, ConstructedFrom.SpecialType: SpecialType.System_Collections_Generic_IReadOnlyList_T } => EnumerableType.ReadOnlyCollection,
+                    _ => EnumerableType.List
+                };
 
                 if (enumerableTypeSymbol is null || enumerableTypeSymbol.TypeArguments.IsEmpty)
                 {
@@ -275,15 +283,19 @@ internal static class PropertyMappingFactory
         [NotNullWhen(true)] out TypeConverterMapping? converter)
     {
         converter = default(TypeConverterMapping);
-        if (property.Type.IsArray() || !context.Compilation.HasCompatibleTypes(sourceProperty, property))
+
+        if (!property.Type.IsArray() && context.Compilation.HasCompatibleTypes(sourceProperty, property))
         {
-            converter = property.GetPropertyTypeConverter(context, sourceProperty);
-            if (converter is null)
-            {
-                return false;
-            }
+            return true;
         }
 
-        return true;
+        if (!context.Compilation.IsNonGenericEnumerable(property.Type) && context.Compilation.IsNonGenericEnumerable(sourceProperty.Type))
+        {
+            context.ReportDiagnostic(DiagnosticsFactory.PropertyTypeConverterRequiredError(property));
+            return false;
+        }
+
+        converter = property.GetPropertyTypeConverter(context, sourceProperty);
+        return converter is not null;
     }
 }
