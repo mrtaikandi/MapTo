@@ -58,7 +58,6 @@ public class ReferenceHandlingTests
         var (compilation, diagnostics) = builder.Compile(assertOutputCompilation: true);
 
         // Assert
-        compilation.Dump(_output);
         var targetClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
         var constructorDeclarationSyntax = targetClassDeclaration.DescendantNodes().OfType<ConstructorDeclarationSyntax>().Single();
         var parameter = constructorDeclarationSyntax.ParameterList.Parameters.First();
@@ -159,7 +158,6 @@ public class ReferenceHandlingTests
         var (compilation, diagnostics) = builder.Compile();
 
         // Assert
-        compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
 
         var managerExtensionClass = compilation.GetClassDeclaration("ManagerMapToExtensions", "MapTo.Tests.ManagerViewModel.g.cs");

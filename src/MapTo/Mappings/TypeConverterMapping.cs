@@ -6,7 +6,9 @@ internal enum EnumerableType
 {
     None,
     Array,
-    List
+    List,
+    Enumerable,
+    ReadOnlyCollection
 }
 
 internal readonly record struct TypeConverterMapping(

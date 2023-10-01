@@ -32,14 +32,14 @@ internal static class ExtensionClassGeneratorExtensions
     {
         var referenceHandler = mapping.Options.ReferenceHandling == ReferenceHandling.Enabled ? "referenceHandler" : null;
         var properties = mapping.Properties
-            .Where(p => p is { TypeConverter: { IsMapToExtensionMethod: true, EnumerableType: EnumerableType.Array } });
+            .Where(p => p is { SourceType.IsArray: true, TypeConverter: { IsMapToExtensionMethod: true, EnumerableType: EnumerableType.Array } });
 
         foreach (var property in properties)
         {
             const string ParameterName = "sourceArray";
             var returnType = $"{property.TypeName}[]";
             var methodName = property.GetMapArrayMethodName();
-            var sourceType = $"{property.SourceType.FullName}[]";
+            var sourceType = property.SourceType.FullName;
             var typeConverter = property.TypeConverter;
             var propertyMap = typeConverter switch
             {
@@ -150,7 +150,7 @@ internal static class ExtensionClassGeneratorExtensions
             const string ParameterName = "sourceArray";
             var returnType = $"{property.Type.FullName}[]";
             var methodName = property.GetMapArrayMethodName();
-            var sourceType = $"{property.SourceType.FullName}[]";
+            var sourceType = property.SourceType.FullName;
 
             writer
                 .WriteLine()
@@ -221,6 +221,15 @@ internal static class ExtensionClassGeneratorExtensions
             .WriteClosingBracket();
     }
 
+    private static string GetEnumerableTypeLinqMethod(this TypeConverterMapping mapping) => mapping.EnumerableType switch
+    {
+        EnumerableType.Array => "ToArray",
+        EnumerableType.List => "ToList",
+        EnumerableType.Enumerable => "ToArray",
+        EnumerableType.ReadOnlyCollection => "ToArray",
+        _ => "ToList"
+    };
+
     private static string GetMapArrayMethodName(this PropertyMapping property) =>
         $"{property.TypeConverter.MethodName}Array";
 
@@ -233,28 +242,48 @@ internal static class ExtensionClassGeneratorExtensions
         }
 
         var typeConverter = property.TypeConverter;
-        return typeConverter switch
+        return property switch
         {
-            { IsEnumerable: true, EnumerableType: EnumerableType.Array, IsMapToExtensionMethod: false } when copyPrimitiveArrays =>
+            { TypeConverter: { IsEnumerable: true, EnumerableType: EnumerableType.Array, IsMapToExtensionMethod: false } } when !copyPrimitiveArrays => parameterName,
+            { SourceType.IsArray: true, TypeConverter: { IsEnumerable: true, EnumerableType: EnumerableType.Array, IsMapToExtensionMethod: false } } =>
                 $"{property.GetMapArrayMethodName()}({parameterName})",
-            { IsEnumerable: true, EnumerableType: EnumerableType.Array, IsMapToExtensionMethod: false } when !copyPrimitiveArrays =>
-                parameterName,
-            { IsEnumerable: true, EnumerableType: EnumerableType.Array, IsMapToExtensionMethod: true, ReferenceHandling: true } =>
+            { SourceType.IsArray: true, TypeConverter: { IsEnumerable: true, EnumerableType: EnumerableType.Array, IsMapToExtensionMethod: true, ReferenceHandling: true } } =>
                 $"{property.GetMapArrayMethodName()}({parameterName}, {referenceHandlerInstanceName})",
-            { IsEnumerable: true, EnumerableType: EnumerableType.Array, IsMapToExtensionMethod: true } =>
+            { SourceType.IsArray: true, TypeConverter: { IsEnumerable: true, EnumerableType: EnumerableType.Array, IsMapToExtensionMethod: true } } =>
                 $"{property.GetMapArrayMethodName()}({parameterName})",
-            { IsEnumerable: true, HasParameter: true } =>
-                $"{parameterName}.Select({property.ParameterName[0]} => {typeConverter.MethodFullName}({property.ParameterName[0]})).To{typeConverter.EnumerableType}()",
-            { IsEnumerable: true, ReferenceHandling: true } =>
-                $"{parameterName}.Select({property.ParameterName[0]} => {typeConverter.MethodFullName}({property.ParameterName[0]}, {referenceHandlerInstanceName})).To{typeConverter.EnumerableType}()",
-            { IsEnumerable: true } =>
-                $"{parameterName}.Select({typeConverter.MethodFullName}).To{typeConverter.EnumerableType}()",
-            { HasParameter: true } =>
+            { TypeConverter: { IsEnumerable: true, HasParameter: true } } =>
+                $"{parameterName}.Select({property.ParameterName[0]} => {typeConverter.MethodFullName}({property.ParameterName[0]})).{typeConverter.GetEnumerableTypeLinqMethod()}()",
+            { TypeConverter: { IsEnumerable: true, ReferenceHandling: true } } =>
+                $"{parameterName}.Select({property.ParameterName[0]} => {typeConverter.MethodFullName}({property.ParameterName[0]}, {referenceHandlerInstanceName})).{typeConverter.GetEnumerableTypeLinqMethod()}()",
+            { TypeConverter.IsEnumerable: true } =>
+                $"{parameterName}.Select({typeConverter.MethodFullName}).{typeConverter.GetEnumerableTypeLinqMethod()}()",
+            { TypeConverter.HasParameter: true } =>
                 $"{typeConverter.MethodFullName}({parameterName}, {typeConverter.Parameter})",
-            { HasParameter: false, ReferenceHandling: false } =>
+            { TypeConverter: { HasParameter: false, ReferenceHandling: false } } =>
                 $"{typeConverter.MethodFullName}({parameterName})",
-            { HasParameter: false, ReferenceHandling: true } =>
+            { TypeConverter: { HasParameter: false, ReferenceHandling: true } } =>
                 $"{typeConverter.MethodFullName}({parameterName}, {referenceHandlerInstanceName})"
+        };
+    }
+
+    private static CodeWriter WriteAfterMapMethodCall(this CodeWriter writer, TargetMapping mapping) => mapping.AfterMapMethod switch
+    {
+        { MethodName: null } => writer,
+        { Parameter.IsDefaultOrEmpty: true } => writer.WriteLine().Write(mapping.AfterMapMethod.MethodFullName).WriteLine("();").WriteLine(),
+        { Parameter.IsDefaultOrEmpty: false } => writer.WriteLine().WriteLine($"{mapping.AfterMapMethod.MethodFullName}(target);").WriteLine()
+    };
+
+    private static CodeWriter WriteBeforeMapMethodCall(this CodeWriter writer, TargetMapping mapping)
+    {
+        var beforeMapMethod = mapping.BeforeMapMethod;
+        var parameterName = mapping.Source.Name.ToParameterNameCasing();
+
+        return beforeMapMethod switch
+        {
+            { MethodName: null } => writer,
+            { Parameter.IsDefaultOrEmpty: true } => writer.Write(beforeMapMethod.MethodFullName).WriteLine("();").WriteLine(),
+            { Parameter.IsDefaultOrEmpty: false, ReturnsVoid: true } => writer.WriteLine($"{beforeMapMethod.MethodFullName}({parameterName});").WriteLine(),
+            { Parameter.IsDefaultOrEmpty: false, ReturnsVoid: false } => writer.WriteLine($"{parameterName} = {beforeMapMethod.MethodFullName}({parameterName});").WriteLine()
         };
     }
 
@@ -328,25 +357,4 @@ internal static class ExtensionClassGeneratorExtensions
 
         return writer;
     }
-
-    private static CodeWriter WriteBeforeMapMethodCall(this CodeWriter writer, TargetMapping mapping)
-    {
-        var beforeMapMethod = mapping.BeforeMapMethod;
-        var parameterName = mapping.Source.Name.ToParameterNameCasing();
-
-        return beforeMapMethod switch
-        {
-            { MethodName: null } => writer,
-            { Parameter.IsDefaultOrEmpty: true } => writer.Write(beforeMapMethod.MethodFullName).WriteLine("();").WriteLine(),
-            { Parameter.IsDefaultOrEmpty: false, ReturnsVoid: true } => writer.WriteLine($"{beforeMapMethod.MethodFullName}({parameterName});").WriteLine(),
-            { Parameter.IsDefaultOrEmpty: false, ReturnsVoid: false } => writer.WriteLine($"{parameterName} = {beforeMapMethod.MethodFullName}({parameterName});").WriteLine()
-        };
-    }
-
-    private static CodeWriter WriteAfterMapMethodCall(this CodeWriter writer, TargetMapping mapping) => mapping.AfterMapMethod switch
-    {
-        { MethodName: null } => writer,
-        { Parameter.IsDefaultOrEmpty: true } => writer.WriteLine().Write(mapping.AfterMapMethod.MethodFullName).WriteLine("();").WriteLine(),
-        { Parameter.IsDefaultOrEmpty: false } => writer.WriteLine().WriteLine($"{mapping.AfterMapMethod.MethodFullName}(target);").WriteLine(),
-    };
 }

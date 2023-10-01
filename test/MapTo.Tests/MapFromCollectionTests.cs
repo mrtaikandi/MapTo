@@ -1,4 +1,6 @@
-﻿namespace MapTo.Tests;
+﻿using MapTo.Diagnostics;
+
+namespace MapTo.Tests;
 
 public class MapFromCollectionTests
 {
@@ -9,16 +11,53 @@ public class MapFromCollectionTests
         _output = output;
     }
 
-    [Fact]
-    public void When_MappedPropertyTypeIsCollectionOfMappedObjects_Should_MapCollectionItems()
+    [Theory]
+    [InlineData("List<EmployeeModel>", "List<Employee>", "ToList")]
+    [InlineData("IList<EmployeeModel>", "List<Employee>", "ToList")]
+    [InlineData("ICollection<EmployeeModel>", "List<Employee>", "ToList")]
+    [InlineData("IEnumerable<EmployeeModel>", "List<Employee>", "ToArray")]
+    [InlineData("IReadOnlyList<EmployeeModel>", "List<Employee>", "ToArray")]
+    [InlineData("IReadOnlyCollection<EmployeeModel>", "List<Employee>", "ToArray")]
+    [InlineData("List<EmployeeModel>", "IList<Employee>", "ToList")]
+    [InlineData("IList<EmployeeModel>", "IList<Employee>", "ToList")]
+    [InlineData("ICollection<EmployeeModel>", "IList<Employee>", "ToList")]
+    [InlineData("IEnumerable<EmployeeModel>", "IList<Employee>", "ToArray")]
+    [InlineData("IReadOnlyList<EmployeeModel>", "IList<Employee>", "ToArray")]
+    [InlineData("IReadOnlyCollection<EmployeeModel>", "IList<Employee>", "ToArray")]
+    [InlineData("List<EmployeeModel>", "ICollection<Employee>", "ToList")]
+    [InlineData("IList<EmployeeModel>", "ICollection<Employee>", "ToList")]
+    [InlineData("ICollection<EmployeeModel>", "ICollection<Employee>", "ToList")]
+    [InlineData("IEnumerable<EmployeeModel>", "ICollection<Employee>", "ToArray")]
+    [InlineData("IReadOnlyList<EmployeeModel>", "ICollection<Employee>", "ToArray")]
+    [InlineData("IReadOnlyCollection<EmployeeModel>", "ICollection<Employee>", "ToArray")]
+    [InlineData("List<EmployeeModel>", "IReadOnlyList<Employee>", "ToList")]
+    [InlineData("IList<EmployeeModel>", "IReadOnlyList<Employee>", "ToList")]
+    [InlineData("ICollection<EmployeeModel>", "IReadOnlyList<Employee>", "ToList")]
+    [InlineData("IEnumerable<EmployeeModel>", "IReadOnlyList<Employee>", "ToArray")]
+    [InlineData("IReadOnlyList<EmployeeModel>", "IReadOnlyList<Employee>", "ToArray")]
+    [InlineData("IReadOnlyCollection<EmployeeModel>", "IReadOnlyList<Employee>", "ToArray")]
+    [InlineData("List<EmployeeModel>", "IReadOnlyCollection<Employee>", "ToList")]
+    [InlineData("IList<EmployeeModel>", "IReadOnlyCollection<Employee>", "ToList")]
+    [InlineData("ICollection<EmployeeModel>", "IReadOnlyCollection<Employee>", "ToList")]
+    [InlineData("IEnumerable<EmployeeModel>", "IReadOnlyCollection<Employee>", "ToArray")]
+    [InlineData("IReadOnlyList<EmployeeModel>", "IReadOnlyCollection<Employee>", "ToArray")]
+    [InlineData("IReadOnlyCollection<EmployeeModel>", "IReadOnlyCollection<Employee>", "ToArray")]
+    [InlineData("List<EmployeeModel>", "Employee[]", "ToList")]
+    [InlineData("IList<EmployeeModel>", "Employee[]", "ToList")]
+    [InlineData("ICollection<EmployeeModel>", "Employee[]", "ToList")]
+    [InlineData("IEnumerable<EmployeeModel>", "Employee[]", "ToArray")]
+    [InlineData("IReadOnlyList<EmployeeModel>", "Employee[]", "ToArray")]
+    [InlineData("IReadOnlyCollection<EmployeeModel>", "Employee[]", "ToArray")]
+    public void When_MappedPropertyTypeIsCollectionOfMappedObjects_Should_MapCollectionItems(string targetCollectionType, string sourceCollectionType, string expectedLinqMethod)
     {
         // Arrange
         var builder = new TestSourceBuilder();
+
         var globalUsings = new[] { "System.Collections.Generic" };
 
         var nestedSourceFile = builder.AddFile(usings: globalUsings);
         nestedSourceFile.AddClass(Accessibility.Public, "Employee").WithProperty<int>("Id").WithProperty<string>("Name");
-        nestedSourceFile.AddClass(Accessibility.Public, "Manager").WithProperty<int>("Id").WithProperty<string>("Name").WithProperty("List<Employee>", "Employees");
+        nestedSourceFile.AddClass(Accessibility.Public, "Manager").WithProperty<int>("Id").WithProperty<string>("Name").WithProperty(sourceCollectionType, "Employees");
 
         var sourceFile = builder.AddFile(usings: globalUsings);
         sourceFile.AddClass(Accessibility.Public, "EmployeeModel", partial: true, attributes: "[MapFrom(typeof(Employee))]")
@@ -28,7 +67,7 @@ public class MapFromCollectionTests
         sourceFile.AddClass(Accessibility.Public, "ManagerModel", partial: true, attributes: "[MapFrom(typeof(Manager))]")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
-            .WithProperty("List<EmployeeModel>", "Employees");
+            .WithProperty(targetCollectionType, "Employees");
 
         // Act
         var (compilation, diagnostics) = builder.Compile();
@@ -37,7 +76,74 @@ public class MapFromCollectionTests
         diagnostics.ShouldBeSuccessful();
         compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.ManagerModel.g.cs")
             .GetClassDeclaration("ManagerMapToExtensions")
-            .ShouldContain("Employees = manager.Employees.Select(global::MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeModel).ToList()");
+            .ShouldContain($"Employees = manager.Employees.Select(global::MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeModel).{expectedLinqMethod}()");
+    }
+
+    [Theory]
+    [InlineData("EmployeeModel[]", "List<Employee>", false)]
+    [InlineData("EmployeeModel[]", "IList<Employee>", false)]
+    [InlineData("EmployeeModel[]", "ICollection<Employee>", false)]
+    [InlineData("EmployeeModel[]", "IReadOnlyList<Employee>", false)]
+    [InlineData("EmployeeModel[]", "IReadOnlyCollection<Employee>", false)]
+    [InlineData("EmployeeModel[]", "Employee[]", true)]
+    public void When_MappedPropertyTypeIsArrayOfMappedObjects_Should_GenerateMapItemArraysOnlyIfSourceIsArray(
+        string targetCollectionType,
+        string sourceCollectionType,
+        bool shouldGenerateMapItemArrays)
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        var globalUsings = new[] { "System.Collections.Generic" };
+
+        var nestedSourceFile = builder.AddFile(usings: globalUsings);
+        nestedSourceFile.AddClass(Accessibility.Public, "Employee").WithProperty<int>("Id").WithProperty<string>("Name");
+        nestedSourceFile.AddClass(Accessibility.Public, "Manager").WithProperty<int>("Id").WithProperty<string>("Name").WithProperty(sourceCollectionType, "Employees");
+
+        var sourceFile = builder.AddFile(usings: globalUsings);
+        sourceFile.AddClass(Accessibility.Public, "EmployeeModel", partial: true, attributes: "[MapFrom(typeof(Employee))]")
+            .WithProperty<int>("Id")
+            .WithProperty<string>("Name");
+
+        sourceFile.AddClass(Accessibility.Public, "ManagerModel", partial: true, attributes: "[MapFrom(typeof(Manager))]")
+            .WithProperty<int>("Id")
+            .WithProperty<string>("Name")
+            .WithProperty(targetCollectionType, "Employees");
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+        var extensionClass = compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.ManagerModel.g.cs").GetClassDeclaration("ManagerMapToExtensions").ShouldNotBeNull();
+
+        if (!shouldGenerateMapItemArrays)
+        {
+            extensionClass.ShouldContain("Employees = manager.Employees.Select(global::MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeModel).ToArray()");
+        }
+        else
+        {
+            extensionClass.ShouldContain(
+                """
+                if (!ReferenceEquals(manager.Employees, null))
+                {
+                    target.Employees = MapToEmployeeModelArray(manager.Employees);
+                }
+                """);
+
+            extensionClass.ShouldContain(
+                """
+                private static global::MapTo.Tests.EmployeeModel[] MapToEmployeeModelArray(global::MapTo.Tests.Employee[] sourceArray)
+                {
+                    var targetArray = new global::MapTo.Tests.EmployeeModel[sourceArray.Length];
+                    for (var i = 0; i < sourceArray.Length; i++)
+                    {
+                        targetArray[i] = global::MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeModel(sourceArray[i]);
+                    }
+                
+                    return targetArray;
+                }
+                """);
+        }
     }
 
     [Fact]
@@ -224,5 +330,43 @@ public class MapFromCollectionTests
                 return targetArray;
             }
             """);
+    }
+
+    [Theory]
+    [InlineData("List<string>", false)]
+    [InlineData("string[]", false)]
+    [InlineData("ArrayList", true)]
+    public void When_SourcePropertyTypeIsNonGenericEnumerable_Should_OnlyMapToPropertyWithSameType(string targetPropertyType, bool isCompatible)
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        var globalUsings = new[] { "System.Collections", "System.Collections.Generic" };
+
+        var nestedSourceFile = builder.AddFile(usings: globalUsings);
+        nestedSourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty("ArrayList", "Prop1");
+        nestedSourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
+            .WithProperty(targetPropertyType, "Prop1");
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        if (isCompatible)
+        {
+            diagnostics.ShouldBeSuccessful();
+        }
+        else
+        {
+            var targetClassDeclaration = compilation.GetClassDeclaration("TargetClass");
+            targetClassDeclaration.ShouldNotBeNull();
+
+            var propertySymbol = compilation
+                .GetSemanticModel(targetClassDeclaration.SyntaxTree)
+                .GetDeclaredSymbol(targetClassDeclaration.Members[0])
+                .ShouldNotBeNull();
+
+            var expectedError = DiagnosticsFactory.PropertyTypeConverterRequiredError(propertySymbol);
+            diagnostics.ShouldNotBeSuccessful(expectedError);
+        }
     }
 }

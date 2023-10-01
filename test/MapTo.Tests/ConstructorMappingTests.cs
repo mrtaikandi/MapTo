@@ -223,7 +223,6 @@ public class ConstructorMappingTests
         var (compilation, diagnostics) = builder.Compile();
 
         // Assert
-        compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
 
         compilation
