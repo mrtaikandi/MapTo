@@ -58,4 +58,31 @@ internal static class CodeWriterExtensions
 
     public static CodeWriter WriteLineComment(this CodeWriter writer, string comment) =>
         writer.WriteLine($"// {comment}");
+
+    public static CodeWriter WriteThrowArgumentNullException(this CodeWriter writer, string parameterName) =>
+        writer.Write($"throw new global::{KnownTypes.ArgumentNullException}(nameof({parameterName}))");
+
+    public static CodeWriter WriteTernaryArgumentNullCheckIf(this CodeWriter writer, bool condition, string parameterName, string trueValue) =>
+        condition ? writer.WriteTernaryArgumentNullCheck(parameterName, trueValue) : writer;
+
+    public static CodeWriter WriteTernaryArgumentNullCheck(this CodeWriter writer, string parameterName, string trueValue) =>
+        writer.WriteIsNullCheck(parameterName).Write(" ? ").WriteThrowArgumentNullException(parameterName).Write(" : ").Write(trueValue);
+
+    public static CodeWriter WriteIsNotNullCheck(this CodeWriter writer, string parameterName) => writer.LanguageVersion switch
+    {
+        < LanguageVersion.CSharp7 => writer.Write($"!ReferenceEquals({parameterName}, null)"),
+        < LanguageVersion.CSharp9 => writer.Write($"!({parameterName} is not null)"),
+        _ => writer.Write($"{parameterName} is not null")
+    };
+
+    public static CodeWriter WriteIsNullCheck(this CodeWriter writer, string parameterName) =>
+        writer.Write(writer.LanguageVersion >= LanguageVersion.CSharp7 ? $"{parameterName} is null" : $"ReferenceEquals({parameterName}, null)");
+
+    public static CodeWriter WriteTernaryIsNotNullCheck(this CodeWriter writer, string parameterName, string trueValue, string falseValue) =>
+        writer.WriteIsNotNullCheck(parameterName).Write($" ? {trueValue} : {falseValue}");
+
+    public static CodeWriter WriteTernaryIsNullCheck(this CodeWriter writer, string parameterName, string trueValue, string falseValue) =>
+        writer.WriteIsNullCheck(parameterName).Write(" ? ").Write(trueValue).Write(" : ").Write(falseValue);
+
+    public static CodeWriter Wrap(this CodeWriter src, CodeWriter writer) => writer;
 }

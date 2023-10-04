@@ -64,7 +64,7 @@ internal static class ScenarioBuilder
 
     public static ITestSourceBuilder SimpleMappedClassInSameNamespaceAsSourceWithInitProperty(LanguageVersion version = LanguageVersion.CSharp10)
     {
-        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(version));
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(version, supportNullReferenceTypes: false));
         var sourceFile = builder.AddFile();
         sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
         sourceFile.AddClass(Accessibility.Public, "TargetClass", attributes: "[MapFrom(typeof(SourceClass))]")
@@ -79,10 +79,12 @@ internal static class ScenarioBuilder
 
     public static ITestSourceBuilder BuildEmployeeManagerModels(
         LanguageVersion version = LanguageVersion.CSharp10,
-        ReferenceHandling referenceHandling = ReferenceHandling.Disabled)
+        ReferenceHandling referenceHandling = ReferenceHandling.Disabled) => BuildEmployeeManagerModels(TestSourceBuilderOptions.Create(version), referenceHandling);
+
+    public static ITestSourceBuilder BuildEmployeeManagerModels(TestSourceBuilderOptions options, ReferenceHandling referenceHandling = ReferenceHandling.Disabled)
     {
         var globalUsings = new[] { "System.Collections.Generic" };
-        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(version));
+        var builder = new TestSourceBuilder(options);
         var employeeFile = builder.AddFile("Employee", usings: globalUsings);
 
         employeeFile.AddClass("""
@@ -236,7 +238,7 @@ internal static class ScenarioBuilder
                 [return: {{NotNullIfNotNull}}("sourceClass")]
                 public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
                 {
-                    if (ReferenceEquals(sourceClass, null))
+                    if (sourceClass is null)
                     {
                         return null;
                     }
@@ -256,7 +258,7 @@ internal static class ScenarioBuilder
                 [return: {{NotNullIfNotNull}}("sourceClass")]
                 public static TargetClass MapToTargetClass([{{AllowNull}}] this SourceClass sourceClass)
                 {
-                    if (ReferenceEquals(sourceClass, null))
+                    if (sourceClass is null)
                     {
                         return null;
                     }

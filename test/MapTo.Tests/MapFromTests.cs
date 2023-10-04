@@ -81,7 +81,7 @@ public class MapFromTests
     public void When_FoundMappingSource_With_DifferentNamespaces_Should_UseCorrectNamespace()
     {
         // Arrange
-        var builder = ScenarioBuilder.SimpleMappedClassInDifferentNamespaceAsSource();
+        var builder = ScenarioBuilder.SimpleMappedClassInDifferentNamespaceAsSource(TestSourceBuilderOptions.Create());
 
         // Act
         var (compilation, diagnostics) = builder.Compile();
@@ -96,7 +96,7 @@ public class MapFromTests
                             [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                             public static global::ExternalLibMap.TargetClass? MapToTargetClass(this global::ExternalLib.SourceClass? sourceClass)
                             {
-                                if (ReferenceEquals(sourceClass, null))
+                                if (sourceClass is null)
                                 {
                                     return null;
                                 }
@@ -127,7 +127,7 @@ public class MapFromTests
     public void When_FoundMappingSource_WithReadOnlyPropertyNames_Should_UseGenerateAndUseConstructorInitializer()
     {
         // Arrange
-        var builder = new TestSourceBuilder();
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create());
         var sourceFile = builder.AddFile();
         sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
         sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
@@ -147,7 +147,7 @@ public class MapFromTests
                             [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                             public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
                             {
-                                if (ReferenceEquals(sourceClass, null))
+                                if (sourceClass is null)
                                 {
                                     return null;
                                 }
@@ -248,7 +248,7 @@ public class MapFromTests
                   [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                   public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
                   {
-                      if (ReferenceEquals(sourceClass, null))
+                      if (sourceClass is null)
                       {
                           return null;
                       }

@@ -95,7 +95,7 @@ public class ReferenceHandlingTests
             [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("manager")]
             internal static ManagerViewModel? MapToManagerViewModel(Manager? manager, global::System.Collections.Generic.Dictionary<int, object> referenceHandler)
             {
-                if (ReferenceEquals(manager, null))
+                if (manager is null)
                 {
                     return null;
                 }
@@ -113,16 +113,11 @@ public class ReferenceHandlingTests
             
                 referenceHandler.Add(manager.GetHashCode(), target);
             
-                if (!ReferenceEquals(manager.Employees, null))
-                {
-                    target.Employees = manager.Employees.Select(e => global::MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeViewModel(e, referenceHandler)).ToList();
-                }
-            
-                if (!ReferenceEquals(manager.Manager, null))
+                target.Employees = manager.Employees?.Select(e => global::MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeViewModel(e, referenceHandler)).ToList();
+                if (manager.Manager is not null)
                 {
                     target.Manager = global::MapTo.Tests.ManagerMapToExtensions.MapToManagerViewModel(manager.Manager, referenceHandler);
                 }
-            
                 return target;
             }
             """);
@@ -183,7 +178,7 @@ public class ReferenceHandlingTests
                 EmployeeCode = employee.EmployeeCode
             };
 
-            if (!ReferenceEquals(employee.Manager, null))
+            if (employee.Manager is not null)
             {
                 target.Manager = global::MapTo.Tests.ManagerMapToExtensions.MapToManagerViewModel(employee.Manager);
             }

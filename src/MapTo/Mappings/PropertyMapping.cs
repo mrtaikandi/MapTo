@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using MapTo.Configuration;
 using MapTo.Diagnostics;
 using MapTo.Extensions;
 
 namespace MapTo.Mappings;
 
+[DebuggerDisplay($"{{{nameof(Name)}}} ({{{nameof(TypeName)}}})")]
 internal readonly record struct PropertyMapping(
     string Name,
     TypeMapping Type,
@@ -12,7 +14,8 @@ internal readonly record struct PropertyMapping(
     PropertyInitializationMode InitializationMode,
     string ParameterName,
     TypeConverterMapping TypeConverter,
-    ImmutableArray<string> UsingDirectives)
+    ImmutableArray<string> UsingDirectives,
+    NullHandling NullHandling)
 {
     public string TypeName => Type.FullName;
 
@@ -52,8 +55,8 @@ internal static class PropertyMappingFactory
     private static PropertyMapping? CreatePropertyMapping(MappingContext context, IPropertySymbol property)
     {
         var (_, _, _, sourceTypeSymbol, knownTypes, _, _) = context;
-        var mapPropertyAttributeTypeSymbol = knownTypes.MapPropertyAttributeTypeSymbol;
-        var sourcePropertyName = property.GetSourcePropertyName(mapPropertyAttributeTypeSymbol);
+        var mapPropertyAttribute = property.GetAttribute(knownTypes.MapPropertyAttributeTypeSymbol);
+        var sourcePropertyName = mapPropertyAttribute.GetNamedArgument(nameof(MapPropertyAttribute.From), defaultValue: property.Name);
         var sourceProperty = sourceTypeSymbol.FindProperty(sourcePropertyName);
 
         if (sourceProperty is null)
@@ -74,7 +77,8 @@ internal static class PropertyMappingFactory
             InitializationMode: property.GetInitializationMode(),
             ParameterName: property.Name.ToParameterNameCasing(),
             TypeConverter: converter.Value,
-            UsingDirectives: converter.Value.UsingDirectives ?? ImmutableArray<string>.Empty);
+            UsingDirectives: converter.Value.UsingDirectives ?? ImmutableArray<string>.Empty,
+            NullHandling: mapPropertyAttribute.GetNamedArgument(nameof(MapPropertyAttribute.NullHandling), context.CodeGeneratorOptions.NullHandling));
     }
 
     private static IPropertySymbol? FindProperty(this ITypeSymbol typeSymbol, string propertyName) => typeSymbol
@@ -94,13 +98,8 @@ internal static class PropertyMappingFactory
     {
         error = null;
 
-        if (!property.TryGetTypeSymbol(out var propertyType))
-        {
-            return default;
-        }
-
+        var propertyType = property.Type;
         var propertyTypeName = propertyType.Name;
-        var enumerableType = EnumerableType.None;
         INamedTypeSymbol? enumerableTypeSymbol = null;
         var mapFromAttribute = propertyType.GetAttribute(context.KnownTypes.MapFromAttributeTypeSymbol);
 
@@ -109,24 +108,12 @@ internal static class PropertyMappingFactory
             if (propertyType is IArrayTypeSymbol { ElementType: INamedTypeSymbol arrayNamedTypeSymbol })
             {
                 enumerableTypeSymbol = arrayNamedTypeSymbol;
-                enumerableType = EnumerableType.Array;
-
                 mapFromAttribute = enumerableTypeSymbol.GetAttribute(context.KnownTypes.MapFromAttributeTypeSymbol);
                 propertyTypeName = enumerableTypeSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
             }
             else
             {
                 enumerableTypeSymbol = propertyType as INamedTypeSymbol;
-                enumerableType = enumerableTypeSymbol switch
-                {
-                    { IsGenericType: true, ConstructedFrom.SpecialType: SpecialType.System_Collections_Generic_ICollection_T } => EnumerableType.List,
-                    { IsGenericType: true, ConstructedFrom.SpecialType: SpecialType.System_Collections_Generic_IEnumerable_T } => EnumerableType.Enumerable,
-                    { IsGenericType: true, ConstructedFrom.SpecialType: SpecialType.System_Collections_Generic_IList_T } => EnumerableType.List,
-                    { IsGenericType: true, ConstructedFrom.SpecialType: SpecialType.System_Collections_Generic_IReadOnlyCollection_T } => EnumerableType.ReadOnlyCollection,
-                    { IsGenericType: true, ConstructedFrom.SpecialType: SpecialType.System_Collections_Generic_IReadOnlyList_T } => EnumerableType.ReadOnlyCollection,
-                    _ => EnumerableType.List
-                };
-
                 if (enumerableTypeSymbol is null || enumerableTypeSymbol.TypeArguments.IsEmpty)
                 {
                     error = DiagnosticsFactory.SuitableMappingTypeInNestedPropertyNotFoundError(property, propertyType);
@@ -135,7 +122,7 @@ internal static class PropertyMappingFactory
 
                 var typeSymbol = enumerableTypeSymbol.TypeArguments.First();
                 mapFromAttribute = typeSymbol.GetAttribute(context.KnownTypes.MapFromAttributeTypeSymbol);
-                propertyTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+                propertyTypeName = typeSymbol.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
             }
         }
 
@@ -162,14 +149,13 @@ internal static class PropertyMappingFactory
             : $"{mappedSourcePropertyType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}{context.CodeGeneratorOptions.MapExtensionClassSuffix}";
 
         return new TypeConverterMapping(
-            containingType,
-            methodName,
-            null,
-            enumerableTypeSymbol?.Name,
-            enumerableType,
-            mapFromAttribute is not null,
-            referenceHandling,
-            ImmutableArray.Create("global::System.Linq"));
+            ContainingType: containingType,
+            MethodName: methodName,
+            Parameter: null,
+            Type: property.Type.ToTypeMapping(),
+            IsMapToExtensionMethod: mapFromAttribute is not null,
+            ReferenceHandling: referenceHandling,
+            UsingDirectives: ImmutableArray.Create("global::System.Linq"));
     }
 
     private static TypeConverterMapping? GetPropertyTypeConverter(this IPropertySymbol property, MappingContext context, IPropertySymbol sourceProperty)
@@ -263,10 +249,6 @@ internal static class PropertyMappingFactory
 
         return (null, converterMethodSymbol);
     }
-
-    private static string GetSourcePropertyName(this ISymbol targetProperty, ITypeSymbol propertyAttributeTypeSymbol) => targetProperty
-        .GetAttribute(propertyAttributeTypeSymbol)
-        .GetNamedArgument(nameof(MapPropertyAttribute.From), defaultValue: targetProperty.Name);
 
     private static bool IsTargetTypeInheritFromMappedBaseClass(this MappingContext context)
     {

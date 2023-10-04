@@ -32,7 +32,7 @@ internal static class ExtensionClassGeneratorExtensions
     {
         var referenceHandler = mapping.Options.ReferenceHandling == ReferenceHandling.Enabled ? "referenceHandler" : null;
         var properties = mapping.Properties
-            .Where(p => p is { SourceType.IsArray: true, TypeConverter: { IsMapToExtensionMethod: true, EnumerableType: EnumerableType.Array } });
+            .Where(p => p is { SourceType.IsArray: true, TypeConverter: { IsMapToExtensionMethod: true, Type.EnumerableType: EnumerableType.Array } });
 
         foreach (var property in properties)
         {
@@ -143,7 +143,7 @@ internal static class ExtensionClassGeneratorExtensions
         }
 
         var properties = mapping.Properties
-            .Where(p => p is { TypeConverter: { IsMapToExtensionMethod: false, EnumerableType: EnumerableType.Array } });
+            .Where(p => p is { TypeConverter: { IsMapToExtensionMethod: false, Type.EnumerableType: EnumerableType.Array } });
 
         foreach (var property in properties)
         {
@@ -221,50 +221,8 @@ internal static class ExtensionClassGeneratorExtensions
             .WriteClosingBracket();
     }
 
-    private static string GetEnumerableTypeLinqMethod(this TypeConverterMapping mapping) => mapping.EnumerableType switch
-    {
-        EnumerableType.Array => "ToArray",
-        EnumerableType.List => "ToList",
-        EnumerableType.Enumerable => "ToArray",
-        EnumerableType.ReadOnlyCollection => "ToArray",
-        _ => "ToList"
-    };
-
     private static string GetMapArrayMethodName(this PropertyMapping property) =>
         $"{property.TypeConverter.MethodName}Array";
-
-    private static string GetMappedProperty(this PropertyMapping property, string parameterName, bool copyPrimitiveArrays, string? referenceHandlerInstanceName = null)
-    {
-        parameterName = $"{parameterName}.{property.SourceName}";
-        if (!property.HasTypeConverter)
-        {
-            return parameterName;
-        }
-
-        var typeConverter = property.TypeConverter;
-        return property switch
-        {
-            { TypeConverter: { IsEnumerable: true, EnumerableType: EnumerableType.Array, IsMapToExtensionMethod: false } } when !copyPrimitiveArrays => parameterName,
-            { SourceType.IsArray: true, TypeConverter: { IsEnumerable: true, EnumerableType: EnumerableType.Array, IsMapToExtensionMethod: false } } =>
-                $"{property.GetMapArrayMethodName()}({parameterName})",
-            { SourceType.IsArray: true, TypeConverter: { IsEnumerable: true, EnumerableType: EnumerableType.Array, IsMapToExtensionMethod: true, ReferenceHandling: true } } =>
-                $"{property.GetMapArrayMethodName()}({parameterName}, {referenceHandlerInstanceName})",
-            { SourceType.IsArray: true, TypeConverter: { IsEnumerable: true, EnumerableType: EnumerableType.Array, IsMapToExtensionMethod: true } } =>
-                $"{property.GetMapArrayMethodName()}({parameterName})",
-            { TypeConverter: { IsEnumerable: true, HasParameter: true } } =>
-                $"{parameterName}.Select({property.ParameterName[0]} => {typeConverter.MethodFullName}({property.ParameterName[0]})).{typeConverter.GetEnumerableTypeLinqMethod()}()",
-            { TypeConverter: { IsEnumerable: true, ReferenceHandling: true } } =>
-                $"{parameterName}.Select({property.ParameterName[0]} => {typeConverter.MethodFullName}({property.ParameterName[0]}, {referenceHandlerInstanceName})).{typeConverter.GetEnumerableTypeLinqMethod()}()",
-            { TypeConverter.IsEnumerable: true } =>
-                $"{parameterName}.Select({typeConverter.MethodFullName}).{typeConverter.GetEnumerableTypeLinqMethod()}()",
-            { TypeConverter.HasParameter: true } =>
-                $"{typeConverter.MethodFullName}({parameterName}, {typeConverter.Parameter})",
-            { TypeConverter: { HasParameter: false, ReferenceHandling: false } } =>
-                $"{typeConverter.MethodFullName}({parameterName})",
-            { TypeConverter: { HasParameter: false, ReferenceHandling: true } } =>
-                $"{typeConverter.MethodFullName}({parameterName}, {referenceHandlerInstanceName})"
-        };
-    }
 
     private static CodeWriter WriteAfterMapMethodCall(this CodeWriter writer, TargetMapping mapping) => mapping.AfterMapMethod switch
     {
@@ -299,9 +257,15 @@ internal static class ExtensionClassGeneratorExtensions
             return hasObjectInitializer ? writer.WriteNewLine() : writer.WriteLine("();");
         }
 
-        writer
-            .Write($"new {mapping.Name}(")
-            .WriteJoin(", ", mapping.Constructor.Parameters.Select(a => a.Property.GetMappedProperty(parameterName, mapping.Options.CopyPrimitiveArrays)));
+        writer.Write($"new {mapping.Name}(");
+
+        for (var i = 0; i < mapping.Constructor.Parameters.Length; i++)
+        {
+            var parameter = mapping.Constructor.Parameters[i];
+
+            PropertyGenerator.Instance.Generate(new(writer, parameter.Property, parameterName, null, mapping.Options.CopyPrimitiveArrays, null));
+            writer.WriteLineIf(i < mapping.Constructor.Parameters.Length - 1, ", ");
+        }
 
         return hasObjectInitializer ? writer.WriteLine(")") : writer.WriteLine(");");
     }
@@ -317,15 +281,22 @@ internal static class ExtensionClassGeneratorExtensions
         var sourceType = mapping.Source.Name;
         var parameterName = sourceType.ToParameterNameCasing();
 
-        return writer
-            .WriteOpeningBracket()
-            .WriteLineJoin(",", properties.Select(p => $"{p.Name} = {p.GetMappedProperty(parameterName, mapping.Options.CopyPrimitiveArrays)}"))
-            .WriteClosingBracket(false)
-            .WriteLine(";");
+        writer.WriteOpeningBracket();
+
+        for (var i = 0; i < properties.Length; i++)
+        {
+            var property = properties[i];
+
+            writer.Write($"{property.Name} = ");
+            PropertyGenerator.Instance.Generate(new(writer, property, parameterName, null, mapping.Options.CopyPrimitiveArrays, null));
+            writer.WriteIf(i < properties.Length - 1, ",").WriteLineIndented();
+        }
+
+        return writer.WriteClosingBracket(false).WriteLine(";");
     }
 
     private static CodeWriter WriteParameterNullCheck(this CodeWriter writer, string parameterName) => writer
-        .WriteLine($"if (ReferenceEquals({parameterName}, null))")
+        .Write("if (").WriteIsNullCheck(parameterName).WriteLine(")")
         .WriteOpeningBracket()
         .WriteLine("return null;")
         .WriteClosingBracket();
@@ -333,28 +304,20 @@ internal static class ExtensionClassGeneratorExtensions
     private static CodeWriter WritePropertySetters(this CodeWriter writer, TargetMapping mapping, string instanceName, string? referenceHandlerInstanceName = null)
     {
         var sourceType = mapping.Source.Name;
-        var parameterName = sourceType.ToParameterNameCasing();
-        var properties = mapping.Properties.Where(p => p is { HasTypeConverter: false, InitializationMode: PropertyInitializationMode.Setter }).ToArray();
-        var propertiesWithConverter = mapping.Properties.Where(p => p is { HasTypeConverter: true, InitializationMode: PropertyInitializationMode.Setter });
+        var sourceParameterName = sourceType.ToParameterNameCasing();
+        var properties = mapping.Properties.Where(p => p.InitializationMode is PropertyInitializationMode.Setter);
         var copyPrimitiveArrays = mapping.Options.CopyPrimitiveArrays;
 
+        var newline = false;
         foreach (var property in properties)
         {
-            writer.WriteLine($"{instanceName}.{property.Name} = {property.GetMappedProperty(parameterName, copyPrimitiveArrays, referenceHandlerInstanceName)};");
+            // writer
+            //     .WriteLineIf(newline = propertyMap.StartsWith("if") && !newline)
+            //     .WriteLine(propertyMap)
+            //     .WriteLineIf(propertyMap.EndsWith("}"));
+            PropertyGenerator.Instance.Generate(new(writer, property, sourceParameterName, instanceName, copyPrimitiveArrays, referenceHandlerInstanceName));
         }
 
-        writer.WriteLineIf(properties.Length > 0);
-
-        foreach (var property in propertiesWithConverter)
-        {
-            writer
-                .WriteLine($"if (!ReferenceEquals({parameterName}.{property.Name}, null)) ")
-                .WriteOpeningBracket()
-                .WriteLine($"{instanceName}.{property.Name} = {property.GetMappedProperty(parameterName, copyPrimitiveArrays, referenceHandlerInstanceName)};")
-                .WriteClosingBracket()
-                .WriteNewLine();
-        }
-
-        return writer;
+        return writer.WriteLineIf(!newline);
     }
 }
