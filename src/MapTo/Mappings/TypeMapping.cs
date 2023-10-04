@@ -2,12 +2,16 @@
 
 namespace MapTo.Mappings;
 
-[DebuggerDisplay($"FQN: {{{nameof(FullName)}}}")]
+[DebuggerDisplay($"{{{nameof(FullName)}}}")]
 internal readonly record struct TypeMapping(
     string Name,
     string FullName,
+    bool IsNullable,
+    NullableAnnotation NullableAnnotation,
     bool IsArray,
-    string ElementTypeFullName)
+    string ElementTypeName,
+    EnumerableType EnumerableType,
+    NullableAnnotation ElementTypeNullableAnnotation)
 {
 #if DEBUG
     internal ITypeSymbol OriginalTypeSymbol { get; init; }
@@ -19,19 +23,35 @@ internal static class TypeMappingExtensions
     internal static TypeMapping ToTypeMapping(this ITypeSymbol typeSymbol)
     {
         var isArray = false;
-        var elementType = string.Empty;
+        ITypeSymbol? elementType = null;
+        var elementTypeName = string.Empty;
+        var enumerableType = EnumerableType.None;
 
-        if (typeSymbol is IArrayTypeSymbol arrayTypeSymbol)
+        switch (typeSymbol)
         {
-            isArray = true;
-            elementType = arrayTypeSymbol.ElementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            case IArrayTypeSymbol arrayTypeSymbol:
+                isArray = true;
+                elementType = arrayTypeSymbol.ElementType;
+                elementTypeName = elementType.ToFullyQualifiedDisplayString();
+                enumerableType = EnumerableType.Array;
+                break;
+
+            case INamedTypeSymbol namedTypedSymbol:
+                elementType = namedTypedSymbol.TypeArguments.FirstOrDefault();
+                elementTypeName = elementType?.ToFullyQualifiedDisplayString() ?? string.Empty;
+                enumerableType = namedTypedSymbol.ToEnumerableType();
+                break;
         }
 
         var mapping = new TypeMapping(
             Name: typeSymbol.Name,
             FullName: typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+            IsNullable: typeSymbol.IsReferenceType || typeSymbol.NullableAnnotation is NullableAnnotation.Annotated,
+            NullableAnnotation: typeSymbol.NullableAnnotation,
             IsArray: isArray,
-            ElementTypeFullName: elementType);
+            ElementTypeName: elementTypeName,
+            EnumerableType: enumerableType,
+            ElementTypeNullableAnnotation: elementType?.NullableAnnotation ?? NullableAnnotation.None);
 
 #if DEBUG
         return mapping with { OriginalTypeSymbol = typeSymbol };
@@ -39,4 +59,22 @@ internal static class TypeMappingExtensions
         return mapping;
 #endif
     }
+
+    internal static string EmptySourceCodeString(this TypeMapping type) => type.EnumerableType switch
+    {
+        EnumerableType.Array or EnumerableType.ReadOnlyCollection => $"global::{KnownTypes.Array}.Empty<{type.ElementTypeName}>()",
+        EnumerableType.List => $"new global::{KnownTypes.GenericList}<{type.ElementTypeName}>()",
+        EnumerableType.Enumerable => $"global::{KnownTypes.LinqEnumerable}.Empty<{type.ElementTypeName}>()",
+        _ => "default"
+    };
+
+    private static EnumerableType ToEnumerableType(this INamedTypeSymbol typeSymbol) => typeSymbol switch
+    {
+        _ when typeSymbol.IsGenericCollectionOf(SpecialType.System_Collections_Generic_IList_T) => EnumerableType.List,
+        _ when typeSymbol.IsGenericCollectionOf(SpecialType.System_Collections_Generic_ICollection_T) => EnumerableType.List,
+        _ when typeSymbol.IsGenericCollectionOf(SpecialType.System_Collections_Generic_IReadOnlyList_T) => EnumerableType.ReadOnlyCollection,
+        _ when typeSymbol.IsGenericCollectionOf(SpecialType.System_Collections_Generic_IReadOnlyCollection_T) => EnumerableType.ReadOnlyCollection,
+        _ when typeSymbol.IsGenericCollectionOf(SpecialType.System_Collections_Generic_IEnumerable_T) => EnumerableType.Enumerable,
+        _ => EnumerableType.None
+    };
 }

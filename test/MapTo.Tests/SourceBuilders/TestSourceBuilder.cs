@@ -7,6 +7,9 @@ internal class TestSourceBuilder : ITestSourceBuilder
 {
     private readonly List<ITestFileBuilder> _files = new();
 
+    internal TestSourceBuilder(bool supportNullReferenceTypes, IDictionary<string, string>? analyzerConfigOptions)
+        : this(TestSourceBuilderOptions.Create(supportNullReferenceTypes: supportNullReferenceTypes, analyzerConfigOptions: analyzerConfigOptions)) { }
+
     internal TestSourceBuilder(TestSourceBuilderOptions? options = null)
     {
         Options = options ?? TestSourceBuilderOptions.Create();

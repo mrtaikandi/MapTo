@@ -13,7 +13,7 @@ internal readonly record struct CodeGenerator(
 
     public string Build()
     {
-        var writer = new CodeWriter();
+        var writer = new CodeWriter(CompilerOptions);
         var generators = new ICodeGenerator[]
         {
             new FileGenerator(CompilerOptions.NullableReferenceTypes, CompilerOptions.FileScopedNamespace, Mapping),

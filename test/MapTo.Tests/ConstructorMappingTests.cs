@@ -15,7 +15,7 @@ public class ConstructorMappingTests
     public void When_TargetWithReadOnlyPropertyAndConstructor_Should_NotGenerateConstructorAndUseConstructorInitializer()
     {
         // Arrange
-        var builder = new TestSourceBuilder();
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: false));
         var sourceFile = builder.AddFile();
         sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
         sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
@@ -46,7 +46,7 @@ public class ConstructorMappingTests
     public void When_TargetWithReadOnlyPropertyAndNoConstructors_Should_GenerateConstructor()
     {
         // Arrange
-        var builder = new TestSourceBuilder();
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: false));
         var sourceFile = builder.AddFile();
         sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
         sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
@@ -94,7 +94,7 @@ public class ConstructorMappingTests
     public void When_TargetHasMultipleConstructorsWithSameParameterCount_Should_ChooseAnyOfThem()
     {
         // Arrange
-        var builder = new TestSourceBuilder();
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: false));
         var sourceFile = builder.AddFile();
 
         sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
@@ -118,7 +118,7 @@ public class ConstructorMappingTests
     public void When_TargetHasMultipleConstructorsWithoutMapConstructorAttribute_Should_ChooseTheOneWithMostParameters()
     {
         // Arrange
-        var builder = new TestSourceBuilder();
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: false));
         var sourceFile = builder.AddFile();
 
         sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name").WithProperty<int>("Prop");
@@ -154,12 +154,12 @@ public class ConstructorMappingTests
     {
         // Arrange
         var builder = new TestSourceBuilder();
-        var sourceFile = builder.AddFile();
+        var sourceFile = builder.AddFile(supportNullableReferenceTypes: true);
 
-        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name", defaultValue: "string.Empty");
         sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
             .WithProperty<int?>("Id")
-            .WithProperty<string>("Name")
+            .WithProperty<string>("Name", defaultValue: "string.Empty")
             .WithConstructor("public TargetClass(int id) => Id = id;")
             .WithConstructor("[MapConstructor] public TargetClass(string name) => Name = name;")
             .WithConstructor("public TargetClass(int id, string name) => (Id, Name) = (id, name);");

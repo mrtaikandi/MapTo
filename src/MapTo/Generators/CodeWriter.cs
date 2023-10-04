@@ -1,4 +1,5 @@
 ﻿using System.CodeDom.Compiler;
+using MapTo.Configuration;
 
 namespace MapTo.Generators;
 
@@ -7,13 +8,16 @@ internal sealed class CodeWriter : IDisposable
     private readonly IndentedTextWriter _indentedWriter;
     private readonly StringWriter _writer;
 
-    public CodeWriter()
+    public CodeWriter(CompilerOptions compilerOptions = default)
     {
         _writer = new StringWriter();
+        LanguageVersion = compilerOptions.LanguageVersion;
         _indentedWriter = new IndentedTextWriter(_writer, new string(' ', 4));
     }
 
     public int CurrentIndent => _indentedWriter.Indent;
+
+    public LanguageVersion LanguageVersion { get; }
 
     public string NewLine => _indentedWriter.NewLine;
 
@@ -40,6 +44,12 @@ internal sealed class CodeWriter : IDisposable
     }
 
     public CodeWriter Write(string? value = null)
+    {
+        _indentedWriter.Write(value);
+        return this;
+    }
+
+    public CodeWriter Write(char value)
     {
         _indentedWriter.Write(value);
         return this;
@@ -95,7 +105,7 @@ internal sealed class CodeWriter : IDisposable
         return this;
     }
 
-    public CodeWriter WriteNewLine()
+    public CodeWriter WriteLineIndented()
     {
         _indentedWriter.WriteLine();
         return this;
@@ -175,6 +185,12 @@ internal sealed class CodeWriter : IDisposable
             WriteLines(values);
         }
 
+        return this;
+    }
+
+    public CodeWriter WriteNewLine()
+    {
+        _indentedWriter.WriteLine();
         return this;
     }
 

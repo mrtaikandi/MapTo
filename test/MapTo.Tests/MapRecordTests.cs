@@ -100,7 +100,7 @@ public class MapRecordTests
                 [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceRecord")]
                 public static TargetRecord? MapToTargetRecord(this SourceRecord? sourceRecord)
                 {
-                    if (ReferenceEquals(sourceRecord, null))
+                    if (sourceRecord is null)
                     {
                         return null;
                     }

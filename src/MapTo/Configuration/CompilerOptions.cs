@@ -6,10 +6,12 @@
 /// <param name="NullableReferenceTypes">Whether to support nullable reference types.</param>
 /// <param name="NullableStaticAnalysis">Whether to support nullable static analysis attributes.</param>
 /// <param name="FileScopedNamespace">Whether to support file-scoped namespace.</param>
+/// <param name="LanguageVersion">The C# language version.</param>
 internal readonly record struct CompilerOptions(
     bool NullableReferenceTypes = true,
     bool NullableStaticAnalysis = true,
-    bool FileScopedNamespace = true)
+    bool FileScopedNamespace = true,
+    LanguageVersion LanguageVersion = LanguageVersion.Latest)
 {
     /// <summary>
     /// Gets the nullable reference syntax. Returns <c>?</c> if <see cref="NullableReferenceTypes" /> is <c>true</c>,

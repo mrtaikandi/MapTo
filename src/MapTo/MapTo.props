@@ -4,5 +4,6 @@
         <CompilerVisibleProperty Include="MapTo_MapExtensionClassSuffix"/>
         <CompilerVisibleProperty Include="MapTo_ReferenceHandling"/>
         <CompilerVisibleProperty Include="MapTo_CopyPrimitiveArrays"/>
+        <CompilerVisibleProperty Include="MapTo_NullHandling"/>
     </ItemGroup>
 </Project>

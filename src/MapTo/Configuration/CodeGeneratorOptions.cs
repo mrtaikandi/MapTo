@@ -9,11 +9,13 @@ namespace MapTo.Configuration;
 /// <param name="MapExtensionClassSuffix">The generated mapping extension class suffix.</param>
 /// <param name="ReferenceHandling">Indicates whether to use reference handling.</param>
 /// <param name="CopyPrimitiveArrays">Indicates whether to copy object and primitive type arrays into a new array.</param>
+/// <param name="NullHandling">Indicates how to handle null properties.</param>
 internal readonly record struct CodeGeneratorOptions(
     string MapMethodPrefix = "MapTo",
     string MapExtensionClassSuffix = "MapToExtensions",
     ReferenceHandling ReferenceHandling = ReferenceHandling.Disabled,
-    bool CopyPrimitiveArrays = false)
+    bool CopyPrimitiveArrays = false,
+    NullHandling NullHandling = NullHandling.Auto)
 {
     /// <summary>
     /// The prefix of the property name in the .editorconfig file.
@@ -33,6 +35,7 @@ internal readonly record struct CodeGeneratorOptions(
             MapMethodPrefix: provider.GlobalOptions.GetOption(nameof(MapMethodPrefix), "MapTo"),
             MapExtensionClassSuffix: provider.GlobalOptions.GetOption(nameof(MapExtensionClassSuffix), "MapToExtensions"),
             ReferenceHandling: provider.GlobalOptions.GetOption<ReferenceHandling>(nameof(ReferenceHandling)),
-            CopyPrimitiveArrays: provider.GlobalOptions.GetOption(nameof(CopyPrimitiveArrays), false));
+            CopyPrimitiveArrays: provider.GlobalOptions.GetOption(nameof(CopyPrimitiveArrays), false),
+            NullHandling: provider.GlobalOptions.GetOption<NullHandling>(nameof(NullHandling)));
     }
 }

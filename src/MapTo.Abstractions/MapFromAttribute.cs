@@ -53,4 +53,10 @@ public sealed class MapFromAttribute : Attribute
     /// </summary>
     /// <value>The name of the method to call after mapping the property.</value>
     public string? AfterMap { get; set; }
+
+    /// <summary>
+    /// Gets or sets the way to handle null properties.
+    /// </summary>
+    /// <value>The way to handle null properties.</value>
+    public NullHandling NullHandling { get; set; } = NullHandling.Auto;
 }

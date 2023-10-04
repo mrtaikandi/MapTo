@@ -25,22 +25,19 @@ internal readonly record struct MappingContext(
     public static MappingContext WithOptions((MappingContext Builder, CodeGeneratorOptions Options) source, CancellationToken cancellationToken)
     {
         var mapFromAttributeData = source.Builder.MapFromAttributeData;
+        var compilation = source.Builder.TargetSemanticModel.Compilation;
         return source.Builder with
         {
-            CompilerOptions = CompilerOptions.From(source.Builder.TargetSemanticModel.Compilation),
+            CompilerOptions = CompilerOptions.From(compilation),
             CodeGeneratorOptions = source.Options with
             {
-                CopyPrimitiveArrays = mapFromAttributeData.TryGetNamedArgument(nameof(MapFromAttribute.CopyPrimitiveArrays), out var value)
-                    ? (bool)value
-                    : source.Options.CopyPrimitiveArrays,
-
-                ReferenceHandling = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.ReferenceHandling)) switch
-                {
-                    0 => ReferenceHandling.Disabled,
-                    1 => ReferenceHandling.Enabled,
-                    2 => ReferenceHandling.Auto,
-                    _ => source.Options.ReferenceHandling
-                }
+                CopyPrimitiveArrays = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.CopyPrimitiveArrays), source.Options.CopyPrimitiveArrays),
+                ReferenceHandling = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.ReferenceHandling), source.Options.ReferenceHandling),
+                NullHandling = mapFromAttributeData.GetNamedArgument(
+                    nameof(MapFromAttribute.NullHandling),
+                    compilation.Options.NullableContextOptions is NullableContextOptions.Disable && source.Options.NullHandling == NullHandling.Auto
+                        ? NullHandling.SetNull
+                        : source.Options.NullHandling)
             }
         };
     }
@@ -78,7 +75,8 @@ internal static class MappingContextExtensions
                     TargetTypeSyntax: context.TargetNode as TypeDeclarationSyntax ?? throw new InvalidOperationException("TargetNode is not a ClassDeclarationSyntax"),
                     TargetTypeSymbol: context.TargetSymbol as INamedTypeSymbol ?? throw new InvalidOperationException("TargetSymbol is not a ITypeSymbol"),
                     TargetSemanticModel: context.SemanticModel,
-                    SourceTypeSymbol: mapFromAttribute.ConstructorArguments.First().Value as INamedTypeSymbol ?? throw new InvalidOperationException("SourceType is not a ITypeSymbol"),
+                    SourceTypeSymbol: mapFromAttribute.ConstructorArguments.First().Value as INamedTypeSymbol ??
+                                      throw new InvalidOperationException("SourceType is not a ITypeSymbol"),
                     KnownTypes: KnownTypes.Create(context.SemanticModel.Compilation))
                 {
                     MapFromAttributeData = mapFromAttribute

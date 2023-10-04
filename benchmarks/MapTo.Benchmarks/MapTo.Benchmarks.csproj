@@ -5,7 +5,7 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <IsPackable>false</IsPackable>
-        <EmitCompilerGeneratedFiles>false</EmitCompilerGeneratedFiles>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
 
         <MapTo_ReferenceHandling>Disabled</MapTo_ReferenceHandling>
     </PropertyGroup>
@@ -15,6 +15,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <AssemblyAttribute Include="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverageAttribute" />
         <None Update="Data\SpotifyAlbum.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>

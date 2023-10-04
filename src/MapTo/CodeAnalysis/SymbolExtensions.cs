@@ -107,18 +107,28 @@ internal static class SymbolExtensions
         return namedTypeSymbol as INamedTypeSymbol ?? throw new InvalidOperationException($"Unable to get type symbol for property '{symbol.Name}'.");
     }
 
-    public static IPropertySymbol? FindProperty(this IEnumerable<IPropertySymbol> properties, IPropertySymbol targetProperty)
-    {
-        return properties.SingleOrDefault(p =>
-            p.Name == targetProperty.Name &&
-            (p.NullableAnnotation != NullableAnnotation.Annotated ||
-             (p.NullableAnnotation == NullableAnnotation.Annotated &&
-              targetProperty.NullableAnnotation == NullableAnnotation.Annotated)));
-    }
-
     public static bool HasNonPrimitiveProperties(this ITypeSymbol typeSymbol) =>
         !typeSymbol.IsPrimitiveType() && typeSymbol.GetAllMembers().OfType<IPropertySymbol>().Any(p => !p.Type.IsPrimitiveType(true));
 
     public static Location? GetLocation(this ISymbol? symbol) =>
         symbol?.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation();
+
+    public static bool IsGenericCollectionOf(this ITypeSymbol typeSymbol, SpecialType type)
+    {
+        if (typeSymbol is not INamedTypeSymbol { IsGenericType: true } namedTypeSymbol)
+        {
+            return false;
+        }
+
+        if (namedTypeSymbol.SpecialType == type || namedTypeSymbol.ConstructedFrom.SpecialType == type)
+        {
+            return true;
+        }
+
+        var genericType = namedTypeSymbol.ConstructedFrom;
+        return genericType.Interfaces.Any(i => i.IsGenericType && i.ConstructedFrom.SpecialType == type);
+    }
+
+    public static string ToFullyQualifiedDisplayString(this ITypeSymbol typeSymbol) =>
+        $"{typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}{(typeSymbol.NullableAnnotation is NullableAnnotation.Annotated ? "?" : string.Empty)}";
 }

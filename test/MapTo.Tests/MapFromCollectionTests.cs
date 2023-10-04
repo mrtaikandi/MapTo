@@ -76,7 +76,7 @@ public class MapFromCollectionTests
         diagnostics.ShouldBeSuccessful();
         compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.ManagerModel.g.cs")
             .GetClassDeclaration("ManagerMapToExtensions")
-            .ShouldContain($"Employees = manager.Employees.Select(global::MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeModel).{expectedLinqMethod}()");
+            .ShouldContain($"Employees = manager.Employees?.Select<global::MapTo.Tests.Employee, global::MapTo.Tests.EmployeeModel>(global::MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeModel).{expectedLinqMethod}()");
     }
 
     [Theory]
@@ -118,17 +118,11 @@ public class MapFromCollectionTests
 
         if (!shouldGenerateMapItemArrays)
         {
-            extensionClass.ShouldContain("Employees = manager.Employees.Select(global::MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeModel).ToArray()");
+            extensionClass.ShouldContain("Employees = manager.Employees?.Select(global::MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeModel).ToArray()");
         }
         else
         {
-            extensionClass.ShouldContain(
-                """
-                if (!ReferenceEquals(manager.Employees, null))
-                {
-                    target.Employees = MapToEmployeeModelArray(manager.Employees);
-                }
-                """);
+            extensionClass.ShouldContain("target.Employees = MapToEmployeeModelArray(manager.Employees);");
 
             extensionClass.ShouldContain(
                 """
@@ -162,13 +156,7 @@ public class MapFromCollectionTests
         diagnostics.ShouldBeSuccessful();
 
         var extensionClass = compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.AlbumViewModel.g.cs").GetClassDeclaration("AlbumMapToExtensions").ShouldNotBeNull();
-        extensionClass.ShouldContain(
-            """
-            if (!ReferenceEquals(album.Artists, null))
-            {
-                target.Artists = MapToArtistViewModelArray(album.Artists, referenceHandler);
-            }
-            """);
+        extensionClass.ShouldContain("target.Artists = MapToArtistViewModelArray(album.Artists, referenceHandler);");
 
         extensionClass.ShouldContain(
             """
@@ -203,14 +191,7 @@ public class MapFromCollectionTests
         var extensionClass = compilation.GetGeneratedFileSyntaxTree("ExternalTestData.Models.SpotifyAlbum.g.cs").GetClassDeclaration("SpotifyAlbumDtoMapToExtensions")
             .ShouldNotBeNull();
 
-        extensionClass.ShouldContain(
-            """
-            if (!ReferenceEquals(spotifyAlbumDto.Artists, null))
-            {
-                target.Artists = MapToArtistArray(spotifyAlbumDto.Artists);
-            }
-            """);
-
+        extensionClass.ShouldContain("target.Artists = MapToArtistArray(spotifyAlbumDto.Artists);");
         extensionClass.ShouldContain(
             """
             private static global::ExternalTestData.Models.Artist[] MapToArtistArray(global::ExternalTestData.Models.ArtistDto[] sourceArray)
@@ -230,7 +211,8 @@ public class MapFromCollectionTests
     public void When_MappedPropertyTypeIsArrayOfMappedObjectsWithReferenceHandlingAuto_Should_GenerateMapItemArrays()
     {
         // Arrange
-        var builder = ScenarioBuilder.BuildSpotifyModels(TestSourceBuilderOptions.Create(analyzerConfigOptions: new Dictionary<string, string>
+        var builder = ScenarioBuilder.BuildSpotifyModels(TestSourceBuilderOptions.Create(
+            analyzerConfigOptions: new Dictionary<string, string>
         {
             [nameof(CodeGeneratorOptions.ReferenceHandling)] = ReferenceHandling.Auto.ToString()
         }));
@@ -245,14 +227,7 @@ public class MapFromCollectionTests
             .GetClassDeclaration("SpotifyAlbumDtoMapToExtensions")
             .ShouldNotBeNull();
 
-        extensionClass.ShouldContain(
-            """
-            if (!ReferenceEquals(spotifyAlbumDto.Artists, null))
-            {
-                target.Artists = MapToArtistArray(spotifyAlbumDto.Artists, referenceHandler);
-            }
-            """);
-
+        extensionClass.ShouldContain("target.Artists = MapToArtistArray(spotifyAlbumDto.Artists, referenceHandler);");
         extensionClass.ShouldContain(
             """
             private static global::ExternalTestData.Models.Artist[] MapToArtistArray(global::ExternalTestData.Models.ArtistDto[] sourceArray, global::System.Collections.Generic.Dictionary<int, object> referenceHandler)
@@ -267,13 +242,7 @@ public class MapFromCollectionTests
              }
             """);
 
-        extensionClass.ShouldContain(
-            """
-            if (!ReferenceEquals(spotifyAlbumDto.Copyrights, null))
-            {
-                target.Copyrights = MapToCopyrightArray(spotifyAlbumDto.Copyrights);
-            }
-            """);
+        extensionClass.ShouldContain("target.Copyrights = MapToCopyrightArray(spotifyAlbumDto.Copyrights);");
 
         extensionClass.ShouldContain(
             """
@@ -312,14 +281,7 @@ public class MapFromCollectionTests
         var extensionClass = compilation.GetGeneratedFileSyntaxTree("ExternalTestData.Models.SpotifyAlbum.g.cs").GetClassDeclaration("SpotifyAlbumDtoMapToExtensions")
             .ShouldNotBeNull();
 
-        extensionClass.ShouldContain(
-            """
-            if (!ReferenceEquals(spotifyAlbumDto.AvailableMarkets, null))
-            {
-                target.AvailableMarkets = MapToStringArray(spotifyAlbumDto.AvailableMarkets);
-            }
-            """);
-
+        extensionClass.ShouldContain("target.AvailableMarkets = MapToStringArray(spotifyAlbumDto.AvailableMarkets);");
         extensionClass.ShouldContain(
             """
             private static string[] MapToStringArray(string[] sourceArray)
@@ -368,5 +330,63 @@ public class MapFromCollectionTests
             var expectedError = DiagnosticsFactory.PropertyTypeConverterRequiredError(propertySymbol);
             diagnostics.ShouldNotBeSuccessful(expectedError);
         }
+    }
+
+    [Theory]
+    [InlineData(NullHandling.Auto)]
+    [InlineData(NullHandling.SetNull)]
+    public void When_NullContextIsDisabled_NullHandlingAutoAndSetNull_Should_BeTheSame(NullHandling nullHandling)
+    {
+        // Arrange
+        var builder = new TestSourceBuilder(
+            supportNullReferenceTypes: false,
+            analyzerConfigOptions: new Dictionary<string, string>
+            {
+                [nameof(CodeGeneratorOptions.NullHandling)] = nullHandling.ToString()
+            });
+
+        var sourceFile = builder.AddFile(usings: new[] { "System.Collections", "System.Collections.Generic" });
+        sourceFile.AddClass(Accessibility.Public, "MiddleClass").WithProperty<string>("Key");
+        sourceFile.AddClass(Accessibility.Public, "MappedMiddleClass", attributes: "[MapFrom(typeof(MiddleClass))]").WithProperty<string>("Key");
+
+        sourceFile.AddClass(Accessibility.Public, "SourceClass")
+            .WithProperty("List<int>", "Prop1")
+            .WithProperty("string[]", "Prop2")
+            .WithProperty("MiddleClass[]", "Prop3")
+            .WithProperty("List<MiddleClass>", "Prop4");
+
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")
+            .WithProperty("List<int>", "Prop1")
+            .WithProperty("string[]", "Prop2")
+            .WithProperty("MiddleClass[]", "Prop3")
+            .WithProperty("List<MappedMiddleClass>", "Prop4");
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        compilation.Dump(_output);
+        diagnostics.ShouldBeSuccessful();
+
+        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldContain(
+            """
+            target.Prop1 = sourceClass.Prop1;
+
+            if (sourceClass.Prop2 is not null)
+            {
+                target.Prop2 = sourceClass.Prop2;
+            }
+
+            if (sourceClass.Prop3 is not null)
+            {
+                target.Prop3 = sourceClass.Prop3;
+            }
+
+            if (sourceClass.Prop4 is not null)
+            {
+                target.Prop4 = sourceClass.Prop4.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToList();
+            }
+            """);
     }
 }
