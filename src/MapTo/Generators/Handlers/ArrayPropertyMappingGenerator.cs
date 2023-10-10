@@ -108,9 +108,9 @@ internal sealed class ArrayPropertyMappingGenerator : PropertyMappingGenerator
             {
                 { IsMapToExtensionMethod: false } when !copyPrimitiveArrays => writer.Write(parameterName),
                 { IsMapToExtensionMethod: true, ReferenceHandling: true } => writer
-                    .Write(property.TypeConverter.MethodName).Write("Array").WriteOpenParenthesis()
-                    .Write(parameterName).Write(", ").Write(refHandler).WriteClosingParenthesis(),
-                _ => writer.Write(property.TypeConverter.MethodName).Write("Array").WriteOpenParenthesis().Write(parameterName).WriteClosingParenthesis()
+                    .Write(property.TypeConverter.MethodName).Write("Array").Write("(")
+                    .Write(parameterName).Write(", ").Write(refHandler).Write(")"),
+                _ => writer.Write(property.TypeConverter.MethodName).Write("Array").Write("(").Write(parameterName).Write(")")
             };
         }
     }
