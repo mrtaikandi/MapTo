@@ -179,7 +179,10 @@ public class PropertyTypeConverterTests
         var targetSemanticModel = compilation.GetSemanticModel(targetClassDeclaration.SyntaxTree);
         var targetMethodSymbol = (targetSemanticModel.GetDeclaredSymbol(targetClassDeclaration.Members[2]) as IMethodSymbol).ShouldNotBeNull();
 
-        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.PropertyTypeConverterMethodInputTypeCompatibilityError(sourcePropertySymbol, targetMethodSymbol));
+        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.PropertyTypeConverterMethodInputTypeCompatibilityError(
+            sourcePropertySymbol.ToDisplayString(),
+            sourcePropertySymbol.Type,
+            targetMethodSymbol));
     }
 
     [Theory]
@@ -281,6 +284,6 @@ public class PropertyTypeConverterTests
         var methodSymbol = semanticModel.GetDeclaredSymbol(targetClassDeclaration.Members[2]) as IMethodSymbol;
 
         methodSymbol.ShouldNotBeNull();
-        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.PropertyTypeConverterMethodInputTypeNullCompatibilityError(sourceProperty, methodSymbol));
+        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.PropertyTypeConverterMethodInputTypeNullCompatibilityError(sourceProperty.Name, methodSymbol));
     }
 }

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using MapTo.Configuration;
 using MapTo.Diagnostics;
 using MapTo.Extensions;
@@ -56,10 +57,9 @@ internal static class PropertyMappingFactory
     {
         var (_, _, _, sourceTypeSymbol, knownTypes, _, _) = context;
         var mapPropertyAttribute = property.GetAttribute(knownTypes.MapPropertyAttributeTypeSymbol);
-        var sourcePropertyName = mapPropertyAttribute.GetNamedArgument(nameof(MapPropertyAttribute.From), defaultValue: property.Name);
-        var sourceProperty = sourceTypeSymbol.FindProperty(sourcePropertyName);
+        var sourceProperty = property.FindSource(sourceTypeSymbol, mapPropertyAttribute);
 
-        if (sourceProperty is null)
+        if (sourceProperty.NotFound)
         {
             return null;
         }
@@ -73,7 +73,7 @@ internal static class PropertyMappingFactory
             Name: property.Name,
             Type: property.GetTypeNamedSymbol().ToTypeMapping(),
             SourceName: sourceProperty.Name,
-            SourceType: sourceProperty.Type.ToTypeMapping(),
+            SourceType: sourceProperty.Type,
             InitializationMode: property.GetInitializationMode(),
             ParameterName: property.Name.ToParameterNameCasing(),
             TypeConverter: converter.Value,
@@ -81,10 +81,63 @@ internal static class PropertyMappingFactory
             NullHandling: mapPropertyAttribute.GetNamedArgument(nameof(MapPropertyAttribute.NullHandling), context.CodeGeneratorOptions.NullHandling));
     }
 
-    private static IPropertySymbol? FindProperty(this ITypeSymbol typeSymbol, string propertyName) => typeSymbol
-        .GetAllMembers()
-        .OfType<IPropertySymbol>()
-        .SingleOrDefault(p => p.Name == propertyName);
+    private static FoundedSource FindSource(
+        this IPropertySymbol property,
+        ITypeSymbol sourceTypeSymbol,
+        AttributeData? mapPropertyAttribute)
+    {
+        var propertyName = mapPropertyAttribute.GetNamedArgumentStringValue(nameof(MapPropertyAttribute.From)) ?? property.Name;
+        var propertySegments = propertyName.Split('.');
+
+        var nullableAnnotation = NullableAnnotation.None;
+        var sourcePropertyName = new StringBuilder();
+        var sourceType = sourceTypeSymbol;
+
+        // No need to include the source type name if nameof is used.
+        var i = propertySegments.Length > 1 && propertySegments[0] == sourceTypeSymbol.Name ? 1 : 0;
+
+        for (; i < propertySegments.Length; i++)
+        {
+            var name = propertySegments[i];
+
+            var sourceMember = sourceTypeSymbol.GetAllMembers().SingleOrDefault(p => p.Name == name);
+            (sourceType, var sourceAnnotation) = sourceMember switch
+            {
+                IPropertySymbol p => (p.Type, p.NullableAnnotation),
+                IMethodSymbol m => (m.ReturnType, m.ReturnType.NullableAnnotation),
+                IFieldSymbol f => (f.Type, f.NullableAnnotation),
+                _ => (null, default)
+            };
+
+            if (sourceType is null)
+            {
+                return default;
+            }
+
+            sourcePropertyName.Append(name);
+            sourceTypeSymbol = sourceType;
+            nullableAnnotation = nullableAnnotation is NullableAnnotation.Annotated ? nullableAnnotation : sourceAnnotation;
+
+            if (i < propertySegments.Length - 1)
+            {
+                if (sourceAnnotation is NullableAnnotation.Annotated)
+                {
+                    sourcePropertyName.Append('?');
+                }
+
+                sourcePropertyName.Append('.');
+            }
+            else if (sourceMember is IMethodSymbol)
+            {
+                sourcePropertyName.Append("()");
+            }
+        }
+
+        return new FoundedSource(
+            TypeSymbol: sourceType,
+            Type: sourceType.ToTypeMapping(nullableAnnotation),
+            Name: sourcePropertyName.ToString());
+    }
 
     private static PropertyInitializationMode GetInitializationMode(this IPropertySymbol property) => property.SetMethod switch
     {
@@ -158,7 +211,7 @@ internal static class PropertyMappingFactory
             UsingDirectives: ImmutableArray.Create("global::System.Linq"));
     }
 
-    private static TypeConverterMapping? GetPropertyTypeConverter(this IPropertySymbol property, MappingContext context, IPropertySymbol sourceProperty)
+    private static TypeConverterMapping? GetPropertyTypeConverter(this IPropertySymbol property, MappingContext context, FoundedSource sourceProperty)
     {
         TypedConstant? parameters = null;
         var (error, converterMethodSymbol) = GetPropertyTypeConverterMethod(context, property, sourceProperty);
@@ -211,7 +264,7 @@ internal static class PropertyMappingFactory
     private static (Diagnostic? Error, IMethodSymbol? ConverterMethodSymbol) GetPropertyTypeConverterMethod(
         MappingContext context,
         IPropertySymbol property,
-        IPropertySymbol sourceProperty)
+        FoundedSource sourceProperty)
     {
         var typeConverterAttribute = property.GetAttribute(context.KnownTypes.PropertyTypeConverterAttributeTypeSymbol);
         var firstArgument = typeConverterAttribute?.ConstructorArguments.First();
@@ -237,14 +290,15 @@ internal static class PropertyMappingFactory
             return (DiagnosticsFactory.PropertyTypeConverterMethodReturnTypeCompatibilityError(property, converterMethodSymbol), null);
         }
 
-        if (!context.Compilation.HasCompatibleTypes(converterMethodSymbol.Parameters.First().Type, sourceProperty))
+        if (!context.Compilation.HasCompatibleTypes(converterMethodSymbol.Parameters.First().Type, sourceProperty.TypeSymbol))
         {
-            return (DiagnosticsFactory.PropertyTypeConverterMethodInputTypeCompatibilityError(sourceProperty, converterMethodSymbol), null);
+            return (DiagnosticsFactory.PropertyTypeConverterMethodInputTypeCompatibilityError(sourceProperty.Name, sourceProperty.TypeSymbol, converterMethodSymbol), null);
         }
 
-        if (sourceProperty.NullableAnnotation is NullableAnnotation.Annotated && converterMethodSymbol.Parameters.First().NullableAnnotation is NullableAnnotation.NotAnnotated)
+        if (sourceProperty.Type.NullableAnnotation is NullableAnnotation.Annotated &&
+            converterMethodSymbol.Parameters.First().NullableAnnotation is NullableAnnotation.NotAnnotated)
         {
-            return (DiagnosticsFactory.PropertyTypeConverterMethodInputTypeNullCompatibilityError(sourceProperty, converterMethodSymbol), null);
+            return (DiagnosticsFactory.PropertyTypeConverterMethodInputTypeNullCompatibilityError(sourceProperty.Name, converterMethodSymbol), null);
         }
 
         return (null, converterMethodSymbol);
@@ -260,18 +314,18 @@ internal static class PropertyMappingFactory
 
     private static bool TryGetTypeConverter(
         this IPropertySymbol property,
-        IPropertySymbol sourceProperty,
+        FoundedSource sourceProperty,
         MappingContext context,
         [NotNullWhen(true)] out TypeConverterMapping? converter)
     {
         converter = default(TypeConverterMapping);
 
-        if (!property.Type.IsArray() && context.Compilation.HasCompatibleTypes(sourceProperty, property))
+        if (!property.Type.IsArray() && context.Compilation.HasCompatibleTypes(sourceProperty.TypeSymbol, property))
         {
             return true;
         }
 
-        if (!context.Compilation.IsNonGenericEnumerable(property.Type) && context.Compilation.IsNonGenericEnumerable(sourceProperty.Type))
+        if (!context.Compilation.IsNonGenericEnumerable(property.Type) && context.Compilation.IsNonGenericEnumerable(sourceProperty.TypeSymbol))
         {
             context.ReportDiagnostic(DiagnosticsFactory.PropertyTypeConverterRequiredError(property));
             return false;
@@ -279,5 +333,10 @@ internal static class PropertyMappingFactory
 
         converter = property.GetPropertyTypeConverter(context, sourceProperty);
         return converter is not null;
+    }
+
+    private readonly record struct FoundedSource(ITypeSymbol TypeSymbol, TypeMapping Type, string Name)
+    {
+        internal bool NotFound => string.IsNullOrWhiteSpace(Name);
     }
 }

@@ -45,13 +45,17 @@ internal static class DiagnosticsFactory
         property.ToDisplayString(),
         property.Type.ToDisplayString());
 
-    internal static Diagnostic PropertyTypeConverterMethodInputTypeCompatibilityError(IPropertySymbol sourceProperty, IMethodSymbol converterMethodSymbol) => Create(
-        DiagnosticDescriptors.PropertyTypeConverterMethodInputTypeCompatibilityError,
-        converterMethodSymbol.Parameters[0].GetLocation(),
-        converterMethodSymbol.Parameters[0].Type.ToDisplayString(),
-        converterMethodSymbol.Name,
-        sourceProperty.ToDisplayString(),
-        sourceProperty.Type.ToDisplayString());
+    internal static Diagnostic PropertyTypeConverterMethodInputTypeCompatibilityError(
+        string sourcePropertyName,
+        ITypeSymbol sourcePropertyType,
+        IMethodSymbol converterMethodSymbol) =>
+        Create(
+            DiagnosticDescriptors.PropertyTypeConverterMethodInputTypeCompatibilityError,
+            converterMethodSymbol.Parameters[0].GetLocation(),
+            converterMethodSymbol.Parameters[0].Type.ToDisplayString(),
+            converterMethodSymbol.Name,
+            sourcePropertyName,
+            sourcePropertyType.ToDisplayString());
 
     internal static Diagnostic PropertyTypeConverterMethodAdditionalParametersTypeCompatibilityError(IMethodSymbol converterMethodSymbol) => Create(
         DiagnosticDescriptors.PropertyTypeConverterMethodAdditionalParametersTypeCompatibilityError,
@@ -59,10 +63,10 @@ internal static class DiagnosticsFactory
         converterMethodSymbol.Parameters[1].Type.ToDisplayString(),
         converterMethodSymbol.Name);
 
-    internal static Diagnostic PropertyTypeConverterMethodInputTypeNullCompatibilityError(IPropertySymbol sourceProperty, IMethodSymbol converterMethodSymbol) => Create(
+    internal static Diagnostic PropertyTypeConverterMethodInputTypeNullCompatibilityError(string sourcePropertyName, IMethodSymbol converterMethodSymbol) => Create(
         DiagnosticDescriptors.PropertyTypeConverterMethodInputTypeNullCompatibilityError,
         converterMethodSymbol.Parameters[0].GetLocation(),
-        sourceProperty.ToDisplayString(),
+        sourcePropertyName,
         converterMethodSymbol.Name,
         converterMethodSymbol.Parameters[0].Name);
 

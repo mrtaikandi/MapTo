@@ -53,11 +53,11 @@ internal sealed class TypeConverterPropertyMappingGenerator : PropertyMappingGen
         return typeConverter switch
         {
             { HasParameter: true } => writer
-                .Write(typeConverter.MethodFullName).WriteOpenParenthesis().Write(parameterName).Write(", ").Write(typeConverter.Parameter).WriteClosingParenthesis(),
+                .Write(typeConverter.MethodFullName).Write("(").Write(parameterName).Write(", ").Write(typeConverter.Parameter).Write(")"),
             { HasParameter: false, ReferenceHandling: false } => writer
-                .Write(typeConverter.MethodFullName).WriteOpenParenthesis().Write(parameterName).WriteClosingParenthesis(),
+                .Write(typeConverter.MethodFullName).Write("(").Write(parameterName).Write(")"),
             { HasParameter: false, ReferenceHandling: true } => writer
-                .Write(typeConverter.MethodFullName).WriteOpenParenthesis().Write(parameterName).Write(", ").Write(referenceHandlerName).WriteClosingParenthesis()
+                .Write(typeConverter.MethodFullName).Write("(").Write(parameterName).Write(", ").Write(referenceHandlerName).Write(")")
         };
     }
 }

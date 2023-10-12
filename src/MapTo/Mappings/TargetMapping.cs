@@ -1,5 +1,6 @@
 ﻿using MapTo.Configuration;
 using MapTo.Diagnostics;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MapTo.Mappings;
 
@@ -37,8 +38,8 @@ internal static class TargetMappingFactory
             Properties: properties,
             Location: targetTypeSyntax.Identifier.GetLocation(),
             UsingDirectives: properties.SelectMany(p => p.UsingDirectives).Distinct().ToImmutableArray(),
-            BeforeMapMethod: targetTypeSymbol.GetBeforeMapMethod(context),
-            AfterMapMethod: targetTypeSymbol.GetAfterMapMethod(context),
+            BeforeMapMethod: GetBeforeMapMethod(context),
+            AfterMapMethod: GetAfterMapMethod(context),
             Options: codeGeneratorOptions with
             {
                 ReferenceHandling = context.UseReferenceHandling(properties)
@@ -64,8 +65,8 @@ internal static class TargetMappingFactory
         var targetType = context.TargetTypeSymbol.ToTypeMapping();
         return context.CodeGeneratorOptions.ReferenceHandling == ReferenceHandling.Auto &&
                properties.Any(p => p.Type == targetType || context.TargetTypeSymbol.HasNonPrimitiveProperties())
-                   ? ReferenceHandling.Enabled
-                   : context.CodeGeneratorOptions.ReferenceHandling;
+            ? ReferenceHandling.Enabled
+            : context.CodeGeneratorOptions.ReferenceHandling;
     }
 
     private static bool IsValid(this TargetMapping mapping, MappingContext context)
@@ -79,44 +80,46 @@ internal static class TargetMappingFactory
         return true;
     }
 
-    private static MethodMapping GetBeforeMapMethod(this ITypeSymbol targetTypeSymbol, MappingContext context)
+    private static MethodMapping GetBeforeMapMethod(MappingContext context)
     {
-        var compilation = context.Compilation;
         var mapFromAttribute = context.MapFromAttributeData;
-
-        var methodName = mapFromAttribute.GetNamedArgument<string?>(nameof(MapFromAttribute.BeforeMap));
-        if (methodName is null)
+        if (mapFromAttribute.GetNamedArgument(nameof(MapFromAttribute.BeforeMap)) is null)
         {
             return default;
         }
 
-        var methodSymbol = methodName.Contains(".")
-            ? compilation.GetMethodSymbolByFullyQualifiedName(methodName.AsSpan())
-            : targetTypeSymbol.GetMembers(methodName).OfType<IMethodSymbol>().SingleOrDefault();
-
-        return !methodSymbol.ValidateBeforeMapMethod(context)
-            ? default
-            : MethodMapping.Create(methodSymbol);
+        var methodSymbol = mapFromAttribute.GetMethodSymbol(context, nameof(MapFromAttribute.BeforeMap));
+        return methodSymbol.ValidateBeforeMapMethod(context) ? MethodMapping.Create(methodSymbol) : default;
     }
 
-    private static MethodMapping GetAfterMapMethod(this ITypeSymbol targetTypeSymbol, MappingContext context)
+    private static MethodMapping GetAfterMapMethod(MappingContext context)
     {
-        var compilation = context.Compilation;
         var mapFromAttribute = context.MapFromAttributeData;
-
-        var methodName = mapFromAttribute.GetNamedArgument<string?>(nameof(MapFromAttribute.AfterMap));
-        if (methodName is null)
+        if (mapFromAttribute.GetNamedArgument(nameof(MapFromAttribute.AfterMap)) is null)
         {
             return default;
         }
 
-        var methodSymbol = methodName.Contains(".")
-            ? compilation.GetMethodSymbolByFullyQualifiedName(methodName.AsSpan())
-            : targetTypeSymbol.GetMembers(methodName).OfType<IMethodSymbol>().SingleOrDefault();
+        var methodSymbol = mapFromAttribute.GetMethodSymbol(context, nameof(MapFromAttribute.AfterMap));
+        return methodSymbol.ValidateAfterMapMethod(context) ? MethodMapping.Create(methodSymbol) : default;
+    }
 
-        return !methodSymbol.ValidateAfterMapMethod(context)
-            ? default
-            : MethodMapping.Create(methodSymbol);
+    private static IMethodSymbol? GetMethodSymbol(this AttributeData attributeData, MappingContext context, string argumentName)
+    {
+        var argumentExpression = attributeData.GetNamedArgumentExpression(argumentName);
+        if (argumentExpression is null)
+        {
+            return null;
+        }
+
+        return argumentExpression switch
+        {
+            InvocationExpressionSyntax { Expression: IdentifierNameSyntax { Identifier.ValueText: "nameof" }, ArgumentList.Arguments: { Count: 1 } arguments } =>
+                context.TargetSemanticModel.GetSymbolInfo(arguments[0].Expression).GetSymbolOrBestCandidate<IMethodSymbol>(),
+            LiteralExpressionSyntax { Token.Value: string value } when value.Contains(".") => context.Compilation.GetMethodSymbolByFullyQualifiedName(value.AsSpan()),
+            LiteralExpressionSyntax { Token.Value: string value } => context.TargetTypeSymbol.GetMembers(value).OfType<IMethodSymbol>().SingleOrDefault(),
+            _ => default
+        };
     }
 
     private static bool ValidateBeforeMapMethod([NotNullWhen(true)] this IMethodSymbol? methodSymbol, MappingContext context)
