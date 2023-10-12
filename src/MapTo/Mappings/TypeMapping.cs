@@ -11,7 +11,8 @@ internal readonly record struct TypeMapping(
     bool IsArray,
     string ElementTypeName,
     EnumerableType EnumerableType,
-    NullableAnnotation ElementTypeNullableAnnotation)
+    NullableAnnotation ElementTypeNullableAnnotation,
+    SpecialType SpecialType)
 {
 #if DEBUG
     internal ITypeSymbol OriginalTypeSymbol { get; init; }
@@ -20,7 +21,7 @@ internal readonly record struct TypeMapping(
 
 internal static class TypeMappingExtensions
 {
-    internal static TypeMapping ToTypeMapping(this ITypeSymbol typeSymbol)
+    internal static TypeMapping ToTypeMapping(this ITypeSymbol typeSymbol, NullableAnnotation nullableAnnotation = NullableAnnotation.None)
     {
         var isArray = false;
         ITypeSymbol? elementType = null;
@@ -47,11 +48,12 @@ internal static class TypeMappingExtensions
             Name: typeSymbol.Name,
             FullName: typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
             IsNullable: typeSymbol.IsReferenceType || typeSymbol.NullableAnnotation is NullableAnnotation.Annotated,
-            NullableAnnotation: typeSymbol.NullableAnnotation,
+            NullableAnnotation: nullableAnnotation is NullableAnnotation.None ? typeSymbol.NullableAnnotation : nullableAnnotation,
             IsArray: isArray,
             ElementTypeName: elementTypeName,
             EnumerableType: enumerableType,
-            ElementTypeNullableAnnotation: elementType?.NullableAnnotation ?? NullableAnnotation.None);
+            ElementTypeNullableAnnotation: elementType?.NullableAnnotation ?? NullableAnnotation.None,
+            SpecialType: typeSymbol.SpecialType);
 
 #if DEBUG
         return mapping with { OriginalTypeSymbol = typeSymbol };
@@ -60,11 +62,12 @@ internal static class TypeMappingExtensions
 #endif
     }
 
-    internal static string EmptySourceCodeString(this TypeMapping type) => type.EnumerableType switch
+    internal static string EmptySourceCodeString(this TypeMapping type) => type switch
     {
-        EnumerableType.Array or EnumerableType.ReadOnlyCollection => $"global::{KnownTypes.Array}.Empty<{type.ElementTypeName}>()",
-        EnumerableType.List => $"new global::{KnownTypes.GenericList}<{type.ElementTypeName}>()",
-        EnumerableType.Enumerable => $"global::{KnownTypes.LinqEnumerable}.Empty<{type.ElementTypeName}>()",
+        { EnumerableType: EnumerableType.Array or EnumerableType.ReadOnlyCollection } => $"global::{KnownTypes.Array}.Empty<{type.ElementTypeName}>()",
+        { EnumerableType: EnumerableType.List } => $"new global::{KnownTypes.GenericList}<{type.ElementTypeName}>()",
+        { EnumerableType: EnumerableType.Enumerable } => $"global::{KnownTypes.LinqEnumerable}.Empty<{type.ElementTypeName}>()",
+        { SpecialType: SpecialType.System_String, NullableAnnotation: not NullableAnnotation.Annotated } => "string.Empty",
         _ => "default"
     };
 

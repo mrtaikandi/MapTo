@@ -34,18 +34,6 @@ internal static class ScenarioBuilder
         return builder;
     }
 
-    public static ITestSourceBuilder SimplePartialMappedClassInSameNamespaceAsSource(TestSourceBuilderOptions? options = null)
-    {
-        var builder = new TestSourceBuilder(options ?? TestSourceBuilderOptions.Create());
-        var sourceFile = builder.AddFile();
-        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(Accessibility.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
-            .WithProperty<int?>("Id", propertyType: PropertyType.ReadOnly | PropertyType.AutoProperty)
-            .WithProperty<string>("Name");
-
-        return builder;
-    }
-
     public static ITestSourceBuilder SimpleMappedClassInSameNamespaceAsSource(TestSourceBuilderOptions? options = null)
     {
         var builder = new TestSourceBuilder(options ?? TestSourceBuilderOptions.Create());
@@ -224,6 +212,75 @@ internal static class ScenarioBuilder
                 public string Name { get; set; } = string.Empty;
             
                 public ArtistViewModel[] Artists { get; set; }
+            }
+            """);
+
+        return builder;
+    }
+
+    public static ITestSourceBuilder ProductOrderAndOrderLineItem(TestSourceBuilderOptions? options = null)
+    {
+        var builder = new TestSourceBuilder(options);
+        var sourceFile = builder.AddFile(supportNullableReferenceTypes: true, usings: new[] { "System.Collections.Generic", "System.Linq" });
+        sourceFile.AddClass(body:
+            """
+            public class Order
+            {
+                private readonly IList<OrderLineItem> _orderLineItems = new List<OrderLineItem>();
+            
+                public Customer? Customer { get; set; }
+            
+                public OrderLineItem[] GetOrderLineItems()
+                {
+                    return _orderLineItems.ToArray();
+                }
+            
+                public void AddOrderLineItem(Product product, int quantity)
+                {
+                    _orderLineItems.Add(new OrderLineItem(product, quantity));
+                }
+            
+                public decimal GetTotal()
+                {
+                    return _orderLineItems.Sum(li => li.GetTotal());
+                }
+            }
+            """);
+
+        sourceFile.AddClass(body:
+            """
+            public class Product
+            {
+                public decimal Price { get; set; }
+                public string Name { get; set; } = null!;
+            }
+            """);
+
+        sourceFile.AddClass(body:
+            """
+            public class OrderLineItem
+            {
+                public OrderLineItem(Product product, int quantity)
+                {
+                    Product = product;
+                    Quantity = quantity;
+                }
+            
+                public Product Product { get; private set; }
+                public int Quantity { get; private set;}
+            
+                public decimal GetTotal()
+                {
+                    return Quantity*Product.Price;
+                }
+            }
+            """);
+
+        sourceFile.AddClass(body:
+            """
+            public class Customer
+            {
+                public string Name { get; set; } = null!;
             }
             """);
 

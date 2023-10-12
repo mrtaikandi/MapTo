@@ -1,13 +1,9 @@
-﻿namespace MapTo.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+
+namespace MapTo.CodeAnalysis;
 
 internal static class AttributeDataExtensions
 {
-    internal static bool TryGetNamedArgument(this AttributeData attributeData, string name, [NotNullWhen(true)] out object? value)
-    {
-        value = attributeData.NamedArguments.SingleOrDefault(a => a.Key == name).Value.Value;
-        return value is not null;
-    }
-
     internal static object? GetNamedArgument(this AttributeData? attributeData, string name) =>
         attributeData?.NamedArguments.SingleOrDefault(a => a.Key == name).Value.Value;
 
@@ -16,4 +12,25 @@ internal static class AttributeDataExtensions
         var value = attributeData?.NamedArguments.SingleOrDefault(a => a.Key == name).Value.Value;
         return value is null ? defaultValue : (T)value;
     }
+
+    internal static string? GetNamedArgumentStringValue(this AttributeData? attributeData, string name) => attributeData is null
+        ? null
+        : attributeData.GetAttributeSyntax().GetNamedArgumentValue(name) ?? attributeData.NamedArguments.SingleOrDefault(a => a.Key == name).Value.Value as string;
+
+    internal static AttributeSyntax? GetAttributeSyntax(this AttributeData? attributeData) =>
+        attributeData?.ApplicationSyntaxReference?.GetSyntax() as AttributeSyntax;
+
+    internal static ExpressionSyntax? GetNamedArgumentExpression(this AttributeData? attributeData, string name) =>
+        attributeData?.GetAttributeSyntax().GetNamedArgumentExpression(name);
+
+    internal static ExpressionSyntax? GetNamedArgumentExpression(this AttributeSyntax? attributeSyntax, string name) =>
+        attributeSyntax?.ArgumentList?.Arguments.SingleOrDefault(a => a.NameEquals?.Name.Identifier.Text == name)?.Expression;
+
+    internal static string? GetNamedArgumentValue(this AttributeSyntax? attributeSyntax, string name) => attributeSyntax.GetNamedArgumentExpression(name) switch
+    {
+        LiteralExpressionSyntax { Token.Value: string value } => value,
+        InvocationExpressionSyntax { Expression: IdentifierNameSyntax { Identifier.ValueText: "nameof" }, ArgumentList.Arguments: { Count: 1 } arguments } =>
+            arguments[0].Expression.ToString(),
+        _ => null
+    };
 }

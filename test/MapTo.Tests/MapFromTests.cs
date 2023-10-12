@@ -363,15 +363,16 @@ public class MapFromTests
     }
 
     [Theory]
-    [InlineData("ThirdParty.Utilities.HelperClass.CustomBeforeMapMethod")]
+    [InlineData("nameof(HelperClass.CustomBeforeMapMethod)")]
+    [InlineData("\"ThirdParty.Utilities.HelperClass.CustomBeforeMapMethod\"")]
     [InlineData("nameof(ThirdParty.Utilities.HelperClass.CustomBeforeMapMethod)")]
     public void When_BeforeMapMethodFoundInAnotherClass_Should_CallBeforeMapping(string beforeMapMethod)
     {
         // Arrange
         var builder = new TestSourceBuilder();
-        var sourceFile = builder.AddFile();
+        var sourceFile = builder.AddFile(usings: new[] { "ThirdParty.Utilities" });
         sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: $"""[MapFrom(typeof(SourceClass), BeforeMap = "{beforeMapMethod}")]""")
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: $"""[MapFrom(typeof(SourceClass), BeforeMap = {beforeMapMethod})]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name");
 
@@ -445,15 +446,16 @@ public class MapFromTests
     }
 
     [Theory]
-    [InlineData("Public")]
-    [InlineData("Internal")]
-    public void When_BeforeMapMethodFoundHasNoParameterAndIsVoid_Should_CallBeforeMapping(string beforeMapAccessibility)
+    [InlineData("Public", "\"CustomBeforeMapMethod\"")]
+    [InlineData("Public", "nameof(CustomBeforeMapMethod)")]
+    [InlineData("Internal", "nameof(CustomBeforeMapMethod)")]
+    public void When_BeforeMapMethodFoundHasNoParameterAndIsVoid_Should_CallBeforeMapping(string beforeMapAccessibility, string methodName)
     {
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
         sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: $"[MapFrom(typeof(SourceClass), BeforeMap = {methodName})]")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
             .WithStaticVoidMethod("CustomBeforeMapMethod", string.Empty, Enum.Parse<Accessibility>(beforeMapAccessibility));
@@ -732,15 +734,16 @@ public class MapFromTests
     }
 
     [Theory]
-    [InlineData("ThirdParty.Utilities.HelperClass.CustomAfterMapMethod")]
+    [InlineData("\"ThirdParty.Utilities.HelperClass.CustomAfterMapMethod\"")]
     [InlineData("nameof(ThirdParty.Utilities.HelperClass.CustomAfterMapMethod)")]
-    public void When_AfterMapMethodFoundInAnotherClass_Should_CallBeforeMapping(string beforeMapMethod)
+    [InlineData("nameof(HelperClass.CustomAfterMapMethod)")]
+    public void When_AfterMapMethodFoundInAnotherClass_Should_CallAfterMapping(string afterMapMethod)
     {
         // Arrange
         var builder = new TestSourceBuilder();
-        var sourceFile = builder.AddFile();
+        var sourceFile = builder.AddFile(usings: new[] { "ThirdParty.Utilities" });
         sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: $"""[MapFrom(typeof(SourceClass), AfterMap = "{beforeMapMethod}")]""")
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: $"""[MapFrom(typeof(SourceClass), AfterMap = {afterMapMethod})]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name");
 
@@ -752,6 +755,7 @@ public class MapFromTests
         var (compilation, diagnostics) = builder.Compile();
 
         // Assert
+        compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
         compilation.GetClassDeclaration("SourceClassMapToExtensions")
             .ShouldContain("ThirdParty.Utilities.HelperClass.CustomAfterMapMethod();");
@@ -814,18 +818,19 @@ public class MapFromTests
     }
 
     [Theory]
-    [InlineData("Public")]
-    [InlineData("Internal")]
-    public void When_AfterMapMethodFoundHasNoParameterAndIsVoid_Should_CallBeforeMapping(string beforeMapAccessibility)
+    [InlineData("Public", "\"CustomAfterMapMethod\"")]
+    [InlineData("Public", "nameof(CustomAfterMapMethod)")]
+    [InlineData("Internal", "nameof(CustomAfterMapMethod)")]
+    public void When_AfterMapMethodFoundHasNoParameterAndIsVoid_Should_CallAfterMapping(string afterMapAccessibility, string methodName)
     {
         // Arrange
         var builder = new TestSourceBuilder();
         var sourceFile = builder.AddFile();
         sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: $"[MapFrom(typeof(SourceClass), AfterMap = {methodName})]")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
-            .WithStaticVoidMethod("CustomAfterMapMethod", string.Empty, Enum.Parse<Accessibility>(beforeMapAccessibility));
+            .WithStaticVoidMethod("CustomAfterMapMethod", string.Empty, Enum.Parse<Accessibility>(afterMapAccessibility));
 
         // Act
         var (compilation, diagnostics) = builder.Compile();
@@ -837,7 +842,7 @@ public class MapFromTests
     }
 
     [Fact]
-    public void When_AfterMapMethodFoundHasParameterAndIsVoid_Should_CallBeforeMapping()
+    public void When_AfterMapMethodFoundHasParameterAndIsVoid_Should_CallAfterMapping()
     {
         // Arrange
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: false));
@@ -858,7 +863,7 @@ public class MapFromTests
     }
 
     [Fact]
-    public void When_AfterMapMethodFoundHasParameterAndIsNotVoid_Should_CallBeforeMapping()
+    public void When_AfterMapMethodFoundHasParameterAndIsNotVoid_Should_CallAfterMapping()
     {
         // Arrange
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: false));
@@ -907,7 +912,7 @@ public class MapFromTests
     }
 
     [Fact]
-    public void When_AfterMapMethodFoundWithNullableAnnotatedParameterAndNullableAnnotationIsEnabled_Should_CallBeforeMapping()
+    public void When_AfterMapMethodFoundWithNullableAnnotatedParameterAndNullableAnnotationIsEnabled_Should_CallAfterMapping()
     {
         // Arrange
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: true));

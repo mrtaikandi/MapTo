@@ -131,4 +131,12 @@ internal static class SymbolExtensions
 
     public static string ToFullyQualifiedDisplayString(this ITypeSymbol typeSymbol) =>
         $"{typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}{(typeSymbol.NullableAnnotation is NullableAnnotation.Annotated ? "?" : string.Empty)}";
+
+    public static T? GetSymbolOrBestCandidate<T>(this SymbolInfo symbolInfo)
+        where T : class, ISymbol => symbolInfo switch
+    {
+        { Symbol: { } symbol } => symbol as T,
+        { CandidateReason: CandidateReason.MemberGroup, CandidateSymbols: { Length: 1 } candidateSymbols } => candidateSymbols[0] as T,
+        _ => null
+    };
 }

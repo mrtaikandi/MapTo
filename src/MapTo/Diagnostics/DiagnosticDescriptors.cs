@@ -112,7 +112,7 @@ internal static class DiagnosticDescriptors
     internal static readonly DiagnosticDescriptor BeforeOrAfterMapMethodNotFoundError = new DiagnosticDescriptor(
         id: $"{ErrorId}012",
         title: string.Empty,
-        messageFormat: "Unable to find '{0}' method. Make sure a matching static method exists it is accessible.",
+        messageFormat: "Unable to find '{0}' method. Make sure a matching static method exists and it is accessible.",
         category: UsageCategory,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
