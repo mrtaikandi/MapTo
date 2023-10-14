@@ -264,7 +264,7 @@ internal static class ExtensionClassGeneratorExtensions
             var parameter = mapping.Constructor.Parameters[i];
 
             PropertyGenerator.Instance.Generate(new(writer, parameter.Property, parameterName, null, mapping.Options.CopyPrimitiveArrays, null));
-            writer.WriteLineIf(i < mapping.Constructor.Parameters.Length - 1, ", ");
+            writer.WriteIf(i < mapping.Constructor.Parameters.Length - 1, ", ");
         }
 
         return hasObjectInitializer ? writer.WriteLine(")") : writer.WriteLine(");");

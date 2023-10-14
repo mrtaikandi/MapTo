@@ -184,4 +184,142 @@ public class MapRecordTests
                 }
                 """);
     }
+
+    [Fact]
+    public void With_SimpleRecords_Should_GenerateWithConstructorInitializer()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile(supportNullableReferenceTypes: true)
+            .WithBody(
+                """
+                public record Source(string FirstName, string LastName);
+
+                [MapFrom(typeof(Source))]
+                public record Target(string FirstName, string LastName);
+                """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldBe(
+            $$"""
+            {{ScenarioBuilder.GeneratedCodeAttribute}}
+            public static class SourceMapToExtensions
+            {
+                [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
+                public static Target? MapToTarget(this Source? source)
+                {
+                    if (source is null)
+                    {
+                        return null;
+                    }
+            
+                    return new Target(source.FirstName, source.LastName);
+                }
+            }
+            """);
+    }
+
+    [Fact]
+    public void Whit_RecordsWithInitProperty_Should_GenerateWithObjectInitializer()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile(supportNullableReferenceTypes: true)
+            .WithBody(
+                """
+                public record Source
+                {
+                    public string FirstName { get; init; } = null!;
+                    public string LastName { get; init; } = null!;
+                }
+
+                [MapFrom(typeof(Source))]
+                public record Target
+                {
+                    public string FirstName { get; init; } = null!;
+                    public string LastName { get; init; } = null!;
+                }
+                """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldContain(
+            """
+            return new Target
+            {
+                FirstName = source.FirstName,
+                LastName = source.LastName
+            };
+            """);
+    }
+
+    [Fact]
+    public void With_RecordsWithConstructorAndInitProperty_Should_GenerateWithConstructorAndObjectInitializer()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile(supportNullableReferenceTypes: true)
+            .WithBody(
+                """
+                public record Source(string FirstName)
+                {
+                    public string LastName { get; init; } = null!;
+                }
+
+                [MapFrom(typeof(Source))]
+                public record Target(string LastName)
+                {
+                    public string FirstName { get; init; } = null!;
+                }
+                """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldContain(
+            """
+            return new Target(source.LastName)
+            {
+                FirstName = source.FirstName
+            };
+            """);
+    }
+
+    [Fact]
+    public void When_RecordAndInheritance_Should_HandleSubtype()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile(supportNullableReferenceTypes: true)
+            .WithBody(
+                """
+                public record SourceParent(string Name);
+                public record SourceChild(string Name, string LastName) : SourceParent(Name);
+
+                [MapFrom(typeof(SourceChild))]
+                public record Target(
+                    [property: MapProperty(From = nameof(SourceChild.Name))] string FirstName,
+                    string LastName);
+                """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+        var extensionClass = compilation.GetClassDeclaration("SourceChildMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldContain("return new Target(sourceChild.Name, sourceChild.LastName);");
+    }
 }
