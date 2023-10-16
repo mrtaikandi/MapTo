@@ -180,9 +180,9 @@ public class PropertyTypeConverterTests
         var targetMethodSymbol = (targetSemanticModel.GetDeclaredSymbol(targetClassDeclaration.Members[2]) as IMethodSymbol).ShouldNotBeNull();
 
         diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.PropertyTypeConverterMethodInputTypeCompatibilityError(
-            sourcePropertySymbol.ToDisplayString(),
-            sourcePropertySymbol.Type,
-            targetMethodSymbol));
+            sourcePropertyName: sourcePropertySymbol.Name,
+            sourcePropertyType: sourcePropertySymbol.Type,
+            converterMethodSymbol: targetMethodSymbol));
     }
 
     [Theory]

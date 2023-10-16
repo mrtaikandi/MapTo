@@ -224,12 +224,28 @@ internal static class ExtensionClassGeneratorExtensions
     private static string GetMapArrayMethodName(this PropertyMapping property) =>
         $"{property.TypeConverter.MethodName}Array";
 
-    private static CodeWriter WriteAfterMapMethodCall(this CodeWriter writer, TargetMapping mapping) => mapping.AfterMapMethod switch
+    private static CodeWriter WriteAfterMapMethodCall(this CodeWriter writer, TargetMapping mapping)
     {
-        { MethodName: null } => writer,
-        { Parameter.IsDefaultOrEmpty: true } => writer.WriteLine().Write(mapping.AfterMapMethod.MethodFullName).WriteLine("();").WriteLine(),
-        { Parameter.IsDefaultOrEmpty: false } => writer.WriteLine().WriteLine($"{mapping.AfterMapMethod.MethodFullName}(target);").WriteLine()
-    };
+        if (mapping.AfterMapMethod == default)
+        {
+            return writer;
+        }
+
+        writer
+            .WriteLine()
+            .WriteIf(!mapping.AfterMapMethod.ReturnsVoid, "target = ");
+
+        return mapping.AfterMapMethod switch
+        {
+            { Parameters.IsDefaultOrEmpty: true } => writer.Write(mapping.AfterMapMethod.MethodFullName).WriteLine("();").WriteLine(),
+            { Parameters.Length: 1 } => writer.WriteLine($"{mapping.AfterMapMethod.MethodFullName}(target);").WriteLine(),
+            { Parameters.Length: 2 } when mapping.AfterMapMethod.Parameters[0] == mapping.Source.ToFullyQualifiedName() => writer
+                .WriteLine($"{mapping.AfterMapMethod.MethodFullName}({mapping.Source.Name.ToParameterNameCasing()}, target);").WriteLine(),
+            { Parameters.Length: 2 } when mapping.AfterMapMethod.Parameters[1] == mapping.Source.ToFullyQualifiedName() => writer
+                .WriteLine($"{mapping.AfterMapMethod.MethodFullName}(target, {mapping.Source.Name.ToParameterNameCasing()});").WriteLine(),
+            _ => writer
+        };
+    }
 
     private static CodeWriter WriteBeforeMapMethodCall(this CodeWriter writer, TargetMapping mapping)
     {
@@ -239,9 +255,9 @@ internal static class ExtensionClassGeneratorExtensions
         return beforeMapMethod switch
         {
             { MethodName: null } => writer,
-            { Parameter.IsDefaultOrEmpty: true } => writer.Write(beforeMapMethod.MethodFullName).WriteLine("();").WriteLine(),
-            { Parameter.IsDefaultOrEmpty: false, ReturnsVoid: true } => writer.WriteLine($"{beforeMapMethod.MethodFullName}({parameterName});").WriteLine(),
-            { Parameter.IsDefaultOrEmpty: false, ReturnsVoid: false } => writer.WriteLine($"{parameterName} = {beforeMapMethod.MethodFullName}({parameterName});").WriteLine()
+            { Parameters.IsDefaultOrEmpty: true } => writer.Write(beforeMapMethod.MethodFullName).WriteLine("();").WriteLine(),
+            { Parameters.IsDefaultOrEmpty: false, ReturnsVoid: true } => writer.WriteLine($"{beforeMapMethod.MethodFullName}({parameterName});").WriteLine(),
+            { Parameters.IsDefaultOrEmpty: false, ReturnsVoid: false } => writer.WriteLine($"{parameterName} = {beforeMapMethod.MethodFullName}({parameterName});").WriteLine()
         };
     }
 
@@ -308,16 +324,11 @@ internal static class ExtensionClassGeneratorExtensions
         var properties = mapping.Properties.Where(p => p.InitializationMode is PropertyInitializationMode.Setter);
         var copyPrimitiveArrays = mapping.Options.CopyPrimitiveArrays;
 
-        var newline = false;
         foreach (var property in properties)
         {
-            // writer
-            //     .WriteLineIf(newline = propertyMap.StartsWith("if") && !newline)
-            //     .WriteLine(propertyMap)
-            //     .WriteLineIf(propertyMap.EndsWith("}"));
             PropertyGenerator.Instance.Generate(new(writer, property, sourceParameterName, instanceName, copyPrimitiveArrays, referenceHandlerInstanceName));
         }
 
-        return writer.WriteLineIf(!newline);
+        return writer.WriteLine();
     }
 }
