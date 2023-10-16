@@ -755,14 +755,13 @@ public class MapFromTests
         var (compilation, diagnostics) = builder.Compile();
 
         // Assert
-        compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
         compilation.GetClassDeclaration("SourceClassMapToExtensions")
             .ShouldContain("ThirdParty.Utilities.HelperClass.CustomAfterMapMethod();");
     }
 
     [Fact]
-    public void When_AfterMapMethodFoundButHasMoreThanOneParameters_Should_ReportDiagnostics()
+    public void When_AfterMapMethodFoundButHasMoreThanTwoParameters_Should_ReportDiagnostics()
     {
         // Arrange
         var builder = new TestSourceBuilder();
@@ -778,6 +777,7 @@ public class MapFromTests
 
         // Assert
         var targetTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.TargetClass").ShouldNotBeNull();
+        var sourceTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.SourceClass").ShouldNotBeNull();
 
         var extensionClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
         var mapFromAttribute = compilation.GetSemanticModel(extensionClassDeclaration.SyntaxTree)
@@ -786,11 +786,12 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.BeforeOrAfterMapMethodInvalidParameterError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), targetTypeSymbol));
+        diagnostics.ShouldNotBeSuccessful(
+            DiagnosticsFactory.AfterMapMethodInvalidParametersError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), sourceTypeSymbol, targetTypeSymbol));
     }
 
     [Fact]
-    public void When_AfterMapMethodFoundButHasIncorrectTypeParameter_Should_ReportDiagnostics()
+    public void When_AfterMapMethodFoundButOnlyHasSourceTypeParameter_Should_ReportDiagnostics()
     {
         // Arrange
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: false));
@@ -806,6 +807,7 @@ public class MapFromTests
 
         // Assert
         var targetTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.TargetClass").ShouldNotBeNull();
+        var sourceTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.SourceClass").ShouldNotBeNull();
 
         var extensionClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
         var mapFromAttribute = compilation.GetSemanticModel(extensionClassDeclaration.SyntaxTree)
@@ -814,7 +816,68 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.BeforeOrAfterMapMethodInvalidParameterError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), targetTypeSymbol));
+        diagnostics.ShouldNotBeSuccessful(
+            DiagnosticsFactory.AfterMapMethodInvalidParametersError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), sourceTypeSymbol, targetTypeSymbol));
+    }
+
+    [Fact]
+    public void When_AfterMapMethodFoundWithOneCorrectAndOneIncorrectParameters_Should_ReportDiagnostics()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: false));
+        var sourceFile = builder.AddFile();
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
+            .WithProperty<int>("Id")
+            .WithProperty<string>("Name")
+            .WithStaticVoidMethod("CustomAfterMapMethod", string.Empty, parameters: new[] { "SourceClass sourceClass", "string something" });
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile(assertOutputCompilation: false);
+
+        // Assert
+        var targetTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.TargetClass").ShouldNotBeNull();
+        var sourceTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.SourceClass").ShouldNotBeNull();
+
+        var extensionClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
+        var mapFromAttribute = compilation.GetSemanticModel(extensionClassDeclaration.SyntaxTree)
+            .GetDeclaredSymbol(extensionClassDeclaration)
+            .ShouldNotBeNull()
+            .GetAttribute<MapFromAttribute>()
+            .ShouldNotBeNull();
+
+        diagnostics.ShouldNotBeSuccessful(
+            DiagnosticsFactory.AfterMapMethodInvalidParametersError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), sourceTypeSymbol, targetTypeSymbol));
+    }
+
+    [Fact]
+    public void When_AfterMapMethodFoundWithOneIncorrectAndOneCorrectParameters_Should_ReportDiagnostics()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: false));
+        var sourceFile = builder.AddFile();
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
+            .WithProperty<int>("Id")
+            .WithProperty<string>("Name")
+            .WithStaticVoidMethod("CustomAfterMapMethod", string.Empty, parameters: new[] { "string something", "TargetClass target" });
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile(assertOutputCompilation: false);
+
+        // Assert
+        var targetTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.TargetClass").ShouldNotBeNull();
+        var sourceTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.SourceClass").ShouldNotBeNull();
+
+        var extensionClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
+        var mapFromAttribute = compilation.GetSemanticModel(extensionClassDeclaration.SyntaxTree)
+            .GetDeclaredSymbol(extensionClassDeclaration)
+            .ShouldNotBeNull()
+            .GetAttribute<MapFromAttribute>()
+            .ShouldNotBeNull();
+
+        diagnostics.ShouldNotBeSuccessful(
+            DiagnosticsFactory.AfterMapMethodInvalidParametersError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), sourceTypeSymbol, targetTypeSymbol));
     }
 
     [Theory]
@@ -869,11 +932,11 @@ public class MapFromTests
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: false));
         var sourceFile = builder.AddFile();
         sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
-        sourceFile.AddClass(body: "public class SourceSubClass : SourceClass { }");
+        sourceFile.AddClass(body: "public class TargetSubClass : TargetClass { }");
         sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
-            .WithStaticMethod("SourceSubClass", "CustomAfterMapMethod", "throw new System.NotImplementedException();", parameters: new[] { "TargetClass target" });
+            .WithStaticMethod("TargetSubClass", "CustomAfterMapMethod", "throw new System.NotImplementedException();", parameters: new[] { "TargetClass target" });
 
         // Act
         var (compilation, diagnostics) = builder.Compile();
@@ -881,7 +944,7 @@ public class MapFromTests
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation.GetClassDeclaration("SourceClassMapToExtensions")
-            .ShouldContain("MapTo.Tests.TargetClass.CustomAfterMapMethod(target);");
+            .ShouldContain("target = global::MapTo.Tests.TargetClass.CustomAfterMapMethod(target);");
     }
 
     [Fact]
@@ -930,5 +993,107 @@ public class MapFromTests
         diagnostics.ShouldBeSuccessful();
         compilation.GetClassDeclaration("SourceClassMapToExtensions")
             .ShouldContain("MapTo.Tests.TargetClass.CustomAfterMapMethod(target);");
+    }
+
+    [Fact]
+    public void When_AfterMapMethodFoundWithTargetAndSourceParameter_Should_CallAfterMap()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: true));
+        var sourceFile = builder.AddFile(supportNullableReferenceTypes: true);
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name", defaultValue: "string.Empty");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
+            .WithProperty<int>("Id")
+            .WithProperty<string>("Name", defaultValue: "string.Empty")
+            .WithStaticVoidMethod("CustomAfterMapMethod", "throw new System.NotImplementedException();", parameters: new[] { "TargetClass? target", "SourceClass? source" });
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+
+        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+            .ShouldNotBeNull()
+            .ShouldContain("MapTo.Tests.TargetClass.CustomAfterMapMethod(target, sourceClass);");
+    }
+
+    [Fact]
+    public void When_AfterMapMethodFoundWithSourceAndTargetParameter_Should_CallAfterMap()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: true));
+        var sourceFile = builder.AddFile(supportNullableReferenceTypes: true);
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name", defaultValue: "string.Empty");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
+            .WithProperty<int>("Id")
+            .WithProperty<string>("Name", defaultValue: "string.Empty")
+            .WithStaticVoidMethod("CustomAfterMapMethod", "throw new System.NotImplementedException();", parameters: new[] { "SourceClass? source", "TargetClass? target" });
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+
+        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+            .ShouldNotBeNull()
+            .ShouldContain("MapTo.Tests.TargetClass.CustomAfterMapMethod(sourceClass, target);");
+    }
+
+    [Fact]
+    public void When_AfterMapMethodFoundButHasIncorrectReturnType_Should_ReportDiagnostics()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: false));
+        var sourceFile = builder.AddFile();
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
+            .WithProperty<int>("Id")
+            .WithProperty<string>("Name")
+            .WithStaticMethod("SourceClassClass", "CustomAfterMapMethod", string.Empty, parameters: new[] { "TargetClass target" });
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile(assertOutputCompilation: false);
+
+        // Assert
+        var targetTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.TargetClass").ShouldNotBeNull();
+
+        var extensionClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
+        var mapFromAttribute = compilation.GetSemanticModel(extensionClassDeclaration.SyntaxTree)
+            .GetDeclaredSymbol(extensionClassDeclaration)
+            .ShouldNotBeNull()
+            .GetAttribute<MapFromAttribute>()
+            .ShouldNotBeNull();
+
+        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.BeforeOrAfterMapMethodInvalidReturnTypeError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), targetTypeSymbol));
+    }
+
+    [Fact]
+    public void When_AfterMapMethodFoundWithCorrectReturnTypeButNotTargetClassParameter_Should_ReportDiagnostics()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: false));
+        var sourceFile = builder.AddFile();
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
+            .WithProperty<int>("Id")
+            .WithProperty<string>("Name")
+            .WithStaticMethod("TargetClass", "CustomAfterMapMethod", "throw new System.NotImplementedException();", parameters: Array.Empty<string>());
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile(assertOutputCompilation: false);
+
+        // Assert
+        var targetTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.TargetClass").ShouldNotBeNull();
+
+        var extensionClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
+        var mapFromAttribute = compilation.GetSemanticModel(extensionClassDeclaration.SyntaxTree)
+            .GetDeclaredSymbol(extensionClassDeclaration)
+            .ShouldNotBeNull()
+            .GetAttribute<MapFromAttribute>()
+            .ShouldNotBeNull();
+
+        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.BeforeOrAfterMapMethodMissingParameterError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), targetTypeSymbol));
     }
 }

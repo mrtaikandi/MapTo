@@ -21,4 +21,5 @@
  MT3014  | Mapping  | Error    | Before or after map method has invalid return type.                                              
  MT3015  | Mapping  | Error    | Before or after map method parameter is missing.                                                 
  MT3016  | Mapping  | Error    | Before or after map method parameter has inconsistent nullability annotation.                    
- MT3017  | Mapping  | Error    | Before or after map method return type has inconsistent nullability annotation.                  
+ MT3017  | Mapping  | Error    | Before or after map method return type has inconsistent nullability annotation.
+ MT3018  | Mapping  | Error    | After map method does not have correct number of parameters.

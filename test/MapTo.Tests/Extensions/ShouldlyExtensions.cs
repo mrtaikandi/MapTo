@@ -118,6 +118,15 @@ internal static partial class ShouldlyExtensions
         Assert.Equal(expectedError.Descriptor.MessageFormat, actualDiagnostics.Descriptor.MessageFormat);
         Assert.Equal(expectedError.Descriptor.Title, actualDiagnostics.Descriptor.Title);
         Assert.Equal(expectedError.Location.ToDisplayString(), actualDiagnostics.Location.ToDisplayString());
+        Assert.Equal(expectedError.GetMessage(), actualDiagnostics.GetMessage());
+
+        var actualMessage = actualDiagnostics.GetMessage();
+        if (actualMessage.Contains("''") || actualMessage.Contains("\"\""))
+        {
+            Assert.Fail($"Expected diagnostic message to be equal but found a difference.{Environment.NewLine}" +
+                        $"Expected:{Environment.NewLine}{expectedError.GetMessage()}{Environment.NewLine}" +
+                        $"Actual:{Environment.NewLine}{actualMessage}");
+        }
     }
 
     internal static void ShouldNotBeSuccessful(this ImmutableArray<Diagnostic> diagnostics, string diagnosticId, string? diagnosticMessage = null)

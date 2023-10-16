@@ -177,9 +177,18 @@ internal static class TargetMappingFactory
         return true;
     }
 
+    /// <summary>
+    /// A valid after map method can be in the form of:
+    /// void AfterMap();
+    /// void AfterMap(TTarget target);
+    /// void AfterMap(TTarget target, TSource source);
+    /// void AfterMap(TSource source, TTarget target);
+    /// and it may be void or return TTarget.
+    /// </summary>
     private static bool ValidateAfterMapMethod([NotNullWhen(true)] this IMethodSymbol? methodSymbol, MappingContext context)
     {
         var targetTypeSymbol = context.TargetTypeSymbol;
+        var sourceTypeSymbol = context.SourceTypeSymbol;
         var compilation = context.Compilation;
         var mapFromAttribute = context.MapFromAttributeData;
         var compilerOptions = context.CompilerOptions;
@@ -190,18 +199,38 @@ internal static class TargetMappingFactory
             return false;
         }
 
-        var methodParameter = methodSymbol.Parameters.FirstOrDefault();
-        if (methodParameter is not null)
+        var parameters = methodSymbol.Parameters;
+        if (!parameters.IsDefaultOrEmpty)
         {
-            if (methodSymbol.Parameters.Length > 1 || !compilation.HasCompatibleTypes(targetTypeSymbol, methodParameter.Type))
+            if (parameters.Length > 2 ||
+                (parameters.Length == 1 && !compilation.HasCompatibleTypes(targetTypeSymbol, parameters[0].Type)) ||
+                (parameters.Length == 2 && (!parameters.Any(p => compilation.HasCompatibleTypes(targetTypeSymbol, p.Type)) ||
+                                            !parameters.Any(p => compilation.HasCompatibleTypes(sourceTypeSymbol, p.Type)))))
             {
-                context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodInvalidParameterError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), targetTypeSymbol));
+                context.ReportDiagnostic(
+                    DiagnosticsFactory.AfterMapMethodInvalidParametersError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), sourceTypeSymbol, targetTypeSymbol));
+
                 return false;
             }
 
-            if (compilerOptions.NullableReferenceTypes && methodParameter.NullableAnnotation is not NullableAnnotation.Annotated)
+            if (compilerOptions.NullableReferenceTypes && parameters.All(p => p.NullableAnnotation is not NullableAnnotation.Annotated))
             {
                 context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodMissingParameterNullabilityAnnotationError(mapFromAttribute, nameof(MapFromAttribute.AfterMap)));
+                return false;
+            }
+        }
+
+        if (!methodSymbol.ReturnsVoid)
+        {
+            if (!compilation.HasCompatibleTypes(methodSymbol.ReturnType, targetTypeSymbol))
+            {
+                context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodInvalidReturnTypeError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), targetTypeSymbol));
+                return false;
+            }
+
+            if (methodSymbol.Parameters.IsDefaultOrEmpty)
+            {
+                context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodMissingParameterError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), targetTypeSymbol));
                 return false;
             }
         }
