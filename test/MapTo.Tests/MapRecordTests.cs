@@ -322,4 +322,67 @@ public class MapRecordTests
         var extensionClass = compilation.GetClassDeclaration("SourceChildMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain("return new Target(sourceChild.Name, sourceChild.LastName);");
     }
+
+    [Fact]
+    public void With_RecordsWithConstructorAndDefaultValue_Should_GenerateWithConstructorAndIgnoreTheDefault()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile(supportNullableReferenceTypes: true)
+            .WithBody(
+                """
+                public record Source(string FirstName)
+                {
+                    public string LastName { get; init; } = null!;
+                }
+
+                [MapFrom(typeof(Source))]
+                public record Target(string LastName, int Level = 1)
+                {
+                    public string FirstName { get; init; } = null!;
+                }
+                """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldContain(
+            """
+            return new Target(LastName: source.LastName)
+            {
+                FirstName = source.FirstName
+            };
+            """);
+    }
+
+    [Fact]
+    public void With_RecordsWithConstructorAndMultipleDefaultValues_Should_GenerateWithConstructorAndIgnoreTheDefault()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile(supportNullableReferenceTypes: true)
+            .WithBody(
+                """
+                public record Source(string FirstName)
+                {
+                    public string LastName { get; init; } = null!;
+                }
+
+                [MapFrom(typeof(Source))]
+                public record Target(string LastName, string Level = "High", string? FirstName = "Random");
+                """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile(assertOutputCompilation: false);
+
+        // Assert
+        compilation.Dump(_output);
+        compilation.ShouldBeSuccessful();
+        diagnostics.ShouldBeSuccessful();
+        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldContain("return new Target(LastName: source.LastName, FirstName: source.FirstName);");
+    }
 }
