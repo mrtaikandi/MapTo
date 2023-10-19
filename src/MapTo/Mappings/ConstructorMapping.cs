@@ -3,7 +3,7 @@ using MapTo.Extensions;
 
 namespace MapTo.Mappings;
 
-internal readonly record struct ConstructorMapping(string Name, bool IsGenerated, ImmutableArray<ConstructorParameterMapping> Parameters)
+internal readonly record struct ConstructorMapping(string Name, bool IsGenerated, ImmutableArray<ConstructorParameterMapping> Parameters, bool HasParameterWithDefaultValue)
 {
     public bool HasParameters => !Parameters.IsDefaultOrEmpty;
 }
@@ -32,13 +32,16 @@ internal static class ConstructorMappingFactory
         {
             var constructorProperties = properties.Where(p => p.InitializationMode == PropertyInitializationMode.Constructor).ToArray();
             return new ConstructorMapping(
-                constructorName,
-                constructorProperties.Length > 0,
-                constructorProperties.Select(p => new ConstructorParameterMapping(p.ParameterName, p.Type, p, Location.None)).ToImmutableArray());
+                Name: constructorName,
+                IsGenerated: constructorProperties.Length > 0,
+                Parameters: constructorProperties.Select(p => new ConstructorParameterMapping(p.ParameterName, p.Type, p, Location.None)).ToImmutableArray(),
+                HasParameterWithDefaultValue: false);
         }
 
         var argumentMappings = constructor.GetArgumentMappings(properties);
-        return argumentMappings.IsValid(context) ? new ConstructorMapping(constructorName, false, argumentMappings) : default;
+        return argumentMappings.IsValid(context)
+            ? new ConstructorMapping(constructorName, false, argumentMappings, constructor.Parameters.Any(p => p.HasExplicitDefaultValue))
+            : default;
     }
 
     internal static bool IsEqual(this IParameterSymbol parameter, PropertyMapping property) =>
@@ -53,12 +56,10 @@ internal static class ConstructorMappingFactory
         foreach (var parameter in constructor.Parameters)
         {
             var property = properties.SingleOrDefault(prop => parameter.IsEqual(prop));
-            if (property == default)
+            if (property != default)
             {
-                return ImmutableArray<ConstructorParameterMapping>.Empty;
+                arguments.Add(new ConstructorParameterMapping(parameter.Name, parameter.Type.ToTypeMapping(), property, parameter.GetLocation() ?? Location.None));
             }
-
-            arguments.Add(new ConstructorParameterMapping(parameter.Name, parameter.Type.ToTypeMapping(), property, parameter.GetLocation() ?? Location.None));
         }
 
         return arguments.ToImmutable();
