@@ -80,6 +80,50 @@ public class MapFromCollectionTests
     }
 
     [Theory]
+    [InlineData("List<Employee>", "IList<Employee>")]
+    [InlineData("IReadOnlyList<Employee>", "IList<Employee>")]
+    [InlineData("IReadOnlyCollection<Employee>", "IList<Employee>")]
+    [InlineData("List<Employee>", "ICollection<Employee>")]
+    [InlineData("IList<Employee>", "ICollection<Employee>")]
+    [InlineData("IReadOnlyList<Employee>", "ICollection<Employee>")]
+    [InlineData("IReadOnlyCollection<Employee>", "ICollection<Employee>")]
+    [InlineData("List<Employee>", "IReadOnlyList<Employee>")]
+    [InlineData("IList<Employee>", "IReadOnlyList<Employee>")]
+    [InlineData("ICollection<Employee>", "IReadOnlyList<Employee>")]
+    [InlineData("List<Employee>", "IReadOnlyCollection<Employee>")]
+    [InlineData("IList<Employee>", "IReadOnlyCollection<Employee>")]
+    [InlineData("ICollection<Employee>", "IReadOnlyCollection<Employee>")]
+    [InlineData("IReadOnlyList<Employee>", "IReadOnlyCollection<Employee>")]
+    [InlineData("List<Employee>", "Employee[]")]
+    public void When_MappedPropertyTypeIsEnumerableOfNotMappedObjects_Should_ReportDiagnostics(string targetCollectionType, string sourceCollectionType)
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        var globalUsings = new[] { "System.Collections.Generic" };
+
+        var nestedSourceFile = builder.AddFile(usings: globalUsings);
+        nestedSourceFile.AddClass(Accessibility.Public, "Employee").WithProperty<int>("Id").WithProperty<string>("Name");
+        nestedSourceFile.AddClass(Accessibility.Public, "Manager").WithProperty<int>("Id").WithProperty<string>("Name").WithProperty(sourceCollectionType, "Employees");
+
+        var sourceFile = builder.AddFile(usings: globalUsings);
+        sourceFile.AddClass(Accessibility.Public, "ManagerModel", partial: true, attributes: "[MapFrom(typeof(Manager))]")
+            .WithProperty<int>("Id")
+            .WithProperty<string>("Name")
+            .WithProperty(targetCollectionType, "Employees");
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        var manageModelClass = compilation.GetClassDeclaration("ManagerModel").ShouldNotBeNull();
+        var semanticModel = compilation.GetSemanticModel(manageModelClass.SyntaxTree);
+        var property = semanticModel.GetDeclaredSymbol(manageModelClass.Members[2]) as IPropertySymbol;
+        property.ShouldNotBeNull();
+
+        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.SuitableMappingTypeInNestedPropertyNotFoundError(property, property.Type));
+    }
+
+    [Theory]
     [InlineData("EmployeeModel[]", "List<Employee>", false)]
     [InlineData("EmployeeModel[]", "IList<Employee>", false)]
     [InlineData("EmployeeModel[]", "ICollection<Employee>", false)]
@@ -213,9 +257,9 @@ public class MapFromCollectionTests
         // Arrange
         var builder = ScenarioBuilder.BuildSpotifyModels(TestSourceBuilderOptions.Create(
             analyzerConfigOptions: new Dictionary<string, string>
-        {
-            [nameof(CodeGeneratorOptions.ReferenceHandling)] = ReferenceHandling.Auto.ToString()
-        }));
+            {
+                [nameof(CodeGeneratorOptions.ReferenceHandling)] = ReferenceHandling.Auto.ToString()
+            }));
 
         // Act
         var (compilation, diagnostics) = builder.Compile();
