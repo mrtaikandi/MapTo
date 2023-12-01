@@ -25,6 +25,9 @@ internal readonly record struct TypeConverterMapping(
     public string MethodFullName => string.IsNullOrEmpty(ContainingType) ? MethodName : $"{ContainingType}.{MethodName}";
 }
 
-internal readonly record struct EnumTypeMapping(EnumMappingStrategy Strategy, ImmutableArray<EnumMemberMapping> Mappings, string? FallBackValue);
+internal readonly record struct EnumTypeMapping(EnumMappingStrategy Strategy, ImmutableArray<EnumMemberMapping> Mappings, string? FallBackValue, bool Initialized = true)
+{
+    public bool IsNull => !Initialized;
+}
 
 internal readonly record struct EnumMemberMapping(string Source, string Target);

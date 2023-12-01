@@ -225,4 +225,26 @@ internal static class DiagnosticDescriptors
         category: UsageCategory,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
+
+    /// <summary>
+    /// The '{0}' enum member is not defined in the target enum '{1}'.
+    /// </summary>
+    internal static readonly DiagnosticDescriptor StringEnumMappingSourceOnlyError = new DiagnosticDescriptor(
+        id: $"{ErrorId}019",
+        title: string.Empty,
+        messageFormat: "The '{0}' enum member is not defined in the target enum '{1}'",
+        category: UsageCategory,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    /// <summary>
+    /// The '{0}' enum member is not defined in the source enum '{1}'.
+    /// </summary>
+    internal static readonly DiagnosticDescriptor StringEnumMappingTargetOnlyError = new DiagnosticDescriptor(
+        id: $"{ErrorId}020",
+        title: string.Empty,
+        messageFormat: "The '{0}' enum member is not defined in the source enum '{1}'",
+        category: UsageCategory,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
 }
