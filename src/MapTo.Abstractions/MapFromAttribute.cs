@@ -64,4 +64,9 @@ public sealed class MapFromAttribute : Attribute
     /// Gets or sets the enum mapping strategy. Defaults to <see cref="EnumMappingStrategy.ByValue" />.
     /// </summary>
     public EnumMappingStrategy EnumMappingStrategy { get; set; } = EnumMappingStrategy.ByValue;
+
+    /// <summary>
+    /// Gets or sets the fallback value to use when the enum value is not found in the target enum.
+    /// </summary>
+    public object? EnumMappingFallbackValue { get; set; }
 }

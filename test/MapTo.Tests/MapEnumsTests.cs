@@ -145,7 +145,6 @@ public class MapEnumsTests
         var (compilation, diagnostics) = builder.Compile();
 
         // Assert
-        compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
 
         var targetClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
@@ -158,6 +157,39 @@ public class MapEnumsTests
                     global::MapTo.Tests.SourceEnum.Value1 => global::MapTo.Tests.TargetEnum.Value1,
                     global::MapTo.Tests.SourceEnum.Value2 => global::MapTo.Tests.TargetEnum.Value2,
                     _ => throw new global::System.ArgumentOutOfRangeException("source", source, "Unable to map enum value 'MapTo.Tests.SourceEnum' to 'MapTo.Tests.TargetEnum'.")
+                };
+            }
+            """);
+    }
+
+    [Fact]
+    public void When_TargetClassEnumStrategyHasFallbackValue_Should_DefaultToFallbackValueInsteadOfException()
+    {
+        // Arrange
+        var builder = ScenarioBuilder.SimpleClassWithTwoEnumProperties(enumMappingStrategy: EnumMappingStrategy.ByName, fallbackValue: "TargetEnum.Value2");
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+
+        var targetClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        targetClass.ShouldContain(
+            """
+            target.Prop1 = MapToSourceEnum(sourceClass.Prop1);
+            target.Prop2 = MapToSourceEnum(sourceClass.Prop2);
+            """);
+
+        targetClass.ShouldContain(
+            """
+            private static global::MapTo.Tests.TargetEnum MapToSourceEnum(global::MapTo.Tests.SourceEnum source)
+            {
+                return source switch
+                {
+                    global::MapTo.Tests.SourceEnum.Value1 => global::MapTo.Tests.TargetEnum.Value1,
+                    global::MapTo.Tests.SourceEnum.Value2 => global::MapTo.Tests.TargetEnum.Value2,
+                    _ => global::MapTo.Tests.TargetEnum.Value2
                 };
             }
             """);

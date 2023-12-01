@@ -106,10 +106,19 @@ internal static class ExtensionClassGeneratorExtensions
                 writer.Write("global::").Write(member.Source).Write(" => ").Write("global::").Write(member.Target).WriteLine(",");
             }
 
+            if (property.TypeConverter.EnumMapping.FallBackValue is not null)
+            {
+                writer.Write("_ => ").Write("global::").WriteLine(property.TypeConverter.EnumMapping.FallBackValue);
+            }
+            else
+            {
+                writer
+                    .Write("_ => ")
+                    .WriteThrowArgumentOutOfRangeException("source", $"\"Unable to map enum value '{property.SourceType.QualifiedName}' to '{property.Type.QualifiedName}'.\"")
+                    .WriteLineIndented();
+            }
+
             writer
-                .Write("_ => ")
-                .WriteThrowArgumentOutOfRangeException("source", $"\"Unable to map enum value '{property.SourceType.QualifiedName}' to '{property.Type.QualifiedName}'.\"")
-                .WriteLineIndented()
                 .WriteClosingBracket(false)
                 .WriteLine(";")
                 .WriteClosingBracket(); // Method closing bracket
