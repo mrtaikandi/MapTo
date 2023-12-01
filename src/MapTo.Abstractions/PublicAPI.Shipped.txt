@@ -21,6 +21,8 @@ MapTo.MapFromAttribute.ReferenceHandling.set -> void
 MapTo.MapFromAttribute.SourceType.get -> System.Type!
 MapTo.MapFromAttribute.NullHandling.get -> MapTo.NullHandling
 MapTo.MapFromAttribute.NullHandling.set -> void
+MapTo.MapFromAttribute.EnumMappingStrategy.get -> MapTo.EnumMappingStrategy
+MapTo.MapFromAttribute.EnumMappingStrategy.set -> void
 MapTo.MapPropertyAttribute
 MapTo.MapPropertyAttribute.From.get -> string?
 MapTo.MapPropertyAttribute.From.set -> void
@@ -37,3 +39,7 @@ MapTo.NullHandling.Auto = 0 -> MapTo.NullHandling
 MapTo.NullHandling.SetNull = 1 -> MapTo.NullHandling
 MapTo.NullHandling.SetEmptyCollection = 2 -> MapTo.NullHandling
 MapTo.NullHandling.ThrowException = 3 -> MapTo.NullHandling
+MapTo.EnumMappingStrategy
+MapTo.EnumMappingStrategy.ByValue = 0 -> MapTo.EnumMappingStrategy
+MapTo.EnumMappingStrategy.ByName = 1 -> MapTo.EnumMappingStrategy
+MapTo.EnumMappingStrategy.ByNameCaseInsensitive = 2 -> MapTo.EnumMappingStrategy

@@ -59,4 +59,9 @@ public sealed class MapFromAttribute : Attribute
     /// </summary>
     /// <value>The way to handle null properties.</value>
     public NullHandling NullHandling { get; set; } = NullHandling.Auto;
+
+    /// <summary>
+    /// Gets or sets the enum mapping strategy. Defaults to <see cref="EnumMappingStrategy.ByValue" />.
+    /// </summary>
+    public EnumMappingStrategy EnumMappingStrategy { get; set; } = EnumMappingStrategy.ByValue;
 }

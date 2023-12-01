@@ -7,6 +7,7 @@ internal class TypeConverterResolver
         new ImplicitTypeConverterResolver(),
         new ExplicitTypeConverterResolver(),
         new NestedTypeConverterResolver(),
+        new EnumTypeConverterResolver(),
         new ArrayTypeConverterResolver(),
         new EnumerableTypeConverterResolver()
     };

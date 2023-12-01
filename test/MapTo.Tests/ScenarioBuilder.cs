@@ -287,6 +287,47 @@ internal static class ScenarioBuilder
         return builder;
     }
 
+    public static ITestSourceBuilder SimpleClassWithTwoEnumProperties(
+        TestSourceBuilderOptions? options = null,
+        EnumMappingStrategy? enumMappingStrategy = EnumMappingStrategy.ByValue,
+        bool lowercaseTargetEnum = false)
+    {
+        var builder = new TestSourceBuilder(options);
+        var sourceFile = builder.AddFile();
+        var mapFrom = "[MapFrom(typeof(SourceClass))]";
+        var mapFromWithEnumStrategy = $"[MapFrom(typeof(SourceClass), EnumMappingStrategy = EnumMappingStrategy.{enumMappingStrategy})]";
+
+        sourceFile.WithBody(
+            $$"""
+              public enum SourceEnum
+              {
+                  Value1,
+                  Value2
+              }
+
+              public class SourceClass
+              {
+                  public SourceEnum Prop1 { get; set; }
+                  public SourceEnum Prop2 { get; set; }
+              }
+
+              public enum TargetEnum
+              {
+                  Value1,
+                  {{(lowercaseTargetEnum ? "value2" : "Value2")}}
+              }
+
+              {{(enumMappingStrategy is null or EnumMappingStrategy.ByValue ? mapFrom : mapFromWithEnumStrategy)}}
+              public class TargetClass
+              {
+                  public TargetEnum Prop1 { get; set; }
+                  public TargetEnum Prop2 { get; set; }
+              }
+              """);
+
+        return builder;
+    }
+
     private static string SimpleExpectedExtensionClassThatMapsIdAndNameProperties(ITestSourceBuilder builder) => builder.Options.SupportNullReferenceTypes
         ? $$"""
             {{GeneratedCodeAttribute}}

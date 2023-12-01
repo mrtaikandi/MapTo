@@ -1,5 +1,4 @@
-﻿using MapTo.Configuration;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MapTo.Mappings;
 
@@ -33,6 +32,7 @@ internal readonly record struct MappingContext(
             {
                 CopyPrimitiveArrays = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.CopyPrimitiveArrays), source.Options.CopyPrimitiveArrays),
                 ReferenceHandling = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.ReferenceHandling), source.Options.ReferenceHandling),
+                EnumMappingStrategy = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.EnumMappingStrategy), source.Options.EnumMappingStrategy),
                 NullHandling = mapFromAttributeData.GetNamedArgument(
                     nameof(MapFromAttribute.NullHandling),
                     compilation.Options.NullableContextOptions is NullableContextOptions.Disable && source.Options.NullHandling == NullHandling.Auto

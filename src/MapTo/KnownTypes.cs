@@ -11,6 +11,7 @@ internal record KnownTypes(
     internal const string NotNullIfNotNullAttributeFullName = "System.Diagnostics.CodeAnalysis.NotNullIfNotNullAttribute";
     internal const string CompilerGeneratedAttributeFullName = "System.Runtime.CompilerServices.CompilerGeneratedAttribute";
     internal const string ArgumentNullException = "System.ArgumentNullException";
+    internal const string ArgumentOutOfRangeException = "System.ArgumentOutOfRangeException";
     internal const string GenericList = "System.Collections.Generic.List";
     internal const string Array = "System.Array";
     internal const string LinqEnumerable = "System.Linq.Enumerable";
