@@ -33,6 +33,7 @@ internal readonly record struct MappingContext(
                 CopyPrimitiveArrays = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.CopyPrimitiveArrays), source.Options.CopyPrimitiveArrays),
                 ReferenceHandling = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.ReferenceHandling), source.Options.ReferenceHandling),
                 EnumMappingStrategy = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.EnumMappingStrategy), source.Options.EnumMappingStrategy),
+                StrictEnumMapping = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.StrictEnumMapping), source.Options.StrictEnumMapping),
                 NullHandling = mapFromAttributeData.GetNamedArgument(
                     nameof(MapFromAttribute.NullHandling),
                     compilation.Options.NullableContextOptions is NullableContextOptions.Disable && source.Options.NullHandling == NullHandling.Auto

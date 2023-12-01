@@ -13,6 +13,11 @@ internal class EnumTypeConverterResolver : ITypeConverterResolver
         var methodPrefix = context.CodeGeneratorOptions.MapMethodPrefix;
         var mapFromAttribute = GetEffectiveMapFromAttribute(context, property);
         var enumMappingStrategy = GetEnumMappingStrategy(context, mapFromAttribute);
+        var memberMappings = GetMemberMappings(property.Type, sourceProperty.TypeSymbol, mapFromAttribute, enumMappingStrategy);
+        if (memberMappings.IsFailure)
+        {
+            return memberMappings.Error;
+        }
 
         return new TypeConverterMapping(
             ContainingType: string.Empty,
@@ -20,7 +25,7 @@ internal class EnumTypeConverterResolver : ITypeConverterResolver
             Type: property.Type.ToTypeMapping(),
             EnumMapping: new EnumTypeMapping(
                 Strategy: enumMappingStrategy,
-                Mappings: GetMemberMappings(property.Type, sourceProperty.TypeSymbol, enumMappingStrategy),
+                Mappings: memberMappings.Value,
                 FallBackValue: GetFallbackValue(property.Type, mapFromAttribute)));
     }
 
@@ -41,17 +46,27 @@ internal class EnumTypeConverterResolver : ITypeConverterResolver
         return value is null ? null : enumTypeSymbol.GetMembers().OfType<IFieldSymbol>().SingleOrDefault(m => m.ConstantValue == value)?.ToDisplayString();
     }
 
-    private static ImmutableArray<EnumMemberMapping> GetMemberMappings(ITypeSymbol enumTypeSymbol, ITypeSymbol sourceEnumTypeSymbol, EnumMappingStrategy enumMappingStrategy)
+    private static ResolverResult<ImmutableArray<EnumMemberMapping>> GetMemberMappings(
+        ITypeSymbol enumTypeSymbol,
+        ITypeSymbol sourceEnumTypeSymbol,
+        AttributeData? mapFromAttribute,
+        EnumMappingStrategy enumMappingStrategy)
     {
+        var members = enumTypeSymbol.GetMembers().OfType<IFieldSymbol>().Where(m => m.HasConstantValue).OrderBy(m => m.ConstantValue).ToArray();
+        var sourceMembers = sourceEnumTypeSymbol.GetMembers().OfType<IFieldSymbol>().Where(m => m.HasConstantValue).ToArray();
+        var stringComparison = enumMappingStrategy is EnumMappingStrategy.ByNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+
+        if (!VerifyStrictMappingsConditions(mapFromAttribute, sourceEnumTypeSymbol, sourceMembers, enumTypeSymbol, members, enumMappingStrategy, out var error))
+        {
+            return error;
+        }
+
         if (enumMappingStrategy is EnumMappingStrategy.ByValue)
         {
             return ImmutableArray<EnumMemberMapping>.Empty;
         }
 
         var builder = ImmutableArray.CreateBuilder<EnumMemberMapping>();
-        var members = enumTypeSymbol.GetMembers().OfType<IFieldSymbol>().Where(m => m.HasConstantValue).OrderBy(m => m.ConstantValue);
-        var sourceMembers = sourceEnumTypeSymbol.GetMembers().OfType<IFieldSymbol>().Where(m => m.HasConstantValue).ToArray();
-        var stringComparison = enumMappingStrategy is EnumMappingStrategy.ByNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
         foreach (var member in members)
         {
@@ -63,5 +78,40 @@ internal class EnumTypeConverterResolver : ITypeConverterResolver
         }
 
         return builder.ToImmutable();
+    }
+
+    private static bool VerifyStrictMappingsConditions(
+        AttributeData? mapFromAttribute,
+        ITypeSymbol sourceEnumTypeSymbol,
+        IFieldSymbol[] sourceMembers,
+        ITypeSymbol targetEnumTypeSymbol,
+        IFieldSymbol[] targetMembers,
+        EnumMappingStrategy enumMappingStrategy,
+        [NotNullWhen(false)] out Diagnostic? error)
+    {
+        error = null;
+        var strictEnumMapping = mapFromAttribute.GetNamedArgument(nameof(MapFromAttribute.StrictEnumMapping), StrictEnumMapping.Off);
+        if (strictEnumMapping is StrictEnumMapping.Off)
+        {
+            return true;
+        }
+
+        var stringComparison = enumMappingStrategy is EnumMappingStrategy.ByNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+
+        if (strictEnumMapping is not StrictEnumMapping.TargetOnly && sourceMembers.Length > targetMembers.Length)
+        {
+            var missingMember = sourceMembers.First(m => targetMembers.All(m2 => !m2.Name.Equals(m.Name, stringComparison)));
+            error = DiagnosticsFactory.StringEnumMappingSourceOnlyError(missingMember, targetEnumTypeSymbol);
+            return false;
+        }
+
+        if (strictEnumMapping is not StrictEnumMapping.SourceOnly && targetMembers.Length > sourceMembers.Length)
+        {
+            var missingMember = targetMembers.First(m => sourceMembers.All(m2 => !m2.Name.Equals(m.Name, stringComparison)));
+            error = DiagnosticsFactory.StringEnumMappingTargetOnlyError(missingMember, sourceEnumTypeSymbol);
+            return false;
+        }
+
+        return true;
     }
 }

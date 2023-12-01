@@ -181,6 +181,24 @@ internal static class DiagnosticsFactory
             targetType.ToDisplayString(),
             sourceType.ToDisplayString());
 
+    /// <summary>
+    /// The '{0}' enum member is not defined in the target enum '{1}'.
+    /// </summary>
+    internal static Diagnostic StringEnumMappingSourceOnlyError(IFieldSymbol missingEnumMember, ITypeSymbol targetEnumType) => Create(
+        DiagnosticDescriptors.StringEnumMappingSourceOnlyError,
+        targetEnumType.GetLocation(),
+        missingEnumMember.ToDisplayString(),
+        targetEnumType.ToDisplayString());
+
+    /// <summary>
+    /// The '{0}' enum member is not defined in the source enum '{1}'.
+    /// </summary>
+    internal static Diagnostic StringEnumMappingTargetOnlyError(IFieldSymbol missingEnumMember, ITypeSymbol sourceEnumType) => Create(
+        DiagnosticDescriptors.StringEnumMappingTargetOnlyError,
+        missingEnumMember.GetLocation(),
+        missingEnumMember.ToDisplayString(),
+        sourceEnumType.ToDisplayString());
+
     private static Diagnostic Create(DiagnosticDescriptor descriptor, Location? location, params object?[] messageArgs) =>
         Diagnostic.Create(descriptor, location ?? Location.None, messageArgs);
 

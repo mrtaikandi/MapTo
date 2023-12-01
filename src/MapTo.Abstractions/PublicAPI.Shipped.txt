@@ -25,6 +25,8 @@ MapTo.MapFromAttribute.EnumMappingStrategy.get -> MapTo.EnumMappingStrategy
 MapTo.MapFromAttribute.EnumMappingStrategy.set -> void
 MapTo.MapFromAttribute.EnumMappingFallbackValue.get -> object?
 MapTo.MapFromAttribute.EnumMappingFallbackValue.set -> void
+MapTo.MapFromAttribute.StrictEnumMapping.get -> MapTo.StrictEnumMapping
+MapTo.MapFromAttribute.StrictEnumMapping.set -> void
 MapTo.MapPropertyAttribute
 MapTo.MapPropertyAttribute.From.get -> string?
 MapTo.MapPropertyAttribute.From.set -> void
@@ -45,3 +47,8 @@ MapTo.EnumMappingStrategy
 MapTo.EnumMappingStrategy.ByValue = 0 -> MapTo.EnumMappingStrategy
 MapTo.EnumMappingStrategy.ByName = 1 -> MapTo.EnumMappingStrategy
 MapTo.EnumMappingStrategy.ByNameCaseInsensitive = 2 -> MapTo.EnumMappingStrategy
+MapTo.StrictEnumMapping
+MapTo.StrictEnumMapping.Off = 0 -> MapTo.StrictEnumMapping
+MapTo.StrictEnumMapping.SourceOnly = 1 -> MapTo.StrictEnumMapping
+MapTo.StrictEnumMapping.TargetOnly = 2 -> MapTo.StrictEnumMapping
+MapTo.StrictEnumMapping.SourceAndTarget = 3 -> MapTo.StrictEnumMapping

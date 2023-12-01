@@ -77,6 +77,7 @@ internal static class ExtensionClassGeneratorExtensions
     internal static CodeWriter WriteMapEnumMethods(this CodeWriter writer, TargetMapping mapping)
     {
         var properties = mapping.Properties
+            .Union(mapping.Constructor.Parameters.Select(p => p.Property))
             .Where(p => p is { SourceType.IsEnum: true, TypeConverter: { IsMapToExtensionMethod: false, EnumMapping.Strategy: not EnumMappingStrategy.ByValue } })
             .GroupBy(p => p.SourceType)
             .Select(g => g.First());

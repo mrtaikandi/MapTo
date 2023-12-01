@@ -38,7 +38,7 @@ internal sealed class TypeConverterPropertyMappingGenerator : PropertyMappingGen
 
                 break;
 
-            case { TypeConverter: { IsMapToExtensionMethod: false, EnumMapping.Strategy: EnumMappingStrategy.ByValue } }:
+            case { TypeConverter: { IsMapToExtensionMethod: false, EnumMapping: { IsNull: false, Strategy: EnumMappingStrategy.ByValue } } }:
                 writer.Write(targetInstanceName).Write(".").Write(property.Name).Write(" = (").Write(property.TypeName).Write(")").Write(parameterName).WriteLine(";");
                 break;
 
@@ -58,6 +58,8 @@ internal sealed class TypeConverterPropertyMappingGenerator : PropertyMappingGen
         {
             { HasParameter: true } => writer
                 .Write(typeConverter.MethodFullName).Write("(").Write(parameterName).Write(", ").Write(typeConverter.Parameter).Write(")"),
+            { HasParameter: false, IsMapToExtensionMethod: false, EnumMapping: { IsNull: false, Strategy: EnumMappingStrategy.ByValue } } => writer
+                .Write("(").Write(property.TypeName).Write(")").Write(parameterName),
             { HasParameter: false, ReferenceHandling: false } => writer
                 .Write(typeConverter.MethodFullName).Write("(").Write(parameterName).Write(")"),
             { HasParameter: false, ReferenceHandling: true } => writer

@@ -23,3 +23,5 @@
  MT3016  | Mapping  | Error    | Before or after map method parameter has inconsistent nullability annotation.                    
  MT3017  | Mapping  | Error    | Before or after map method return type has inconsistent nullability annotation.
  MT3018  | Mapping  | Error    | After map method does not have correct number of parameters.
+ MT3019  | Mapping  | Error    | The source enum member is not found in the target enum.
+ MT3020  | Mapping  | Error    | The target enum member is not found in the source enum.

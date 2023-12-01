@@ -37,8 +37,8 @@ public sealed class MapFromAttribute : Attribute
     /// <summary>
     /// Gets or sets a value indicating whether to use reference handling.
     /// If not set, MapTo will try to automatically determine whether to use reference handling.
-    /// Set to <see langword="true" /> to force reference handling or <see langword="false" /> to
-    /// force no reference handling.
+    /// Set to <see cref="Configuration.ReferenceHandling.Enabled"/> to force reference handling or
+    /// <see cref="Configuration.ReferenceHandling.Disabled"/> to force no reference handling.
     /// </summary>
     public ReferenceHandling ReferenceHandling { get; set; }
 
@@ -69,4 +69,9 @@ public sealed class MapFromAttribute : Attribute
     /// Gets or sets the fallback value to use when the enum value is not found in the target enum.
     /// </summary>
     public object? EnumMappingFallbackValue { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating how strict the enum mapping should be. Defaults to <see cref="StrictEnumMapping.Off" />.
+    /// </summary>
+    public StrictEnumMapping StrictEnumMapping { get; set; } = StrictEnumMapping.Off;
 }
