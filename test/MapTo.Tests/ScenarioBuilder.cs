@@ -328,6 +328,43 @@ internal static class ScenarioBuilder
         return builder;
     }
 
+    public static ITestSourceBuilder EnumWithMapFromAttribute(EnumMappingStrategy enumMappingStrategy, TestSourceBuilderOptions? options = null)
+    {
+        var builder = new TestSourceBuilder(options);
+        var sourceFile = builder.AddFile();
+
+        sourceFile.WithBody(
+            $$"""
+              public enum SourceEnum
+              {
+                  Value1,
+                  Value2
+              }
+
+              public class SourceClass
+              {
+                  public SourceEnum Prop1 { get; set; }
+                  public SourceEnum Prop2 { get; set; }
+              }
+
+              [MapFrom(typeof(SourceEnum), EnumMappingStrategy = EnumMappingStrategy.{{enumMappingStrategy}})]
+              public enum TargetEnum
+              {
+                  Value1,
+                  Value2
+              }
+
+              [MapFrom(typeof(SourceClass))]
+              public class TargetClass
+              {
+                  public TargetEnum Prop1 { get; set; }
+                  public TargetEnum Prop2 { get; set; }
+              }
+              """);
+
+        return builder;
+    }
+
     private static string SimpleExpectedExtensionClassThatMapsIdAndNameProperties(ITestSourceBuilder builder) => builder.Options.SupportNullReferenceTypes
         ? $$"""
             {{GeneratedCodeAttribute}}

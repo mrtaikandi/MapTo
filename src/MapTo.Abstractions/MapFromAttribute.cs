@@ -5,7 +5,7 @@ namespace MapTo;
 /// <summary>
 /// Specifies the source type to map from.
 /// </summary>
-[AttributeUsage(AttributeTargets.Class, Inherited = false)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Enum, Inherited = false)]
 public sealed class MapFromAttribute : Attribute
 {
     /// <summary>

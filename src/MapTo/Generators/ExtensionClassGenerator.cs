@@ -103,7 +103,7 @@ internal static class ExtensionClassGeneratorExtensions
 
             foreach (var member in property.TypeConverter.EnumMapping.Mappings)
             {
-                writer.Write("global::").Write(member.Key).Write(" => ").Write("global::").Write(member.Value).WriteLine(",");
+                writer.Write("global::").Write(member.Source).Write(" => ").Write("global::").Write(member.Target).WriteLine(",");
             }
 
             writer

@@ -134,4 +134,32 @@ public class MapEnumsTests
             }
             """);
     }
+
+    [Fact]
+    public void When_TargetEnumHasMapFromAttribute_Should_UseItToMap()
+    {
+        // Arrange
+        var builder = ScenarioBuilder.EnumWithMapFromAttribute(EnumMappingStrategy.ByName);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        compilation.Dump(_output);
+        diagnostics.ShouldBeSuccessful();
+
+        var targetClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        targetClass.ShouldContain(
+            """
+            private static global::MapTo.Tests.TargetEnum MapToSourceEnum(global::MapTo.Tests.SourceEnum source)
+            {
+                return source switch
+                {
+                    global::MapTo.Tests.SourceEnum.Value1 => global::MapTo.Tests.TargetEnum.Value1,
+                    global::MapTo.Tests.SourceEnum.Value2 => global::MapTo.Tests.TargetEnum.Value2,
+                    _ => throw new global::System.ArgumentOutOfRangeException("source", source, "Unable to map enum value 'MapTo.Tests.SourceEnum' to 'MapTo.Tests.TargetEnum'.")
+                };
+            }
+            """);
+    }
 }

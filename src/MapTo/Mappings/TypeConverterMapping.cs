@@ -10,7 +10,7 @@ internal readonly record struct TypeConverterMapping(
     bool IsMapToExtensionMethod = false,
     bool ReferenceHandling = false,
     ImmutableArray<string>? UsingDirectives = null,
-    EnumTypeConverterMapping EnumMapping = default)
+    EnumTypeMapping EnumMapping = default)
 {
     public TypeConverterMapping(IMethodSymbol method, TypedConstant parameters)
         : this(
@@ -25,6 +25,6 @@ internal readonly record struct TypeConverterMapping(
     public string MethodFullName => string.IsNullOrEmpty(ContainingType) ? MethodName : $"{ContainingType}.{MethodName}";
 }
 
-internal readonly record struct EnumTypeConverterMapping(
-    EnumMappingStrategy Strategy,
-    ImmutableDictionary<string, string> Mappings);
+internal readonly record struct EnumTypeMapping(EnumMappingStrategy Strategy, ImmutableArray<EnumMemberMapping> Mappings);
+
+internal readonly record struct EnumMemberMapping(string Source, string Target);

@@ -17,7 +17,7 @@ internal class EnumTypeConverterResolver : ITypeConverterResolver
             ContainingType: string.Empty,
             MethodName: $"{methodPrefix}{sourceProperty.TypeSymbol.Name}",
             Type: property.Type.ToTypeMapping(),
-            EnumMapping: new EnumTypeConverterMapping(
+            EnumMapping: new EnumTypeMapping(
                 Strategy: enumMappingStrategy,
                 Mappings: GetMemberMappings(property.Type, sourceProperty.TypeSymbol, enumMappingStrategy)));
     }
@@ -32,14 +32,14 @@ internal class EnumTypeConverterResolver : ITypeConverterResolver
         return mapFromAttribute.GetNamedArgument(nameof(MapFromAttribute.EnumMappingStrategy), context.CodeGeneratorOptions.EnumMappingStrategy);
     }
 
-    private static ImmutableDictionary<string, string> GetMemberMappings(ITypeSymbol enumTypeSymbol, ITypeSymbol sourceEnumTypeSymbol, EnumMappingStrategy enumMappingStrategy)
+    private static ImmutableArray<EnumMemberMapping> GetMemberMappings(ITypeSymbol enumTypeSymbol, ITypeSymbol sourceEnumTypeSymbol, EnumMappingStrategy enumMappingStrategy)
     {
         if (enumMappingStrategy is EnumMappingStrategy.ByValue)
         {
-            return ImmutableDictionary<string, string>.Empty;
+            return ImmutableArray<EnumMemberMapping>.Empty;
         }
 
-        var builder = ImmutableDictionary.CreateBuilder<string, string>(StringComparer.Ordinal);
+        var builder = ImmutableArray.CreateBuilder<EnumMemberMapping>();
         var members = enumTypeSymbol.GetMembers().OfType<IFieldSymbol>().Where(m => m.HasConstantValue).OrderBy(m => m.ConstantValue);
         var sourceMembers = sourceEnumTypeSymbol.GetMembers().OfType<IFieldSymbol>().Where(m => m.HasConstantValue).ToArray();
         var stringComparison = enumMappingStrategy is EnumMappingStrategy.ByNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
@@ -49,7 +49,7 @@ internal class EnumTypeConverterResolver : ITypeConverterResolver
             var sourceMember = sourceMembers.FirstOrDefault(m => m.Name.Equals(member.Name, stringComparison));
             if (sourceMember is not null)
             {
-                builder.Add(sourceMember.ToDisplayString(), member.ToDisplayString());
+                builder.Add(new(sourceMember.ToDisplayString(), member.ToDisplayString()));
             }
         }
 
