@@ -6,9 +6,11 @@ namespace MapTo.Mappings;
 internal readonly record struct TypeMapping(
     string Name,
     string FullName,
+    string QualifiedName,
     bool IsNullable,
     NullableAnnotation NullableAnnotation,
     bool IsArray,
+    bool IsEnum,
     string ElementTypeName,
     EnumerableType EnumerableType,
     NullableAnnotation ElementTypeNullableAnnotation,
@@ -47,9 +49,11 @@ internal static class TypeMappingExtensions
         var mapping = new TypeMapping(
             Name: typeSymbol.Name,
             FullName: typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+            QualifiedName: typeSymbol.ToDisplayString(),
             IsNullable: typeSymbol.IsReferenceType || typeSymbol.NullableAnnotation is NullableAnnotation.Annotated,
             NullableAnnotation: nullableAnnotation is NullableAnnotation.None ? typeSymbol.NullableAnnotation : nullableAnnotation,
             IsArray: isArray,
+            IsEnum: typeSymbol.TypeKind == TypeKind.Enum,
             ElementTypeName: elementTypeName,
             EnumerableType: enumerableType,
             ElementTypeNullableAnnotation: elementType?.NullableAnnotation ?? NullableAnnotation.None,

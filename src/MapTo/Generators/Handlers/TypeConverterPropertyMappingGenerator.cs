@@ -38,6 +38,10 @@ internal sealed class TypeConverterPropertyMappingGenerator : PropertyMappingGen
 
                 break;
 
+            case { TypeConverter: { IsMapToExtensionMethod: false, EnumMapping.Strategy: EnumMappingStrategy.ByValue } }:
+                writer.Write(targetInstanceName).Write(".").Write(property.Name).Write(" = (").Write(property.TypeName).Write(")").Write(parameterName).WriteLine(";");
+                break;
+
             default:
                 writer.Write(targetInstanceName).Write(".").Write(property.Name).Write(" = ").Wrap(Map(writer, property, parameterName, referenceHandlerName)).WriteLine(";");
                 break;

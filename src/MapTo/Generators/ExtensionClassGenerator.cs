@@ -1,5 +1,4 @@
-﻿using MapTo.Configuration;
-using MapTo.Extensions;
+﻿using MapTo.Extensions;
 using MapTo.Mappings;
 
 namespace MapTo.Generators;
@@ -18,6 +17,7 @@ internal readonly record struct ExtensionClassGenerator(
             .WriteMapExtensionMethod(TargetMapping, CompilerOptions)
             .WriteMapWithReferenceHandlerMethod(TargetMapping, CompilerOptions)
             .WriteMapArrayMethods(TargetMapping)
+            .WriteMapEnumMethods(TargetMapping)
             .WriteMapToPrimitiveArrayMethods(TargetMapping)
             .WriteClosingBracket(); // Class closing bracket
     }
@@ -69,6 +69,50 @@ internal static class ExtensionClassGeneratorExtensions
                 .WriteLine()
                 .WriteLine("return targetArray;")
                 .WriteClosingBracket();
+        }
+
+        return writer;
+    }
+
+    internal static CodeWriter WriteMapEnumMethods(this CodeWriter writer, TargetMapping mapping)
+    {
+        var properties = mapping.Properties
+            .Where(p => p is { SourceType.IsEnum: true, TypeConverter: { IsMapToExtensionMethod: false, EnumMapping.Strategy: not EnumMappingStrategy.ByValue } })
+            .GroupBy(p => p.SourceType)
+            .Select(g => g.First());
+
+        foreach (var property in properties)
+        {
+            var sourceType = property.SourceType.FullName;
+            var propertyType = property.TypeName;
+
+            writer
+                .WriteLine()
+                .Write("private static ")
+                .Write(propertyType)
+                .WriteWhitespace()
+                .Write(property.TypeConverter.MethodName)
+                .WriteOpenParenthesis()
+                .Write(sourceType)
+                .WriteWhitespace()
+                .Write("source")
+                .WriteClosingParenthesis()
+                .WriteOpeningBracket() // Method opening bracket
+                .WriteLine("return source switch")
+                .WriteOpeningBracket();
+
+            foreach (var member in property.TypeConverter.EnumMapping.Mappings)
+            {
+                writer.Write("global::").Write(member.Key).Write(" => ").Write("global::").Write(member.Value).WriteLine(",");
+            }
+
+            writer
+                .Write("_ => ")
+                .WriteThrowArgumentOutOfRangeException("source", $"\"Unable to map enum value '{property.SourceType.QualifiedName}' to '{property.Type.QualifiedName}'.\"")
+                .WriteLineIndented()
+                .WriteClosingBracket(false)
+                .WriteLine(";")
+                .WriteClosingBracket(); // Method closing bracket
         }
 
         return writer;

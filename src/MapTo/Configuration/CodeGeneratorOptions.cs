@@ -10,12 +10,14 @@ namespace MapTo.Configuration;
 /// <param name="ReferenceHandling">Indicates whether to use reference handling.</param>
 /// <param name="CopyPrimitiveArrays">Indicates whether to copy object and primitive type arrays into a new array.</param>
 /// <param name="NullHandling">Indicates how to handle null properties.</param>
+/// <param name="EnumMappingStrategy">Indicates the strategy to use when mapping enum values.</param>
 internal readonly record struct CodeGeneratorOptions(
     string MapMethodPrefix = "MapTo",
     string MapExtensionClassSuffix = "MapToExtensions",
     ReferenceHandling ReferenceHandling = ReferenceHandling.Disabled,
     bool CopyPrimitiveArrays = false,
-    NullHandling NullHandling = NullHandling.Auto)
+    NullHandling NullHandling = NullHandling.Auto,
+    EnumMappingStrategy EnumMappingStrategy = EnumMappingStrategy.ByValue)
 {
     /// <summary>
     /// The prefix of the property name in the .editorconfig file.
@@ -36,6 +38,7 @@ internal readonly record struct CodeGeneratorOptions(
             MapExtensionClassSuffix: provider.GlobalOptions.GetOption(nameof(MapExtensionClassSuffix), "MapToExtensions"),
             ReferenceHandling: provider.GlobalOptions.GetOption<ReferenceHandling>(nameof(ReferenceHandling)),
             CopyPrimitiveArrays: provider.GlobalOptions.GetOption(nameof(CopyPrimitiveArrays), false),
-            NullHandling: provider.GlobalOptions.GetOption<NullHandling>(nameof(NullHandling)));
+            NullHandling: provider.GlobalOptions.GetOption<NullHandling>(nameof(NullHandling)),
+            EnumMappingStrategy: provider.GlobalOptions.GetOption(nameof(EnumMappingStrategy), EnumMappingStrategy.ByValue));
     }
 }
