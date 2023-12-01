@@ -11,7 +11,8 @@ internal class EnumTypeConverterResolver : ITypeConverterResolver
         }
 
         var methodPrefix = context.CodeGeneratorOptions.MapMethodPrefix;
-        var enumMappingStrategy = GetEnumMappingStrategy(context, property);
+        var mapFromAttribute = GetEffectiveMapFromAttribute(context, property);
+        var enumMappingStrategy = GetEnumMappingStrategy(context, mapFromAttribute);
 
         return new TypeConverterMapping(
             ContainingType: string.Empty,
@@ -19,17 +20,25 @@ internal class EnumTypeConverterResolver : ITypeConverterResolver
             Type: property.Type.ToTypeMapping(),
             EnumMapping: new EnumTypeMapping(
                 Strategy: enumMappingStrategy,
-                Mappings: GetMemberMappings(property.Type, sourceProperty.TypeSymbol, enumMappingStrategy)));
+                Mappings: GetMemberMappings(property.Type, sourceProperty.TypeSymbol, enumMappingStrategy),
+                FallBackValue: GetFallbackValue(property.Type, mapFromAttribute)));
     }
 
-    private static EnumMappingStrategy GetEnumMappingStrategy(MappingContext context, IPropertySymbol property)
+    private static AttributeData? GetEffectiveMapFromAttribute(MappingContext context, IPropertySymbol property)
     {
         // NB: Check for the mapping strategy in order of precedence.
         // Property Type > Property > Containing Type > Fall back to code generator options.
-        var mapFromAttribute = property.Type.GetAttribute(context.KnownTypes.MapFromAttributeTypeSymbol)
-                               ?? property.ContainingType.GetAttribute(context.KnownTypes.MapFromAttributeTypeSymbol);
+        return property.Type.GetAttribute(context.KnownTypes.MapFromAttributeTypeSymbol)
+               ?? property.ContainingType.GetAttribute(context.KnownTypes.MapFromAttributeTypeSymbol);
+    }
 
-        return mapFromAttribute.GetNamedArgument(nameof(MapFromAttribute.EnumMappingStrategy), context.CodeGeneratorOptions.EnumMappingStrategy);
+    private static EnumMappingStrategy GetEnumMappingStrategy(MappingContext context, AttributeData? mapFromAttribute) =>
+        mapFromAttribute.GetNamedArgument(nameof(MapFromAttribute.EnumMappingStrategy), context.CodeGeneratorOptions.EnumMappingStrategy);
+
+    private static string? GetFallbackValue(ITypeSymbol enumTypeSymbol, AttributeData? mapFromAttribute)
+    {
+        var value = mapFromAttribute.GetNamedArgument(nameof(MapFromAttribute.EnumMappingFallbackValue));
+        return value is null ? null : enumTypeSymbol.GetMembers().OfType<IFieldSymbol>().SingleOrDefault(m => m.ConstantValue == value)?.ToDisplayString();
     }
 
     private static ImmutableArray<EnumMemberMapping> GetMemberMappings(ITypeSymbol enumTypeSymbol, ITypeSymbol sourceEnumTypeSymbol, EnumMappingStrategy enumMappingStrategy)

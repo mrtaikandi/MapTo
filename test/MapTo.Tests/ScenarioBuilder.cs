@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text;
 
 namespace MapTo.Tests;
 
@@ -290,12 +291,24 @@ internal static class ScenarioBuilder
     public static ITestSourceBuilder SimpleClassWithTwoEnumProperties(
         TestSourceBuilderOptions? options = null,
         EnumMappingStrategy? enumMappingStrategy = EnumMappingStrategy.ByValue,
-        bool lowercaseTargetEnum = false)
+        bool lowercaseTargetEnum = false,
+        object? fallbackValue = null)
     {
         var builder = new TestSourceBuilder(options);
         var sourceFile = builder.AddFile();
-        var mapFrom = "[MapFrom(typeof(SourceClass))]";
-        var mapFromWithEnumStrategy = $"[MapFrom(typeof(SourceClass), EnumMappingStrategy = EnumMappingStrategy.{enumMappingStrategy})]";
+        var mapFromBuilder = new StringBuilder();
+        mapFromBuilder.Append("[MapFrom(typeof(SourceClass)");
+        if (enumMappingStrategy is not null)
+        {
+            mapFromBuilder.Append($", EnumMappingStrategy = EnumMappingStrategy.{enumMappingStrategy}");
+        }
+
+        if (fallbackValue is not null)
+        {
+            mapFromBuilder.Append($", EnumMappingFallbackValue = {fallbackValue}");
+        }
+
+        mapFromBuilder.Append(")]");
 
         sourceFile.WithBody(
             $$"""
@@ -317,7 +330,7 @@ internal static class ScenarioBuilder
                   {{(lowercaseTargetEnum ? "value2" : "Value2")}}
               }
 
-              {{(enumMappingStrategy is null or EnumMappingStrategy.ByValue ? mapFrom : mapFromWithEnumStrategy)}}
+              {{(enumMappingStrategy is null or EnumMappingStrategy.ByValue ? "[MapFrom(typeof(SourceClass))]" : mapFromBuilder.ToString())}}
               public class TargetClass
               {
                   public TargetEnum Prop1 { get; set; }
