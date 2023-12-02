@@ -502,4 +502,299 @@ public class MapEnumsTests
             DiagnosticsFactory.StringEnumMappingSourceOnlyError(missingMember, targetEnumSymbol),
             ignoreDiagnosticsIds: new[] { "MT3002" });
     }
+
+    [Theory]
+    [InlineData("[IgnoreEnumMember] Value3", null)]
+    [InlineData(null, "[IgnoreEnumMember] Value3")]
+    public void When_IgnoreEnumMemberAttributeIsOnMember_Should_NotReportDiagnotics(string? sourceExtraMember, string? targetExtraMember)
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile().WithBody(
+            $$"""
+              public enum SourceEnum
+              {
+                  Value1,
+                  Value2
+                  {{(sourceExtraMember is not null ? $",{sourceExtraMember}" : string.Empty)}}
+              }
+
+              public enum TargetEnum
+              {
+                  Value1,
+                  Value2
+                  {{(targetExtraMember is not null ? $",{targetExtraMember}" : string.Empty)}}
+              }
+
+              public record SourceClass(SourceEnum Prop1);
+
+              [MapFrom(typeof(SourceClass), StrictEnumMapping = StrictEnumMapping.SourceAndTarget)]
+              public record TargetClass(TargetEnum Prop1);
+              """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        compilation.Dump(_output);
+        diagnostics.ShouldBeSuccessful();
+    }
+
+    [Fact]
+    public void When_IgnoreEnumMemberAttributeIsOnEnumAndTargetHasExtraMember_Should_NotReportDiagnostics()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile().WithBody(
+            """
+            public enum SourceEnum
+            {
+                Value1,
+                Value2
+            }
+
+            [IgnoreEnumMember(TargetEnum.Value3)]
+            public enum TargetEnum
+            {
+                Value1,
+                Value2,
+                Value3
+            }
+
+            public record SourceClass(SourceEnum Prop1);
+
+            [MapFrom(typeof(SourceClass), StrictEnumMapping = StrictEnumMapping.SourceAndTarget)]
+            public record TargetClass(TargetEnum Prop1);
+            """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        compilation.Dump(_output);
+        diagnostics.ShouldBeSuccessful();
+    }
+
+    [Fact]
+    public void When_IgnoreEnumMemberAttributeIsOnEnumAndSourceHasExtraMember_Should_NotReportDiagnostics()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile().WithBody(
+            """
+            public enum SourceEnum
+            {
+                Value1,
+                Value2,
+                Value3
+            }
+
+            [IgnoreEnumMember(SourceEnum.Value2)]
+            [IgnoreEnumMember(SourceEnum.Value3)]
+            public enum TargetEnum
+            {
+                Value1
+            }
+
+            public record SourceClass(SourceEnum Prop1);
+
+            [MapFrom(typeof(SourceClass), StrictEnumMapping = StrictEnumMapping.SourceAndTarget)]
+            public record TargetClass(TargetEnum Prop1);
+            """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        compilation.Dump(_output);
+        diagnostics.ShouldBeSuccessful();
+    }
+
+    [Fact]
+    public void When_IgnoreEnumMemberAttributeIsOnMapClassAndSourceHasExtraMember_Should_NotReportDiagnostics()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile().WithBody(
+            """
+            public enum SourceEnum
+            {
+                Value1,
+                Value2,
+                Value3
+            }
+
+            public enum TargetEnum
+            {
+                Value1
+            }
+
+            public record SourceClass(SourceEnum Prop1);
+
+            [IgnoreEnumMember(SourceEnum.Value2)]
+            [IgnoreEnumMember(SourceEnum.Value3)]
+            [MapFrom(typeof(SourceClass), StrictEnumMapping = StrictEnumMapping.SourceAndTarget)]
+            public record TargetClass(TargetEnum Prop1);
+            """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        compilation.Dump(_output);
+        diagnostics.ShouldBeSuccessful();
+    }
+
+    [Fact]
+    public void When_IgnoreEnumMemberAttributeIsOnMapClassAndTargetHasExtraMember_Should_NotReportDiagnostics()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile().WithBody(
+            """
+            public enum SourceEnum
+            {
+                Value1,
+                Value2
+            }
+
+            public enum TargetEnum
+            {
+                Value1,
+                Value2,
+                Value3
+            }
+
+            public record SourceClass(SourceEnum Prop1);
+
+            [IgnoreEnumMember(TargetEnum.Value3)]
+            [MapFrom(typeof(SourceClass), StrictEnumMapping = StrictEnumMapping.SourceAndTarget)]
+            public record TargetClass(TargetEnum Prop1);
+            """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        compilation.Dump(_output);
+        diagnostics.ShouldBeSuccessful();
+    }
+
+    [Fact]
+    public void When_IgnoreEnumMemberAttributeIsOnEnumMemberWithParameter_Should_ReportDiagnostics()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile().WithBody(
+            """
+            public enum SourceEnum
+            {
+                Value1,
+                Value2
+            }
+
+            public enum TargetEnum
+            {
+                Value1,
+                Value2,
+                [IgnoreEnumMember(TargetEnum.Value3)]
+                Value3
+            }
+
+            public record SourceClass(SourceEnum Prop1);
+
+            [MapFrom(typeof(SourceClass), StrictEnumMapping = StrictEnumMapping.SourceAndTarget)]
+            public record TargetClass(TargetEnum Prop1);
+            """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        var targetEnumSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.TargetEnum").ShouldNotBeNull();
+        var attribute = targetEnumSymbol.GetMembers().OfType<IFieldSymbol>().First(m => m.Name == "Value3").GetAttributes().First();
+
+        diagnostics.ShouldNotBeSuccessful(
+            DiagnosticsFactory.IgnoreEnumMemberWithParameterOnMemberError(attribute, KnownTypes.Create(compilation).IgnoreEnumMemberAttributeTypeSymbol),
+            ignoreDiagnosticsIds: new[] { "MT3002" });
+    }
+
+    [Fact]
+    public void When_IgnoreEnumMemberAttributeIsOnEnumWithoutParameter_Should_ReportDiagnostics()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile().WithBody(
+            """
+            public enum SourceEnum
+            {
+                Value1,
+                Value2
+            }
+
+            [IgnoreEnumMember()]
+            public enum TargetEnum
+            {
+                Value1,
+                Value2,
+                Value3
+            }
+
+            public record SourceClass(SourceEnum Prop1);
+
+            [MapFrom(typeof(SourceClass), StrictEnumMapping = StrictEnumMapping.SourceAndTarget)]
+            public record TargetClass(TargetEnum Prop1);
+            """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        var targetEnumSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.TargetEnum").ShouldNotBeNull();
+        var attribute = targetEnumSymbol.GetAttributes().First();
+
+        diagnostics.ShouldNotBeSuccessful(
+            DiagnosticsFactory.IgnoreEnumMemberWithoutParameterTypeError(attribute, KnownTypes.Create(compilation).IgnoreEnumMemberAttributeTypeSymbol),
+            ignoreDiagnosticsIds: new[] { "MT3002" });
+    }
+
+    [Fact]
+    public void When_IgnoreEnumMemberAttributeIsOnMapClassWithoutParameter_Should_ReportDiagnostics()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile().WithBody(
+            """
+            public enum SourceEnum
+            {
+                Value1,
+                Value2
+            }
+
+            public enum TargetEnum
+            {
+                Value1,
+                Value2,
+                Value3,
+                Value4
+            }
+
+            public record SourceClass(SourceEnum Prop1);
+
+            [IgnoreEnumMember]
+            [MapFrom(typeof(SourceClass), StrictEnumMapping = StrictEnumMapping.SourceAndTarget)]
+            public record TargetClass(TargetEnum Prop1);
+            """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        var targetClassSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.TargetClass").ShouldNotBeNull();
+        var attribute = targetClassSymbol.GetAttributes().First();
+
+        diagnostics.ShouldNotBeSuccessful(
+            DiagnosticsFactory.IgnoreEnumMemberWithoutParameterTypeError(attribute, KnownTypes.Create(compilation).IgnoreEnumMemberAttributeTypeSymbol),
+            ignoreDiagnosticsIds: new[] { "MT3002" });
+    }
 }

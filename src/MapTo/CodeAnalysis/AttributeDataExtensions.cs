@@ -33,4 +33,7 @@ internal static class AttributeDataExtensions
             arguments[0].Expression.ToString(),
         _ => null
     };
+
+    internal static Location? GetLocation(this AttributeData? symbol) =>
+        symbol?.GetAttributeSyntax()?.GetLocation();
 }

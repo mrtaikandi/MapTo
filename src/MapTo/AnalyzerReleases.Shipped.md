@@ -25,3 +25,5 @@
  MT3018  | Mapping  | Error    | After map method does not have correct number of parameters.
  MT3019  | Mapping  | Error    | The source enum member is not found in the target enum.
  MT3020  | Mapping  | Error    | The target enum member is not found in the source enum.
+ MT3021  | Mapping  | Error    | The 'IgnoreEnumMemberAttributeIgnoreEnumMemberAttribute' cannot have arguments when applied to an enum member.
+ MT3022  | Mapping  | Error    | The 'IgnoreEnumMemberAttributeIgnoreEnumMemberAttribute' must have an argument when applied to an enum or class.
