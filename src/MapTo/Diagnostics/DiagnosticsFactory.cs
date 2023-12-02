@@ -199,6 +199,22 @@ internal static class DiagnosticsFactory
         missingEnumMember.ToDisplayString(),
         sourceEnumType.ToDisplayString());
 
+    /// <summary>
+    /// The '{0}' cannot have argument when applied to an enum member.
+    /// </summary>
+    internal static Diagnostic IgnoreEnumMemberWithParameterOnMemberError(AttributeData enumMemberAttribute, ITypeSymbol ignoreEnumMemberAttributeSymbol) => Create(
+        DiagnosticDescriptors.IgnoreEnumMemberWithParameterOnMemberError,
+        enumMemberAttribute.GetLocation(),
+        ignoreEnumMemberAttributeSymbol.ToDisplayString());
+
+    /// <summary>
+    /// The '{0}' must have an argument when applied to an enum or class.
+    /// </summary>
+    internal static Diagnostic IgnoreEnumMemberWithoutParameterTypeError(AttributeData enumMemberAttribute, ITypeSymbol ignoreEnumMemberAttributeSymbol) => Create(
+        DiagnosticDescriptors.IgnoreEnumMemberWithoutParameterTypeError,
+        enumMemberAttribute.GetLocation(),
+        ignoreEnumMemberAttributeSymbol.ToDisplayString());
+
     private static Diagnostic Create(DiagnosticDescriptor descriptor, Location? location, params object?[] messageArgs) =>
         Diagnostic.Create(descriptor, location ?? Location.None, messageArgs);
 

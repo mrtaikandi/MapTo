@@ -6,7 +6,8 @@ internal record KnownTypes(
     INamedTypeSymbol MapPropertyAttributeTypeSymbol,
     INamedTypeSymbol MapConstructorAttributeTypeSymbol,
     INamedTypeSymbol PropertyTypeConverterAttributeTypeSymbol,
-    INamedTypeSymbol CompilerGeneratedAttributeTypeSymbol)
+    INamedTypeSymbol CompilerGeneratedAttributeTypeSymbol,
+    INamedTypeSymbol IgnoreEnumMemberAttributeTypeSymbol)
 {
     internal const string NotNullIfNotNullAttributeFullName = "System.Diagnostics.CodeAnalysis.NotNullIfNotNullAttribute";
     internal const string CompilerGeneratedAttributeFullName = "System.Runtime.CompilerServices.CompilerGeneratedAttribute";
@@ -22,5 +23,6 @@ internal record KnownTypes(
         MapPropertyAttributeTypeSymbol: compilation.GetTypeByMetadataNameOrThrow<MapPropertyAttribute>(),
         MapConstructorAttributeTypeSymbol: compilation.GetTypeByMetadataNameOrThrow<MapConstructorAttribute>(),
         PropertyTypeConverterAttributeTypeSymbol: compilation.GetTypeByMetadataNameOrThrow<PropertyTypeConverterAttribute>(),
-        CompilerGeneratedAttributeTypeSymbol: compilation.GetTypeByMetadataNameOrThrow(CompilerGeneratedAttributeFullName));
+        CompilerGeneratedAttributeTypeSymbol: compilation.GetTypeByMetadataNameOrThrow(CompilerGeneratedAttributeFullName),
+        IgnoreEnumMemberAttributeTypeSymbol: compilation.GetTypeByMetadataNameOrThrow<IgnoreEnumMemberAttribute>());
 }

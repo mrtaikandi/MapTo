@@ -52,3 +52,6 @@ MapTo.StrictEnumMapping.Off = 0 -> MapTo.StrictEnumMapping
 MapTo.StrictEnumMapping.SourceOnly = 1 -> MapTo.StrictEnumMapping
 MapTo.StrictEnumMapping.TargetOnly = 2 -> MapTo.StrictEnumMapping
 MapTo.StrictEnumMapping.SourceAndTarget = 3 -> MapTo.StrictEnumMapping
+MapTo.IgnoreEnumMemberAttribute
+MapTo.IgnoreEnumMemberAttribute.EnumMember.get -> System.Enum?
+MapTo.IgnoreEnumMemberAttribute.IgnoreEnumMemberAttribute(object? enumMember = null) -> void

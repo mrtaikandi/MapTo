@@ -247,4 +247,26 @@ internal static class DiagnosticDescriptors
         category: UsageCategory,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
+
+    /// <summary>
+    /// The '{0}' cannot have argument when applied to an enum member.
+    /// </summary>
+    internal static readonly DiagnosticDescriptor IgnoreEnumMemberWithParameterOnMemberError = new DiagnosticDescriptor(
+        id: $"{ErrorId}021",
+        title: string.Empty,
+        messageFormat: "The '{0}' cannot have argument when applied to an enum member",
+        category: UsageCategory,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    /// <summary>
+    /// The '{0}' must have an argument when applied to an enum or class.
+    /// </summary>
+    internal static readonly DiagnosticDescriptor IgnoreEnumMemberWithoutParameterTypeError = new DiagnosticDescriptor(
+        id: $"{ErrorId}022",
+        title: string.Empty,
+        messageFormat: "The '{0}' must have an argument when applied to an enum or class",
+        category: UsageCategory,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
 }
