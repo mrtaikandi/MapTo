@@ -1,4 +1,4 @@
-﻿using MapTo.Generators.Handlers;
+﻿using MapTo.Generators.Properties;
 
 namespace MapTo.Generators;
 

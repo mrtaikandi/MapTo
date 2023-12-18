@@ -1,6 +1,6 @@
 ﻿using MapTo.Mappings;
 
-namespace MapTo.Generators.Handlers;
+namespace MapTo.Generators.Properties;
 
 internal sealed class TypeConverterPropertyMappingGenerator : PropertyMappingGenerator
 {

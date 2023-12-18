@@ -2,7 +2,7 @@
 using static MapTo.NullHandling;
 using static Microsoft.CodeAnalysis.NullableAnnotation;
 
-namespace MapTo.Generators.Handlers;
+namespace MapTo.Generators.Properties;
 
 internal sealed class GenericEnumerablePropertyMappingGenerator : PropertyMappingGenerator
 {
