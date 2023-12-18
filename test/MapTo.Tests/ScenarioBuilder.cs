@@ -35,6 +35,20 @@ internal static class ScenarioBuilder
         return builder;
     }
 
+    public static ITestSourceBuilder SimpleMappedRecordInSameNamespace(TestSourceBuilderOptions? options = null, ProjectionType mapFromProjectionType = ProjectionType.None)
+    {
+        var builder = new TestSourceBuilder(options ?? TestSourceBuilderOptions.Create());
+        builder.AddFile().WithBody(
+            $"""
+            public record SourceRecord(int Value);
+
+            [MapFrom(typeof(SourceRecord), ProjectTo = ProjectionType.{mapFromProjectionType})]
+            public record DestinationRecord(int Value);
+            """);
+
+        return builder;
+    }
+
     public static ITestSourceBuilder SimpleMappedClassInSameNamespaceAsSource(TestSourceBuilderOptions? options = null)
     {
         var builder = new TestSourceBuilder(options ?? TestSourceBuilderOptions.Create());

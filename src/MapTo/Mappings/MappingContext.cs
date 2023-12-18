@@ -34,6 +34,7 @@ internal readonly record struct MappingContext(
                 ReferenceHandling = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.ReferenceHandling), source.Options.ReferenceHandling),
                 EnumMappingStrategy = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.EnumMappingStrategy), source.Options.EnumMappingStrategy),
                 StrictEnumMapping = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.StrictEnumMapping), source.Options.StrictEnumMapping),
+                ProjectionType = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.ProjectTo), source.Options.ProjectionType),
                 NullHandling = mapFromAttributeData.GetNamedArgument(
                     nameof(MapFromAttribute.NullHandling),
                     compilation.Options.NullableContextOptions is NullableContextOptions.Disable && source.Options.NullHandling == NullHandling.Auto

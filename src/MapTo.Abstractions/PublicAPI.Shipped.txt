@@ -33,6 +33,8 @@ MapTo.MapPropertyAttribute.From.set -> void
 MapTo.MapPropertyAttribute.NullHandling.get -> MapTo.NullHandling
 MapTo.MapPropertyAttribute.NullHandling.set -> void
 MapTo.MapPropertyAttribute.MapPropertyAttribute() -> void
+MapTo.MapFromAttribute.ProjectTo.get -> MapTo.ProjectionType
+MapTo.MapFromAttribute.ProjectTo.set -> void
 MapTo.PropertyTypeConverterAttribute
 MapTo.PropertyTypeConverterAttribute.MethodName.get -> string!
 MapTo.PropertyTypeConverterAttribute.Parameters.get -> object![]?
@@ -55,3 +57,21 @@ MapTo.StrictEnumMapping.SourceAndTarget = 3 -> MapTo.StrictEnumMapping
 MapTo.IgnoreEnumMemberAttribute
 MapTo.IgnoreEnumMemberAttribute.EnumMember.get -> System.Enum?
 MapTo.IgnoreEnumMemberAttribute.IgnoreEnumMemberAttribute(object? enumMember = null) -> void
+MapTo.ProjectionType
+MapTo.ProjectionType.None = 0 -> MapTo.ProjectionType
+MapTo.ProjectionType.Array = 1 -> MapTo.ProjectionType
+MapTo.ProjectionType.Enumerable = 2 -> MapTo.ProjectionType
+MapTo.ProjectionType.ICollection = 4 -> MapTo.ProjectionType
+MapTo.ProjectionType.IReadOnlyCollection = 8 -> MapTo.ProjectionType
+MapTo.ProjectionType.Collection = 16 -> MapTo.ProjectionType
+MapTo.ProjectionType.IList = 32 -> MapTo.ProjectionType
+MapTo.ProjectionType.IReadOnlyList = 64 -> MapTo.ProjectionType
+MapTo.ProjectionType.List = 128 -> MapTo.ProjectionType
+MapTo.ProjectionType.Queryable = 256 -> MapTo.ProjectionType
+MapTo.ProjectionType.IDictionary = 512 -> MapTo.ProjectionType
+MapTo.ProjectionType.Dictionary = 1024 -> MapTo.ProjectionType
+MapTo.ProjectionType.Span = 2048 -> MapTo.ProjectionType
+MapTo.ProjectionType.Memory = 4096 -> MapTo.ProjectionType
+MapTo.ProjectionType.ReadOnlySpan = 8192 -> MapTo.ProjectionType
+MapTo.ProjectionType.ReadOnlyMemory = 16384 -> MapTo.ProjectionType
+MapTo.ProjectionType.All = -1 -> MapTo.ProjectionType

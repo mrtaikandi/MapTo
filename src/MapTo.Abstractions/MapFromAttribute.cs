@@ -74,4 +74,10 @@ public sealed class MapFromAttribute : Attribute
     /// Gets or sets a value indicating how strict the enum mapping should be. Defaults to <see cref="StrictEnumMapping.Off" />.
     /// </summary>
     public StrictEnumMapping StrictEnumMapping { get; set; } = StrictEnumMapping.Off;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to generate projection mappings and which types to generate them for.
+    /// By default, projection mappings are generated for all supported types.
+    /// </summary>
+    public ProjectionType ProjectTo { get; set; } = ProjectionType.None;
 }

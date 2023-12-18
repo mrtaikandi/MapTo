@@ -19,6 +19,7 @@ internal readonly record struct ExtensionClassGenerator(
             .WriteMapArrayMethods(TargetMapping)
             .WriteMapEnumMethods(TargetMapping)
             .WriteMapToPrimitiveArrayMethods(TargetMapping)
+            .WriteProjectionExtensionMethods(TargetMapping, CompilerOptions)
             .WriteClosingBracket(); // Class closing bracket
     }
 }
@@ -275,6 +276,196 @@ internal static class ExtensionClassGeneratorExtensions
             .WriteClosingBracket();
     }
 
+    internal static CodeWriter WriteProjectionExtensionMethods(this CodeWriter writer, TargetMapping mapping, CompilerOptions compilerOptions)
+    {
+        var projectionType = mapping.Options.ProjectionType;
+        if (projectionType is ProjectionType.None)
+        {
+            return writer;
+        }
+
+        string returnType;
+        string sourceType;
+        const string ParameterName = "source";
+        var methodName = $"{mapping.Options.MapMethodPrefix}{mapping.Name}".Pluralize();
+        var mapMethodName = $"{mapping.Options.MapMethodPrefix}{mapping.Name}";
+
+        switch (projectionType)
+        {
+            case ProjectionType.Array:
+                sourceType = $"{mapping.GetSourceType()}[]";
+                returnType = $"{mapping.GetReturnType()}[]";
+                break;
+
+            case ProjectionType.Enumerable:
+                sourceType = $"global::{KnownTypes.GenericIEnumerable}<{mapping.GetSourceType()}>";
+                returnType = $"global::{KnownTypes.GenericIEnumerable}<{mapping.GetReturnType()}>";
+                break;
+
+            case ProjectionType.ICollection:
+                sourceType = $"global::{KnownTypes.GenericICollection}<{mapping.GetSourceType()}>";
+                returnType = $"global::{KnownTypes.GenericICollection}<{mapping.GetReturnType()}>";
+                break;
+
+            case ProjectionType.IReadOnlyCollection:
+                sourceType = $"global::{KnownTypes.GenericIReadOnlyCollection}<{mapping.GetSourceType()}>";
+                returnType = $"global::{KnownTypes.GenericIReadOnlyCollection}<{mapping.GetReturnType()}>";
+                break;
+
+            case ProjectionType.Collection:
+                sourceType = $"global::{KnownTypes.ObjectModelCollection}<{mapping.GetSourceType()}>";
+                returnType = $"global::{KnownTypes.ObjectModelCollection}<{mapping.GetReturnType()}>";
+                break;
+
+            case ProjectionType.IList:
+                sourceType = $"global::{KnownTypes.GenericIList}<{mapping.GetSourceType()}>";
+                returnType = $"global::{KnownTypes.GenericIList}<{mapping.GetReturnType()}>";
+                break;
+
+            case ProjectionType.IReadOnlyList:
+                sourceType = $"global::{KnownTypes.GenericIReadOnlyList}<{mapping.GetSourceType()}>";
+                returnType = $"global::{KnownTypes.GenericIReadOnlyList}<{mapping.GetReturnType()}>";
+                break;
+
+            case ProjectionType.List:
+                sourceType = $"global::{KnownTypes.GenericList}<{mapping.GetSourceType()}>";
+                returnType = $"global::{KnownTypes.GenericList}<{mapping.GetReturnType()}>";
+                break;
+
+            case ProjectionType.Span:
+                sourceType = $"global::{KnownTypes.SystemSpan}<{mapping.GetSourceType()}>";
+                returnType = $"global::{KnownTypes.SystemSpan}<{mapping.GetReturnType()}>";
+                compilerOptions = compilerOptions with { NullableReferenceTypes = false, NullableStaticAnalysis = false };
+                break;
+
+            case ProjectionType.Memory:
+                sourceType = $"global::{KnownTypes.SystemMemory}<{mapping.GetSourceType()}>";
+                returnType = $"global::{KnownTypes.SystemMemory}<{mapping.GetReturnType()}>";
+                break;
+
+            case ProjectionType.ReadOnlySpan:
+                sourceType = $"global::{KnownTypes.SystemReadOnlySpan}<{mapping.GetSourceType()}>";
+                returnType = $"global::{KnownTypes.SystemReadOnlySpan}<{mapping.GetReturnType()}>";
+                compilerOptions = compilerOptions with { NullableReferenceTypes = false, NullableStaticAnalysis = false };
+                break;
+
+            case ProjectionType.ReadOnlyMemory:
+                sourceType = $"global::{KnownTypes.SystemReadOnlyMemory}<{mapping.GetSourceType()}>";
+                returnType = $"global::{KnownTypes.SystemReadOnlyMemory}<{mapping.GetReturnType()}>";
+                break;
+
+            default:
+                // ReSharper disable once NotResolvedInText
+                throw new ArgumentOutOfRangeException("ProjectTo", $"Unknown projection type '{projectionType}'.");
+        }
+
+        writer
+            .WriteLine()
+            .WriteReturnNotNullIfNotNullAttributeIfRequired(mapping, compilerOptions, parameterName: ParameterName)
+            .Write(mapping.Modifier.ToLowercaseString())
+            .Write(" static ")
+            .Write(returnType)
+            .Write(compilerOptions.NullableReferenceSyntax)
+            .WriteWhitespace()
+            .Write(methodName)
+            .WriteOpenParenthesis()
+            .WriteAllowNullAttributeIf(compilerOptions is { NullableStaticAnalysis: true, NullableReferenceTypes: false })
+            .Write("this ")
+            .Write(sourceType)
+            .Write(compilerOptions.NullableReferenceSyntax)
+            .WriteWhitespace()
+            .Write(ParameterName)
+            .WriteClosingParenthesis()
+            .WriteOpeningBracket(); // Method opening bracket
+
+        switch (projectionType)
+        {
+            case ProjectionType.Array:
+            case ProjectionType.Span:
+            case ProjectionType.ReadOnlySpan:
+                writer
+                    .WriteParameterNullCheckIf(compilerOptions.NullableReferenceTypes, ParameterName)
+                    .WriteLineIf(compilerOptions.NullableReferenceTypes)
+                    .WriteLine($"var target = new {mapping.GetReturnType()}[{ParameterName}.Length];")
+                    .WriteLine("for (var i = 0; i < target.Length; i++)")
+                    .WriteOpeningBracket()
+                    .WriteLine($"target[i] = {mapMethodName}({ParameterName}[i]);")
+                    .WriteClosingBracket()
+                    .WriteLine()
+                    .WriteLine("return target;");
+
+                break;
+
+            case ProjectionType.Enumerable:
+                writer
+                    .Write("return ")
+                    .WriteTernaryIsNullCheck(ParameterName, "null", $"global::{KnownTypes.LinqEnumerable}.Select({ParameterName}, x => {mapMethodName}(x))").WriteLine(";");
+
+                break;
+
+            case ProjectionType.ICollection:
+            case ProjectionType.IReadOnlyCollection:
+            case ProjectionType.IList:
+            case ProjectionType.IReadOnlyList:
+            case ProjectionType.List:
+                writer
+                    .WriteParameterNullCheck(ParameterName)
+                    .WriteLine()
+                    .WriteLine($"var target = new global::{KnownTypes.GenericList}<{mapping.GetReturnType()}>(source.Count);")
+                    .WriteLine("foreach (var item in source)")
+                    .WriteOpeningBracket()
+                    .WriteLine($"target.Add({mapMethodName}(item));")
+                    .WriteClosingBracket()
+                    .WriteLine()
+                    .WriteLine("return target;");
+
+                break;
+
+            case ProjectionType.Collection:
+                writer
+                    .WriteParameterNullCheck(ParameterName)
+                    .WriteLine()
+                    .WriteLine($"var target = new global::{KnownTypes.GenericList}<{mapping.GetReturnType()}>(source.Count);")
+                    .WriteLine("foreach (var item in source)")
+                    .WriteOpeningBracket()
+                    .WriteLine($"target.Add({mapMethodName}(item));")
+                    .WriteClosingBracket()
+                    .WriteLine()
+                    .WriteLine($"return new global::{KnownTypes.ObjectModelCollection}<{mapping.GetReturnType()}>(target);");
+
+                break;
+
+            case ProjectionType.Memory:
+            case ProjectionType.ReadOnlyMemory:
+                var nullableValue = compilerOptions.NullableReferenceTypes ? ".Value" : string.Empty;
+                writer
+                    .WriteParameterNullCheckIf(compilerOptions.NullableReferenceTypes, ParameterName)
+                    .WriteLineIf(compilerOptions.NullableReferenceTypes)
+                    .WriteLine($"var sourceSpan = source{nullableValue}.Span;")
+                    .WriteLine($"var target = new {mapping.GetReturnType()}[sourceSpan.Length];")
+                    .WriteLine()
+                    .WriteLine("for (var i = 0; i < target.Length; i++)")
+                    .WriteOpeningBracket()
+                    .WriteLine($"target[i] = {mapMethodName}(sourceSpan[i]);")
+                    .WriteClosingBracket()
+                    .WriteLine()
+                    .WriteLine("return target;");
+
+                break;
+
+            case ProjectionType.Queryable:
+                throw new NotImplementedException("Queryable projection is not implemented yet.");
+
+            default:
+                // ReSharper disable once NotResolvedInText
+                throw new ArgumentOutOfRangeException("ProjectTo", $"Unknown projection type '{projectionType}'.");
+        }
+
+        writer.WriteClosingBracket(); // Method closing bracket
+
+        return writer;
+    }
+
     private static string GetMapArrayMethodName(this PropertyMapping property) =>
         $"{property.TypeConverter.MethodName}Array";
 
@@ -375,6 +566,20 @@ internal static class ExtensionClassGeneratorExtensions
         .WriteOpeningBracket()
         .WriteLine("return null;")
         .WriteClosingBracket();
+
+    private static CodeWriter WriteParameterNullCheckIf(this CodeWriter writer, bool condition, string parameterName)
+    {
+        if (condition)
+        {
+            writer
+                .Write("if (").WriteIsNullCheck(parameterName).WriteLine(")")
+                .WriteOpeningBracket()
+                .WriteLine("return null;")
+                .WriteClosingBracket();
+        }
+
+        return writer;
+    }
 
     private static CodeWriter WritePropertySetters(this CodeWriter writer, TargetMapping mapping, string instanceName, string? referenceHandlerInstanceName = null)
     {
