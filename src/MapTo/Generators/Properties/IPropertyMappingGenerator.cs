@@ -1,4 +1,4 @@
-﻿namespace MapTo.Generators.Handlers;
+﻿namespace MapTo.Generators.Properties;
 
 internal interface IPropertyMappingGenerator
 {
