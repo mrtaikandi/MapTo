@@ -44,8 +44,8 @@ internal static class CodeWriterExtensions
     public static CodeWriter WriteReturnNotNullIfNotNullAttributeIfRequired(this CodeWriter writer, string parameterName, CompilerOptions options) =>
         options.NullableStaticAnalysis || options.NullableReferenceTypes ? writer.WriteReturnNotNullIfNotNullAttribute(parameterName) : writer;
 
-    public static CodeWriter WriteReturnNotNullIfNotNullAttributeIfRequired(this CodeWriter writer, TargetMapping mapping, CompilerOptions options) =>
-        WriteReturnNotNullIfNotNullAttributeIfRequired(writer, mapping.Source.Name.ToParameterNameCasing(), options);
+    public static CodeWriter WriteReturnNotNullIfNotNullAttributeIfRequired(this CodeWriter writer, TargetMapping mapping, CompilerOptions options, string? parameterName = null) =>
+        WriteReturnNotNullIfNotNullAttributeIfRequired(writer, parameterName ?? mapping.Source.Name.ToParameterNameCasing(), options);
 
     public static CodeWriter WriteTernaryArgumentNullCheck(this CodeWriter writer, string parameterName, string trueValue) =>
         writer.WriteIsNullCheck(parameterName).Write(" ? ").WriteThrowArgumentNullException(parameterName).Write(" : ").Write(trueValue);

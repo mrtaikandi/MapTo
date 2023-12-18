@@ -93,7 +93,6 @@ public class MapEnumsTests
         var (compilation, diagnostics) = builder.Compile();
 
         // Assert
-        compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
 
         var targetClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
@@ -533,10 +532,9 @@ public class MapEnumsTests
               """);
 
         // Act
-        var (compilation, diagnostics) = builder.Compile();
+        var (_, diagnostics) = builder.Compile();
 
         // Assert
-        compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
     }
 
@@ -568,10 +566,9 @@ public class MapEnumsTests
             """);
 
         // Act
-        var (compilation, diagnostics) = builder.Compile();
+        var (_, diagnostics) = builder.Compile();
 
         // Assert
-        compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
     }
 
@@ -603,10 +600,9 @@ public class MapEnumsTests
             """);
 
         // Act
-        var (compilation, diagnostics) = builder.Compile();
+        var (_, diagnostics) = builder.Compile();
 
         // Assert
-        compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
     }
 
@@ -638,10 +634,9 @@ public class MapEnumsTests
             """);
 
         // Act
-        var (compilation, diagnostics) = builder.Compile();
+        var (_, diagnostics) = builder.Compile();
 
         // Assert
-        compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
     }
 
@@ -673,10 +668,9 @@ public class MapEnumsTests
             """);
 
         // Act
-        var (compilation, diagnostics) = builder.Compile();
+        var (_, diagnostics) = builder.Compile();
 
         // Assert
-        compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
     }
 

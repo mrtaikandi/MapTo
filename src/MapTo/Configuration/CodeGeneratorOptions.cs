@@ -12,6 +12,7 @@ namespace MapTo.Configuration;
 /// <param name="NullHandling">Indicates how to handle null properties.</param>
 /// <param name="EnumMappingStrategy">Indicates the strategy to use when mapping enum values.</param>
 /// <param name="StrictEnumMapping">Indicates how strict the enum mapping should be.</param>
+/// <param name="ProjectionType">Indicates the type of projection mappings to generate.</param>
 internal readonly record struct CodeGeneratorOptions(
     string MapMethodPrefix = "MapTo",
     string MapExtensionClassSuffix = "MapToExtensions",
@@ -19,7 +20,8 @@ internal readonly record struct CodeGeneratorOptions(
     bool CopyPrimitiveArrays = false,
     NullHandling NullHandling = NullHandling.Auto,
     EnumMappingStrategy EnumMappingStrategy = EnumMappingStrategy.ByValue,
-    StrictEnumMapping StrictEnumMapping = StrictEnumMapping.Off)
+    StrictEnumMapping StrictEnumMapping = StrictEnumMapping.Off,
+    ProjectionType ProjectionType = ProjectionType.None)
 {
     /// <summary>
     /// The prefix of the property name in the .editorconfig file.
@@ -42,6 +44,7 @@ internal readonly record struct CodeGeneratorOptions(
             CopyPrimitiveArrays: provider.GlobalOptions.GetOption(nameof(CopyPrimitiveArrays), false),
             NullHandling: provider.GlobalOptions.GetOption<NullHandling>(nameof(NullHandling)),
             EnumMappingStrategy: provider.GlobalOptions.GetOption(nameof(EnumMappingStrategy), EnumMappingStrategy.ByValue),
-            StrictEnumMapping: provider.GlobalOptions.GetOption(nameof(StrictEnumMapping), StrictEnumMapping.Off));
+            StrictEnumMapping: provider.GlobalOptions.GetOption(nameof(StrictEnumMapping), StrictEnumMapping.Off),
+            ProjectionType: provider.GlobalOptions.GetOption(nameof(ProjectionType), ProjectionType.None));
     }
 }
