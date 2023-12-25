@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace MapTo.Tests;
@@ -40,11 +41,31 @@ internal static class ScenarioBuilder
         var builder = new TestSourceBuilder(options ?? TestSourceBuilderOptions.Create());
         builder.AddFile().WithBody(
             $"""
-            public record SourceRecord(int Value);
+             public record SourceRecord(int Value);
 
-            [MapFrom(typeof(SourceRecord), ProjectTo = ProjectionType.{mapFromProjectionType})]
-            public record DestinationRecord(int Value);
-            """);
+             [MapFrom(typeof(SourceRecord), ProjectTo = ProjectionType.{mapFromProjectionType})]
+             public record DestinationRecord(int Value);
+             """);
+
+        return builder;
+    }
+
+    public static ITestSourceBuilder SimpleMappedRecordWithProjectionMethod([StringSyntax("csharp")] string method, bool supportNullReferenceTypes = false)
+    {
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: supportNullReferenceTypes));
+        builder.AddFile(
+                supportNullableReferenceTypes: supportNullReferenceTypes,
+                usings: new[] { "System", "System.Collections.Generic", "System.Collections.Immutable", "System.Collections.ObjectModel" })
+            .WithBody(
+                $$"""
+                  public record SourceRecord(int Value);
+
+                  [MapFrom(typeof(SourceRecord), ProjectTo = ProjectionType.None)]
+                  public partial record DestinationRecord(int Value)
+                  {
+                      {{method}}
+                  }
+                  """);
 
         return builder;
     }

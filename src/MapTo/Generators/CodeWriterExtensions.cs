@@ -39,7 +39,10 @@ internal static class CodeWriterExtensions
         writer.WriteLineIf(enabled, "#nullable enable").WriteLine();
 
     public static CodeWriter WriteReturnNotNullIfNotNullAttribute(this CodeWriter writer, string parameterName) =>
-        writer.WriteLine($@"[return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull(""{parameterName}"")]");
+        writer.WriteLine($"""[return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("{parameterName}")]""");
+
+    public static CodeWriter WriteReturnNotNullIfNotNullAttributeIf(this CodeWriter writer, bool condition, string parameterName) =>
+        condition ? writer.WriteReturnNotNullIfNotNullAttribute(parameterName) : writer;
 
     public static CodeWriter WriteReturnNotNullIfNotNullAttributeIfRequired(this CodeWriter writer, string parameterName, CompilerOptions options) =>
         options.NullableStaticAnalysis || options.NullableReferenceTypes ? writer.WriteReturnNotNullIfNotNullAttribute(parameterName) : writer;
@@ -70,6 +73,9 @@ internal static class CodeWriterExtensions
 
     public static CodeWriter WriteThrowNotImplementedException(this CodeWriter writer) =>
         writer.WriteLine("throw new System.NotImplementedException();");
+
+    public static CodeWriter WriteThrowInvalidOperationException(this CodeWriter writer, string message) =>
+        writer.WriteLine($"throw new global::{KnownTypes.InvalidOperationException}(\"{message}\");");
 
     public static CodeWriter WriteUsing(this CodeWriter writer, string u) =>
         writer.WriteLine($"using {u};");

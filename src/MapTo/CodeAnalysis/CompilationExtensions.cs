@@ -23,6 +23,38 @@ internal static class CompilationExtensions
         !SymbolEqualityComparer.Default.Equals(compilation.GetSpecialType(SpecialType.System_String), typeSymbol) &&
         compilation.HasImplicitConversion(typeSymbol, compilation.GetSpecialType(SpecialType.System_Collections_IEnumerable));
 
+    public static bool IsEnumerableType(this Compilation compilation, ITypeSymbol symbol, out ImmutableArray<ITypeSymbol> typeArguments)
+    {
+        if (symbol is IArrayTypeSymbol arrayTypeSymbol)
+        {
+            typeArguments = ImmutableArray.Create(arrayTypeSymbol.ElementType);
+            return true;
+        }
+
+        if (symbol is not INamedTypeSymbol namedTypeSymbol)
+        {
+            typeArguments = ImmutableArray<ITypeSymbol>.Empty;
+            return false;
+        }
+
+        var spanSymbol = compilation.GetTypeByMetadataName(KnownTypes.SystemSpanOfT);
+        var readOnlySpanSymbol = compilation.GetTypeByMetadataName(KnownTypes.SystemReadOnlySpanOfT);
+        var memorySymbol = compilation.GetTypeByMetadataName(KnownTypes.SystemMemoryOfT);
+        var readOnlyMemorySymbol = compilation.GetTypeByMetadataName(KnownTypes.SystemReadOnlyMemoryOfT);
+        var immutableArraySymbol = compilation.GetTypeByMetadataName(KnownTypes.SystemCollectionImmutableArrayOfT);
+
+        var originalDefinition = namedTypeSymbol.OriginalDefinition;
+        typeArguments = namedTypeSymbol.TypeArguments;
+
+        return (namedTypeSymbol.IsGenericCollectionOf(SpecialType.System_Collections_Generic_IEnumerable_T)
+                || SymbolEqualityComparer.Default.Equals(originalDefinition, spanSymbol)
+                || SymbolEqualityComparer.Default.Equals(originalDefinition, readOnlySpanSymbol)
+                || SymbolEqualityComparer.Default.Equals(originalDefinition, memorySymbol)
+                || SymbolEqualityComparer.Default.Equals(originalDefinition, readOnlyMemorySymbol)
+                || SymbolEqualityComparer.Default.Equals(originalDefinition, immutableArraySymbol)) &&
+               namedTypeSymbol.TypeArguments.Length > 0;
+    }
+
     public static bool TypeByMetadataNameExists(this Compilation? compilation, string typeMetadataName) => GetTypesByMetadataName(compilation, typeMetadataName).Any();
 
     public static IEnumerable<INamedTypeSymbol> GetTypesByMetadataName(this Compilation? compilation, string typeMetadataName)

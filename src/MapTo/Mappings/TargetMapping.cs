@@ -5,6 +5,7 @@ internal readonly record struct TargetMapping(
     string Name,
     NamespaceMapping Namespace,
     bool IsPartial,
+    string TypeKeyword,
     SourceMapping Source,
     ConstructorMapping Constructor,
     ImmutableArray<PropertyMapping> Properties,
@@ -12,7 +13,11 @@ internal readonly record struct TargetMapping(
     ImmutableArray<string> UsingDirectives,
     MethodMapping BeforeMapMethod,
     MethodMapping AfterMapMethod,
-    CodeGeneratorOptions Options);
+    ImmutableArray<ProjectionMapping> Projection,
+    CodeGeneratorOptions Options)
+{
+    internal string ExtensionClassName => $"{Source.Name}{Options.MapExtensionClassSuffix}";
+}
 
 internal static class TargetMappingFactory
 {
@@ -29,6 +34,7 @@ internal static class TargetMappingFactory
             Name: targetTypeSyntax.Identifier.Text,
             Namespace: NamespaceMapping.Create(targetTypeSymbol),
             IsPartial: targetTypeSyntax.IsPartial(),
+            TypeKeyword: targetTypeSyntax.Keyword.Text,
             Source: SourceMapping.Create(sourceTypeSymbol),
             Constructor: constructorMapping,
             Properties: properties,
@@ -36,7 +42,7 @@ internal static class TargetMappingFactory
             UsingDirectives: properties.SelectMany(p => p.UsingDirectives).Distinct().ToImmutableArray(),
             BeforeMapMethod: MethodMapping.CreateBeforeMapMethod(context),
             AfterMapMethod: MethodMapping.CreateAfterMapMethod(context),
-            Projection: default,
+            Projection: ProjectionMapping.Create(context),
             Options: codeGeneratorOptions with
             {
                 ReferenceHandling = context.UseReferenceHandling(properties)

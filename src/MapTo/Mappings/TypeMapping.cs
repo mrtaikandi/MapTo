@@ -14,9 +14,13 @@ internal readonly record struct TypeMapping(
     string ElementTypeName,
     EnumerableType EnumerableType,
     NullableAnnotation ElementTypeNullableAnnotation,
+    bool IsCountable,
+    bool IsFixedSize,
+    bool IsImmutable,
     SpecialType SpecialType)
 {
 #if DEBUG
+    [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global", Justification = "Is for debugging purposes only.")]
     internal ITypeSymbol OriginalTypeSymbol { get; init; }
 #endif
 }
@@ -57,7 +61,10 @@ internal static class TypeMappingExtensions
             ElementTypeName: elementTypeName,
             EnumerableType: enumerableType,
             ElementTypeNullableAnnotation: elementType?.NullableAnnotation ?? NullableAnnotation.None,
-            SpecialType: typeSymbol.SpecialType);
+            SpecialType: typeSymbol.SpecialType,
+            IsCountable: enumerableType.IsCountable(),
+            IsFixedSize: enumerableType.IsFixedSize(),
+            IsImmutable: enumerableType.IsImmutable());
 
 #if DEBUG
         return mapping with { OriginalTypeSymbol = typeSymbol };
@@ -68,18 +75,24 @@ internal static class TypeMappingExtensions
 
     internal static string EmptySourceCodeString(this TypeMapping type) => type switch
     {
-        { EnumerableType: EnumerableType.Array or EnumerableType.ReadOnlyCollection } => $"global::{KnownTypes.Array}.Empty<{type.ElementTypeName}>()",
+        { EnumerableType: EnumerableType.Array or EnumerableType.ReadOnlyCollection or EnumerableType.ReadOnlyList } =>
+            $"global::{KnownTypes.Array}.Empty<{type.ElementTypeName}>()",
         { EnumerableType: EnumerableType.List } => $"new global::{KnownTypes.GenericList}<{type.ElementTypeName}>()",
         { EnumerableType: EnumerableType.Enumerable } => $"global::{KnownTypes.LinqEnumerable}.Empty<{type.ElementTypeName}>()",
         { SpecialType: SpecialType.System_String, NullableAnnotation: not NullableAnnotation.Annotated } => "string.Empty",
         _ => "default"
     };
 
-    private static EnumerableType ToEnumerableType(this INamedTypeSymbol typeSymbol) => typeSymbol switch
+    private static EnumerableType ToEnumerableType(this ITypeSymbol typeSymbol) => typeSymbol switch
     {
+        _ when typeSymbol.IsReadOnlySpanOfT() => EnumerableType.ReadOnlySpan,
+        _ when typeSymbol.IsSpanOfT() => EnumerableType.Span,
+        _ when typeSymbol.IsReadOnlyMemoryOfT() => EnumerableType.ReadOnlyMemory,
+        _ when typeSymbol.IsMemoryOfT() => EnumerableType.Memory,
+        _ when typeSymbol.IsImmutableArrayOfT() => EnumerableType.ImmutableArray,
         _ when typeSymbol.IsGenericCollectionOf(SpecialType.System_Collections_Generic_IList_T) => EnumerableType.List,
-        _ when typeSymbol.IsGenericCollectionOf(SpecialType.System_Collections_Generic_ICollection_T) => EnumerableType.List,
-        _ when typeSymbol.IsGenericCollectionOf(SpecialType.System_Collections_Generic_IReadOnlyList_T) => EnumerableType.ReadOnlyCollection,
+        _ when typeSymbol.IsGenericCollectionOf(SpecialType.System_Collections_Generic_ICollection_T) => EnumerableType.Collection,
+        _ when typeSymbol.IsGenericCollectionOf(SpecialType.System_Collections_Generic_IReadOnlyList_T) => EnumerableType.ReadOnlyList,
         _ when typeSymbol.IsGenericCollectionOf(SpecialType.System_Collections_Generic_IReadOnlyCollection_T) => EnumerableType.ReadOnlyCollection,
         _ when typeSymbol.IsGenericCollectionOf(SpecialType.System_Collections_Generic_IEnumerable_T) => EnumerableType.Enumerable,
         _ => EnumerableType.None
