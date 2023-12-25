@@ -3,7 +3,7 @@ using MapTo.Mappings;
 
 namespace MapTo.Generators;
 
-internal readonly record struct PartialClassGenerator(TargetMapping Mapping) : ICodeGenerator
+internal readonly record struct PartialClassGenerator(TargetMapping Mapping, CompilerOptions CompilerOptions) : ICodeGenerator
 {
     /// <inheritdoc />
     public void BeginWrite(CodeWriter writer)
@@ -18,12 +18,13 @@ internal readonly record struct PartialClassGenerator(TargetMapping Mapping) : I
             .WritePartialClassDefinition(Mapping)
             .WriteOpeningBracket() // Class opening bracket
             .WriteConstructor(Mapping.Constructor)
+            .WriteProjectionPartialMethods(Mapping, CompilerOptions)
             .WriteClosingBracket() // Class closing bracket
             .WriteLine();
     }
 }
 
-internal static class PartialClassGeneratorExtensions
+static file class PartialClassGeneratorExtensions
 {
     internal static CodeWriter WriteConstructor(this CodeWriter writer, ConstructorMapping constructor)
     {
@@ -42,5 +43,5 @@ internal static class PartialClassGeneratorExtensions
     }
 
     internal static CodeWriter WritePartialClassDefinition(this CodeWriter writer, TargetMapping mapping) => writer
-        .WriteLine($"{mapping.Modifier.ToLowercaseString()} partial class {mapping.Name}");
+        .WriteLine($"{mapping.Modifier.ToLowercaseString()} partial {mapping.TypeKeyword} {mapping.Name}");
 }

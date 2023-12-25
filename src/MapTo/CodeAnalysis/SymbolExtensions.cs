@@ -129,6 +129,31 @@ internal static class SymbolExtensions
         return genericType.Interfaces.Any(i => i.IsGenericType && i.ConstructedFrom.SpecialType == type);
     }
 
+    public static bool IsSpanOfT(this ITypeSymbol typeSymbol) =>
+        typeSymbol is INamedTypeSymbol { IsGenericType: true } namedTypeSymbol &&
+        namedTypeSymbol.ContainingNamespace.ToDisplayString() == "System" &&
+        namedTypeSymbol.MetadataName == "Span`1";
+
+    public static bool IsReadOnlySpanOfT(this ITypeSymbol typeSymbol) =>
+        typeSymbol is INamedTypeSymbol { IsGenericType: true } namedTypeSymbol &&
+        namedTypeSymbol.ContainingNamespace.ToDisplayString() == "System" &&
+        namedTypeSymbol.MetadataName == "ReadOnlySpan`1";
+
+    public static bool IsMemoryOfT(this ITypeSymbol typeSymbol) =>
+        typeSymbol is INamedTypeSymbol { IsGenericType: true } namedTypeSymbol &&
+        namedTypeSymbol.ContainingNamespace.ToDisplayString() == "System" &&
+        namedTypeSymbol.MetadataName == "Memory`1";
+
+    public static bool IsReadOnlyMemoryOfT(this ITypeSymbol typeSymbol) =>
+        typeSymbol is INamedTypeSymbol { IsGenericType: true } namedTypeSymbol &&
+        namedTypeSymbol.ContainingNamespace.ToDisplayString() == "System" &&
+        namedTypeSymbol.MetadataName == "ReadOnlyMemory`1";
+
+    public static bool IsImmutableArrayOfT(this ITypeSymbol typeSymbol) =>
+        typeSymbol is INamedTypeSymbol { IsGenericType: true } namedTypeSymbol &&
+        namedTypeSymbol.ContainingNamespace.ToDisplayString() == "System.Collections.Immutable" &&
+        namedTypeSymbol.MetadataName == "ImmutableArray`1";
+
     public static string ToFullyQualifiedDisplayString(this ITypeSymbol typeSymbol) =>
         $"{typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}{(typeSymbol.NullableAnnotation is NullableAnnotation.Annotated ? "?" : string.Empty)}";
 

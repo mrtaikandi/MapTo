@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using MapTo.Configuration;
 using MapTo.Mappings;
 using Microsoft.CodeAnalysis.Text;
 
@@ -17,7 +16,7 @@ internal readonly record struct CodeGenerator(
         var generators = new ICodeGenerator[]
         {
             new FileGenerator(CompilerOptions.NullableReferenceTypes, CompilerOptions.FileScopedNamespace, Mapping),
-            new PartialClassGenerator(Mapping),
+            new PartialClassGenerator(Mapping, CompilerOptions),
             new ExtensionClassGenerator(CompilerOptions, Mapping)
         };
 
