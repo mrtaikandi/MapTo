@@ -69,7 +69,7 @@ public class MapProjectionTests
                 var target = new global::MapTo.Tests.DestinationRecord[source.Length];
                 for (var i = 0; i < source.Length; i++)
                 {
-                    target[i] = global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecord(source[i]);
+                    target[i] = MapToDestinationRecord(source[i]);
                 }
             
                 return target;
@@ -102,7 +102,7 @@ public class MapProjectionTests
                     return null;
                 }
             
-                return global::System.Linq.Enumerable.Select(source, x => global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecord(x));
+                return global::System.Linq.Enumerable.Select(source, x => MapToDestinationRecord(x));
             }
             """);
     }
@@ -135,7 +135,7 @@ public class MapProjectionTests
                 var i = 0;
                 foreach (var item in source)
                 {
-                    target.Add(global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecord(item));
+                    target.Add(MapToDestinationRecord(item));
                     i++;
                 }
             
@@ -173,7 +173,7 @@ public class MapProjectionTests
                 var i = 0;
                 foreach (var item in source)
                 {
-                    target.Add(global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecord(item));
+                    target.Add(MapToDestinationRecord(item));
                     i++;
                 }
             
@@ -210,7 +210,7 @@ public class MapProjectionTests
                 var target = new global::System.Collections.Generic.List<global::MapTo.Tests.DestinationRecord>(source.Count);
                 for (var i = 0; i < source.Count; i++)
                 {
-                    target.Add(global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecord(source[i]));
+                    target.Add(MapToDestinationRecord(source[i]));
                 }
             
                 return target;
@@ -246,7 +246,7 @@ public class MapProjectionTests
                 var target = new global::System.Collections.Generic.List<global::MapTo.Tests.DestinationRecord>(source.Count);
                 for (var i = 0; i < source.Count; i++)
                 {
-                    target.Add(global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecord(source[i]));
+                    target.Add(MapToDestinationRecord(source[i]));
                 }
     
                 return target;
@@ -282,7 +282,7 @@ public class MapProjectionTests
                 var target = new global::System.Collections.Generic.List<global::MapTo.Tests.DestinationRecord>(source.Count);
                 for (var i = 0; i < source.Count; i++)
                 {
-                    target.Add(global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecord(source[i]));
+                    target.Add(MapToDestinationRecord(source[i]));
                 }
             
                 return target;
@@ -318,7 +318,7 @@ public class MapProjectionTests
                 var target = new global::MapTo.Tests.DestinationRecord[source.Value.Span.Length];
                 for (var i = 0; i < source.Value.Span.Length; i++)
                 {
-                    target[i] = global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecord(source.Value.Span[i]);
+                    target[i] = MapToDestinationRecord(source.Value.Span[i]);
                 }
             
                 return target;
@@ -354,7 +354,7 @@ public class MapProjectionTests
                 var target = new global::MapTo.Tests.DestinationRecord[source.Value.Span.Length];
                 for (var i = 0; i < source.Value.Span.Length; i++)
                 {
-                    target[i] = global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecord(source.Value.Span[i]);
+                    target[i] = MapToDestinationRecord(source.Value.Span[i]);
                 }
             
                 return target;

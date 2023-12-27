@@ -26,7 +26,7 @@ internal static class ProjectionGenerator
 
     internal static CodeWriter WriteProjectionExtensionMethods(this CodeWriter writer, TargetMapping mapping, CompilerOptions compilerOptions)
     {
-        var mapMethodName = $"global::{mapping.Namespace}.{mapping.ExtensionClassName}.{mapping.Options.MapMethodPrefix}{mapping.Name}";
+        var mapMethodName = $"{mapping.Options.MapMethodPrefix}{mapping.Name}";
 
         foreach (var projection in mapping.Projections)
         {
