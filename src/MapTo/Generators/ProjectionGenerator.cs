@@ -6,9 +6,9 @@ internal static class ProjectionGenerator
 {
     internal static CodeWriter WriteProjectionPartialMethods(this CodeWriter writer, TargetMapping mapping, CompilerOptions compilerOptions)
     {
-        foreach (var projection in mapping.Projection)
+        foreach (var projection in mapping.Projections.Where(p => p.IsPartial))
         {
-            var (_, originalAccessibility, methodName, returnType, parameterType, parameterName) = projection;
+            var (_, originalAccessibility, methodName, returnType, parameterType, parameterName, _) = projection;
             var parameterIsNullable = projection.IsNullable(compilerOptions);
             var nullSyntax = parameterIsNullable ? compilerOptions.NullableReferenceSyntax : string.Empty;
             var accessibility = originalAccessibility.ToString().ToLowerInvariant();
@@ -28,9 +28,9 @@ internal static class ProjectionGenerator
     {
         var mapMethodName = $"global::{mapping.Namespace}.{mapping.ExtensionClassName}.{mapping.Options.MapMethodPrefix}{mapping.Name}";
 
-        foreach (var projection in mapping.Projection)
+        foreach (var projection in mapping.Projections)
         {
-            var (_, _, methodName, returnType, parameterType, parameterName) = projection;
+            var (_, _, methodName, returnType, parameterType, parameterName, _) = projection;
             var parameterIsNullable = projection.IsNullable(compilerOptions);
             var nullSyntax = parameterIsNullable ? compilerOptions.NullableReferenceSyntax : string.Empty;
             var accessibility = projection.Accessibility.ToString().ToLowerInvariant();
@@ -51,7 +51,7 @@ internal static class ProjectionGenerator
 
     private static CodeWriter WriteProjectionForIEnumerableParameter(this CodeWriter writer, ProjectionMapping projection, string mapMethodName)
     {
-        var (_, _, _, returnType, parameterType, parameterName) = projection;
+        var (_, _, _, returnType, parameterType, parameterName, _) = projection;
         if (parameterType.IsCountable)
         {
             return writer;
@@ -76,10 +76,15 @@ internal static class ProjectionGenerator
 
     private static CodeWriter WriteProjectionForCountableParameter(this CodeWriter writer, ProjectionMapping projection, string mapMethodName)
     {
-        var (_, _, _, returnType, parameterType, parameterName) = projection;
+        var (_, _, _, returnType, parameterType, parameterName, _) = projection;
         if (!parameterType.IsCountable)
         {
             return writer;
+        }
+
+        if (parameterType is { IsReferenceType: false, NullableAnnotation: NullableAnnotation.Annotated })
+        {
+            parameterName = $"{parameterName}.Value";
         }
 
         projection = projection with
@@ -126,7 +131,7 @@ internal static class ProjectionGenerator
 
     private static CodeWriter WriteExtensionBodyForFixedSizeTypesOrSpans(this CodeWriter writer, ProjectionMapping projection, string mapMethodName)
     {
-        var (_, _, _, returnType, parameterType, parameterName) = projection;
+        var (_, _, _, returnType, parameterType, parameterName, _) = projection;
         var lengthMethodName = parameterType.IsFixedSize ? "Length" : "Count";
         writer.WriteLine($"var target = new {returnType.ElementTypeName}[{parameterName}.{lengthMethodName}];");
 
@@ -142,7 +147,7 @@ internal static class ProjectionGenerator
         {
             writer
                 .WriteLine("var i = 0;")
-                .WriteLine($"foreach(var item in {parameterName})")
+                .WriteLine($"foreach (var item in {parameterName})")
                 .WriteOpeningBracket()
                 .WriteLine($"target[i] = {mapMethodName}(item);")
                 .WriteLine("i++;")
@@ -154,7 +159,7 @@ internal static class ProjectionGenerator
 
     private static CodeWriter WriteExtensionBodyForCountableTypes(this CodeWriter writer, ProjectionMapping projection, string mapMethodName)
     {
-        var (_, _, _, returnType, parameterType, parameterName) = projection;
+        var (_, _, _, returnType, parameterType, parameterName, _) = projection;
         var lengthMethodName = parameterType.IsFixedSize ? "Length" : "Count";
         writer.WriteLine($"var target = new global::{KnownTypes.GenericList}<{returnType.ElementTypeName}>({parameterName}.{lengthMethodName});");
 
@@ -170,7 +175,7 @@ internal static class ProjectionGenerator
         {
             writer
                 .WriteLine("var i = 0;")
-                .WriteLine($"foreach(var item in {parameterName})")
+                .WriteLine($"foreach (var item in {parameterName})")
                 .WriteOpeningBracket()
                 .WriteLine($"target.Add({mapMethodName}(item));")
                 .WriteLine("i++;")

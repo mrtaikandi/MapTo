@@ -17,8 +17,22 @@ internal static class AnalyzerConfigOptionsExtensions
         var type = typeof(T);
         type = Nullable.GetUnderlyingType(type) ?? type;
 
-        return type.IsEnum
-            ? (T)Enum.Parse(type, value, true)
-            : (T)Convert.ChangeType(value, type);
+        if (!type.IsEnum)
+        {
+            return (T)Convert.ChangeType(value, type);
+        }
+
+        if (type.GetCustomAttributes(typeof(FlagsAttribute), false).Length == 0)
+        {
+            return (T)Enum.Parse(type, value, true);
+        }
+
+        var values = value.Split(['|'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(v => v.Trim())
+            .Select(v => Enum.Parse(type, v, true))
+            .Cast<int>()
+            .Aggregate(0, (current, next) => current | next);
+
+        return (T)Enum.ToObject(type, values);
     }
 }

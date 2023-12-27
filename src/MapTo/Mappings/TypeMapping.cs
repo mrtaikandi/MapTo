@@ -17,6 +17,7 @@ internal readonly record struct TypeMapping(
     bool IsCountable,
     bool IsFixedSize,
     bool IsImmutable,
+    bool IsReferenceType,
     SpecialType SpecialType)
 {
 #if DEBUG
@@ -64,7 +65,8 @@ internal static class TypeMappingExtensions
             SpecialType: typeSymbol.SpecialType,
             IsCountable: enumerableType.IsCountable(),
             IsFixedSize: enumerableType.IsFixedSize(),
-            IsImmutable: enumerableType.IsImmutable());
+            IsImmutable: enumerableType.IsImmutable(),
+            IsReferenceType: typeSymbol.IsReferenceType);
 
 #if DEBUG
         return mapping with { OriginalTypeSymbol = typeSymbol };

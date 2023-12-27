@@ -8,8 +8,11 @@ namespace MapTo.Tests.Extensions;
 
 internal static partial class ShouldlyExtensions
 {
-    internal static void ShouldBe(this ClassDeclarationSyntax? classDeclaration, [StringSyntax("csharp")] string expected) =>
-        Verify(classDeclaration?.ToString(), expected, "Should be equal but is not.", Assert.Equal);
+    internal static void ShouldBe(this MemberDeclarationSyntax? declarationSyntax, [StringSyntax("csharp")] string expected) =>
+        Verify(declarationSyntax?.NormalizeWhitespace().ToString() ?? string.Empty, expected, "Should be equal but is not.", Assert.Equal, false);
+
+    internal static void ShouldBe(this MemberDeclarationSyntax? declarationSyntax, bool ignoreWhitespace, [StringSyntax("csharp")] string expected) =>
+        Verify(declarationSyntax?.NormalizeWhitespace().ToString() ?? string.Empty, expected, "Should be equal but is not.", Assert.Equal, ignoreWhitespace);
 
     internal static void ShouldBeSuccessful(this Compilation compilation, IEnumerable<string>? ignoreDiagnosticsIds = null) =>
         compilation.GetDiagnostics().ShouldBeSuccessful(compilation, ignoreDiagnosticsIds);
@@ -65,10 +68,10 @@ internal static partial class ShouldlyExtensions
         Assert.Fail(builder.ToString());
     }
 
-    internal static void ShouldContain(this ClassDeclarationSyntax? classDeclaration, [StringSyntax("csharp")] string expected)
+    internal static void ShouldContain(this MemberDeclarationSyntax? declarationSyntax, [StringSyntax("csharp")] string expected)
     {
-        Assert.NotNull(classDeclaration);
-        var content = classDeclaration.ToString();
+        Assert.NotNull(declarationSyntax);
+        var content = declarationSyntax.ToString();
 
 #pragma warning disable SA1118
         Verify(
@@ -95,7 +98,7 @@ internal static partial class ShouldlyExtensions
         }
 
         var syntax = syntaxTrees.Single().ToString().Trim();
-        Verify(syntax, expectedSource, $"Expected to find the following source in the '{fileName}' file path but found a difference.", Assert.Equal);
+        Verify(syntax, expectedSource, $"Expected to find the following source in the '{fileName}' file path but found a difference.", Assert.Equal, false);
     }
 
     internal static void ShouldNotBeSuccessful(this ImmutableArray<Diagnostic> diagnostics, Diagnostic expectedError, IEnumerable<string>? ignoreDiagnosticsIds = null)
@@ -168,16 +171,37 @@ internal static partial class ShouldlyExtensions
         return builder.ToString();
     }
 
-    private static void Verify<TActual, TExpected>(TActual actual, TExpected expected, string failError, Action<TActual, TExpected> assertion)
+    private static void Verify(string actual, string expected, string failError, Action<string, string> assertion, bool ignoreWhitespace)
     {
         try
         {
-            assertion(actual, expected);
+            if (ignoreWhitespace)
+            {
+                assertion(actual.RemoveAllWhitespace(), expected.RemoveAllWhitespace());
+            }
+            else
+            {
+                assertion(actual, expected);
+            }
         }
         catch (Exception)
         {
-            var diff = BuildDiff(actual as string ?? actual?.ToString(), expected as string ?? expected?.ToString());
-            Assert.Fail($"{failError}{Environment.NewLine}{diff}");
+            Assert.Fail(
+                $"""
+                 {failError}
+                 
+                 {BuildDiff(actual, expected)}
+                 
+                 ---------------------------
+                 Actual:
+                 
+                 {actual}
+                 
+                 Expected:
+                 
+                 {expected}
+                 
+                 """);
         }
     }
 

@@ -10,6 +10,9 @@ public class CodeGeneratorOptionsTests
     [InlineData(nameof(CodeGeneratorOptions.ReferenceHandling), "Auto", ReferenceHandling.Auto)]
     [InlineData(nameof(CodeGeneratorOptions.CopyPrimitiveArrays), "true", true)]
     [InlineData(nameof(CodeGeneratorOptions.CopyPrimitiveArrays), "false", false)]
+    [InlineData(nameof(CodeGeneratorOptions.ProjectionType), "IEnumerable", ProjectionType.IEnumerable)]
+    [InlineData(nameof(CodeGeneratorOptions.ProjectionType), "Array | IEnumerable", ProjectionType.Array | ProjectionType.IEnumerable)]
+    [InlineData(nameof(CodeGeneratorOptions.ProjectionType), "3", ProjectionType.Array | ProjectionType.IEnumerable)]
     public void Verify_AnalyzerConfigOption(string configName, string value, object expectedValue)
     {
         // Arrange

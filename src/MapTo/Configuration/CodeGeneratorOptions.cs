@@ -21,7 +21,7 @@ internal readonly record struct CodeGeneratorOptions(
     NullHandling NullHandling = NullHandling.Auto,
     EnumMappingStrategy EnumMappingStrategy = EnumMappingStrategy.ByValue,
     StrictEnumMapping StrictEnumMapping = StrictEnumMapping.Off,
-    ProjectionType ProjectionType = ProjectionType.None)
+    ProjectionType ProjectionType = ProjectionType.Array | ProjectionType.IEnumerable | ProjectionType.List)
 {
     /// <summary>
     /// The prefix of the property name in the .editorconfig file.
@@ -45,6 +45,6 @@ internal readonly record struct CodeGeneratorOptions(
             NullHandling: provider.GlobalOptions.GetOption<NullHandling>(nameof(NullHandling)),
             EnumMappingStrategy: provider.GlobalOptions.GetOption(nameof(EnumMappingStrategy), EnumMappingStrategy.ByValue),
             StrictEnumMapping: provider.GlobalOptions.GetOption(nameof(StrictEnumMapping), StrictEnumMapping.Off),
-            ProjectionType: provider.GlobalOptions.GetOption(nameof(ProjectionType), ProjectionType.None));
+            ProjectionType: provider.GlobalOptions.GetOption(nameof(ProjectionType),  ProjectionType.Array | ProjectionType.IEnumerable | ProjectionType.List));
     }
 }
