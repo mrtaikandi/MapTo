@@ -27,11 +27,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Humanizer.Core" PrivateAssets="All" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="All" />
         <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="All" />
         <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="All" />
-        <PackageReference Include="Microsoft.Bcl.HashCode" PrivateAssets="All" />
+        <PackageReference Include="Humanizer.Core" PrivateAssets="All" GeneratePathProperty="true"/>
+        <PackageReference Include="Microsoft.Bcl.HashCode" PrivateAssets="All" GeneratePathProperty="true"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -52,6 +52,9 @@
         <None Include="$(OutputPath)\$(AssemblyName).Abstractions.dll" Pack="true" PackagePath="lib\netstandard2.0" Visible="false"/>
         <None Include="$(OutputPath)\$(AssemblyName).Abstractions.xml" Pack="true" PackagePath="lib\netstandard2.0" Visible="false"/>
         <None Include="MapTo.props" Pack="true" PackagePath="build" Visible="false"/>
+
+        <None Include="$(PkgHumanizer_Core)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+        <None Include="$(PkgMicrosoft_Bcl_HashCode)\lib\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     </ItemGroup>
 
 </Project>

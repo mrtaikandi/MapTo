@@ -13,7 +13,7 @@ internal readonly record struct TargetMapping(
     ImmutableArray<string> UsingDirectives,
     MethodMapping BeforeMapMethod,
     MethodMapping AfterMapMethod,
-    ImmutableArray<ProjectionMapping> Projection,
+    ImmutableArray<ProjectionMapping> Projections,
     CodeGeneratorOptions Options)
 {
     internal string ExtensionClassName => $"{Source.Name}{Options.MapExtensionClassSuffix}";
@@ -42,7 +42,7 @@ internal static class TargetMappingFactory
             UsingDirectives: properties.SelectMany(p => p.UsingDirectives).Distinct().ToImmutableArray(),
             BeforeMapMethod: MethodMapping.CreateBeforeMapMethod(context),
             AfterMapMethod: MethodMapping.CreateAfterMapMethod(context),
-            Projection: ProjectionMapping.Create(context),
+            Projections: ProjectionMapping.Create(context),
             Options: codeGeneratorOptions with
             {
                 ReferenceHandling = context.UseReferenceHandling(properties)

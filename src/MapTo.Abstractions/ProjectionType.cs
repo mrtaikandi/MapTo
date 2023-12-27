@@ -22,7 +22,7 @@ public enum ProjectionType
     /// <summary>
     /// Specifies that projection mappings should be generated for <see cref="IEnumerable{T}" />.
     /// </summary>
-    Enumerable = 1 << 1,
+    IEnumerable = 1 << 1,
 
     /// <summary>
     /// Specifies that projection mappings should be generated for <see cref="ICollection{T}" />.
@@ -35,59 +35,29 @@ public enum ProjectionType
     IReadOnlyCollection = 1 << 3,
 
     /// <summary>
-    /// Specifies that projection mappings should be generated for <see cref="System.Collections.ObjectModel.Collection{T}" />.
-    /// </summary>
-    Collection = 1 << 4,
-
-    /// <summary>
     /// Specifies that projection mappings should be generated for <see cref="IList{T}" />.
     /// </summary>
-    IList = 1 << 5,
+    IList = 1 << 4,
 
     /// <summary>
     /// Specifies that projection mappings should be generated for <see cref="IReadOnlyList{T}" />.
     /// </summary>
-    IReadOnlyList = 1 << 6,
+    IReadOnlyList = 1 << 5,
 
     /// <summary>
     /// Specifies that projection mappings should be generated for <see cref="System.Collections.Generic.List{T}" />.
     /// </summary>
-    List = 1 << 7,
-
-    /// <summary>
-    /// Specifies that projection mappings should be generated for <see cref="IQueryable{T}" />.
-    /// </summary>
-    Queryable = 1 << 8,
-
-    /// <summary>
-    /// Specifies that projection mappings should be generated for <see cref="IDictionary{TKey,TValue}" />.
-    /// </summary>
-    IDictionary = 1 << 9,
-
-    /// <summary>
-    /// Specifies that projection mappings should be generated for <see cref="Dictionary{TKey,TValue}" />.
-    /// </summary>
-    Dictionary = 1 << 10,
-
-    /// <summary>
-    /// Specifies that projection mappings should be generated for <c>Span{T}</c> />.
-    /// </summary>
-    Span = 1 << 11,
+    List = 1 << 6,
 
     /// <summary>
     /// Specifies that projection mappings should be generated for <c>Memory{T}</c> />.
     /// </summary>
-    Memory = 1 << 12,
-
-    /// <summary>
-    /// Specifies that projection mappings should be generated for <c>ReadOnlySpan{T}</c> />.
-    /// </summary>
-    ReadOnlySpan = 1 << 13,
+    Memory = 1 << 7,
 
     /// <summary>
     /// Specifies that projection mappings should be generated for <c>ReadOnlyMemory{T}</c> />.
     /// </summary>
-    ReadOnlyMemory = 1 << 14,
+    ReadOnlyMemory = 1 << 8,
 
     /// <summary>
     /// Specifies that projection mappings should be generated for all supported types.

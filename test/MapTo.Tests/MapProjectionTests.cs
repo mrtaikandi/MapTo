@@ -22,6 +22,7 @@ public class MapProjectionTests
         diagnostics.ShouldBeSuccessful();
         compilation.GetClassDeclaration("SourceRecordMapToExtensions")
             .ShouldBe(
+                ignoreWhitespace: true,
                 $$"""
                   {{ScenarioBuilder.GeneratedCodeAttribute}}
                   public static class SourceRecordMapToExtensions
@@ -51,48 +52,59 @@ public class MapProjectionTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceRecordMapToExtensions")
-            .ShouldContain(
-                """
-                [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
-                public static DestinationRecord[]? MapToDestinationRecords(this SourceRecord[]? source)
+        var extensionClass = compilation.GetClassDeclaration("SourceRecordMapToExtensions").ShouldNotBeNull();
+        var methods = extensionClass.Members.OfType<MethodDeclarationSyntax>().ToArray();
+        methods.Length.ShouldBe(2);
+        methods[1].ShouldBe(
+            ignoreWhitespace: true,
+            """
+            [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
+            public static global::MapTo.Tests.DestinationRecord[]? MapToDestinationRecords(this global::MapTo.Tests.SourceRecord[]? source)
+            {
+                if (source is null)
                 {
-                    if (source is null)
-                    {
-                        return null;
-                    }
-                
-                    var target = new DestinationRecord[source.Length];
-                    for (var i = 0; i < target.Length; i++)
-                    {
-                        target[i] = MapToDestinationRecord(source[i]);
-                    }
-                
-                    return target;
+                    return null;
                 }
-                """);
+            
+                var target = new global::MapTo.Tests.DestinationRecord[source.Length];
+                for (var i = 0; i < source.Length; i++)
+                {
+                    target[i] = global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecord(source[i]);
+                }
+            
+                return target;
+            }
+            """);
     }
 
     [Fact]
     public void When_ProjectionIsEnumerable_Should_GenerateProjectionExtensionMethods()
     {
         // Arrange
-        var builder = ScenarioBuilder.SimpleMappedRecordInSameNamespace(mapFromProjectionType: ProjectionType.Enumerable);
+        var builder = ScenarioBuilder.SimpleMappedRecordInSameNamespace(mapFromProjectionType: ProjectionType.IEnumerable);
 
         // Act
         var (compilation, diagnostics) = builder.Compile();
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceRecordMapToExtensions")
-            .ShouldContain(
-                """
-                [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
-                public static global::System.Collections.Generic.IEnumerable<DestinationRecord>? MapToDestinationRecords(this global::System.Collections.Generic.IEnumerable<SourceRecord>? source)
+        var extensionClass = compilation.GetClassDeclaration("SourceRecordMapToExtensions").ShouldNotBeNull();
+        var methods = extensionClass.Members.OfType<MethodDeclarationSyntax>().ToArray();
+        methods.Length.ShouldBe(2);
+        methods[1].ShouldBe(
+            ignoreWhitespace: true,
+            """
+            [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
+            public static global::System.Collections.Generic.IEnumerable<global::MapTo.Tests.DestinationRecord>? MapToDestinationRecords(this global::System.Collections.Generic.IEnumerable<global::MapTo.Tests.SourceRecord>? source)
+            {
+                if (source is null)
                 {
-                    return source is null ? null : global::System.Linq.Enumerable.Select(source, x => MapToDestinationRecord(x));
+                    return null;
                 }
-                """);
+            
+                return global::System.Linq.Enumerable.Select(source, x => global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecord(x));
+            }
+            """);
     }
 
     [Fact]
@@ -106,59 +118,30 @@ public class MapProjectionTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceRecordMapToExtensions")
-            .ShouldContain(
-                """
-                [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
-                public static global::System.Collections.Generic.ICollection<DestinationRecord>? MapToDestinationRecords(this global::System.Collections.Generic.ICollection<SourceRecord>? source)
+        var extensionClass = compilation.GetClassDeclaration("SourceRecordMapToExtensions").ShouldNotBeNull();
+        var methods = extensionClass.Members.OfType<MethodDeclarationSyntax>().ToArray();
+        methods.Length.ShouldBe(2);
+        methods[1].ShouldBe(
+            """
+            [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
+            public static global::System.Collections.Generic.ICollection<global::MapTo.Tests.DestinationRecord>? MapToDestinationRecords(this global::System.Collections.Generic.ICollection<global::MapTo.Tests.SourceRecord>? source)
+            {
+                if (source is null)
                 {
-                    if (source is null)
-                    {
-                        return null;
-                    }
-                    
-                    var target = new global::System.Collections.Generic.List<DestinationRecord>(source.Count);
-                    foreach (var item in source)
-                    {
-                        target.Add(MapToDestinationRecord(item));
-                    }
-                    
-                    return target;
+                    return null;
                 }
-                """);
-    }
-
-    [Fact]
-    public void When_ProjectionIsCollection_Should_GenerateProjectionExtensionMethods()
-    {
-        // Arrange
-        var builder = ScenarioBuilder.SimpleMappedRecordInSameNamespace(mapFromProjectionType: ProjectionType.Collection);
-
-        // Act
-        var (compilation, diagnostics) = builder.Compile();
-
-        // Assert
-        diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceRecordMapToExtensions")
-            .ShouldContain(
-                """
-                [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
-                public static global::System.Collections.ObjectModel.Collection<DestinationRecord>? MapToDestinationRecords(this global::System.Collections.ObjectModel.Collection<SourceRecord>? source)
+            
+                var target = new global::System.Collections.Generic.List<global::MapTo.Tests.DestinationRecord>(source.Count);
+                var i = 0;
+                foreach (var item in source)
                 {
-                    if (source is null)
-                    {
-                        return null;
-                    }
-                    
-                    var target = new global::System.Collections.Generic.List<DestinationRecord>(source.Count);
-                    foreach (var item in source)
-                    {
-                        target.Add(MapToDestinationRecord(item));
-                    }
-                    
-                    return new global::System.Collections.ObjectModel.Collection<DestinationRecord>(target);
+                    target.Add(global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecord(item));
+                    i++;
                 }
-                """);
+            
+                return target;
+            }
+            """);
     }
 
     [Fact]
@@ -172,26 +155,31 @@ public class MapProjectionTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceRecordMapToExtensions")
-            .ShouldContain(
-                """
-                [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
-                public static global::System.Collections.Generic.IReadOnlyCollection<DestinationRecord>? MapToDestinationRecords(this global::System.Collections.Generic.IReadOnlyCollection<SourceRecord>? source)
+        var extensionClass = compilation.GetClassDeclaration("SourceRecordMapToExtensions").ShouldNotBeNull();
+        var methods = extensionClass.Members.OfType<MethodDeclarationSyntax>().ToArray();
+        methods.Length.ShouldBe(2);
+        methods[1].ShouldBe(
+            ignoreWhitespace: true,
+            """
+            [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
+            public static global::System.Collections.Generic.IReadOnlyCollection<global::MapTo.Tests.DestinationRecord>? MapToDestinationRecords(this global::System.Collections.Generic.IReadOnlyCollection<global::MapTo.Tests.SourceRecord>? source)
+            {
+                if (source is null)
                 {
-                    if (source is null)
-                    {
-                        return null;
-                    }
-                    
-                    var target = new global::System.Collections.Generic.List<DestinationRecord>(source.Count);
-                    foreach (var item in source)
-                    {
-                        target.Add(MapToDestinationRecord(item));
-                    }
-                    
-                    return target;
+                    return null;
                 }
-                """);
+            
+                var target = new global::System.Collections.Generic.List<global::MapTo.Tests.DestinationRecord>(source.Count);
+                var i = 0;
+                foreach (var item in source)
+                {
+                    target.Add(global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecord(item));
+                    i++;
+                }
+            
+                return target;
+            }
+            """);
     }
 
     [Fact]
@@ -205,26 +193,29 @@ public class MapProjectionTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceRecordMapToExtensions")
-            .ShouldContain(
-                """
-                [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
-                public static global::System.Collections.Generic.IList<DestinationRecord>? MapToDestinationRecords(this global::System.Collections.Generic.IList<SourceRecord>? source)
+        var extensionClass = compilation.GetClassDeclaration("SourceRecordMapToExtensions").ShouldNotBeNull();
+        var methods = extensionClass.Members.OfType<MethodDeclarationSyntax>().ToArray();
+        methods.Length.ShouldBe(2);
+        methods[1].ShouldBe(
+            ignoreWhitespace: true,
+            """
+            [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
+            public static global::System.Collections.Generic.IList<global::MapTo.Tests.DestinationRecord>? MapToDestinationRecords(this global::System.Collections.Generic.IList<global::MapTo.Tests.SourceRecord>? source)
+            {
+                if (source is null)
                 {
-                    if (source is null)
-                    {
-                        return null;
-                    }
-                    
-                    var target = new global::System.Collections.Generic.List<DestinationRecord>(source.Count);
-                    foreach (var item in source)
-                    {
-                        target.Add(MapToDestinationRecord(item));
-                    }
-                    
-                    return target;
+                    return null;
                 }
-                """);
+            
+                var target = new global::System.Collections.Generic.List<global::MapTo.Tests.DestinationRecord>(source.Count);
+                for (var i = 0; i < source.Count; i++)
+                {
+                    target.Add(global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecord(source[i]));
+                }
+            
+                return target;
+            }
+            """);
     }
 
     [Fact]
@@ -238,26 +229,29 @@ public class MapProjectionTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceRecordMapToExtensions")
-            .ShouldContain(
-                """
-                [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
-                public static global::System.Collections.Generic.IReadOnlyList<DestinationRecord>? MapToDestinationRecords(this global::System.Collections.Generic.IReadOnlyList<SourceRecord>? source)
+        var extensionClass = compilation.GetClassDeclaration("SourceRecordMapToExtensions").ShouldNotBeNull();
+        var methods = extensionClass.Members.OfType<MethodDeclarationSyntax>().ToArray();
+        methods.Length.ShouldBe(2);
+        methods[1].ShouldBe(
+            ignoreWhitespace: true,
+            """
+            [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
+            public static global::System.Collections.Generic.IReadOnlyList<global::MapTo.Tests.DestinationRecord>? MapToDestinationRecords(this global::System.Collections.Generic.IReadOnlyList<global::MapTo.Tests.SourceRecord>? source)
+            {
+                if (source is null)
                 {
-                    if (source is null)
-                    {
-                        return null;
-                    }
-                    
-                    var target = new global::System.Collections.Generic.List<DestinationRecord>(source.Count);
-                    foreach (var item in source)
-                    {
-                        target.Add(MapToDestinationRecord(item));
-                    }
-                    
-                    return target;
+                    return null;
                 }
-                """);
+            
+                var target = new global::System.Collections.Generic.List<global::MapTo.Tests.DestinationRecord>(source.Count);
+                for (var i = 0; i < source.Count; i++)
+                {
+                    target.Add(global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecord(source[i]));
+                }
+    
+                return target;
+            }
+            """);
     }
 
     [Fact]
@@ -271,53 +265,29 @@ public class MapProjectionTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceRecordMapToExtensions")
-            .ShouldContain(
-                """
-                [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
-                public static global::System.Collections.Generic.List<DestinationRecord>? MapToDestinationRecords(this global::System.Collections.Generic.List<SourceRecord>? source)
+        var extensionClass = compilation.GetClassDeclaration("SourceRecordMapToExtensions").ShouldNotBeNull();
+        var methods = extensionClass.Members.OfType<MethodDeclarationSyntax>().ToArray();
+        methods.Length.ShouldBe(2);
+        methods[1].ShouldBe(
+            ignoreWhitespace: true,
+            """
+            [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
+            public static global::System.Collections.Generic.List<global::MapTo.Tests.DestinationRecord>? MapToDestinationRecords(this global::System.Collections.Generic.List<global::MapTo.Tests.SourceRecord>? source)
+            {
+                if (source is null)
                 {
-                    if (source is null)
-                    {
-                        return null;
-                    }
-                    
-                    var target = new global::System.Collections.Generic.List<DestinationRecord>(source.Count);
-                    foreach (var item in source)
-                    {
-                        target.Add(MapToDestinationRecord(item));
-                    }
-                    
-                    return target;
+                    return null;
                 }
-                """);
-    }
-
-    [Fact]
-    public void When_ProjectionIsSpan_Should_GenerateProjectionExtensionMethods()
-    {
-        // Arrange
-        var builder = ScenarioBuilder.SimpleMappedRecordInSameNamespace(mapFromProjectionType: ProjectionType.Span);
-
-        // Act
-        var (compilation, diagnostics) = builder.Compile();
-
-        // Assert
-        diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceRecordMapToExtensions")
-            .ShouldContain(
-                """
-                public static global::System.Span<DestinationRecord> MapToDestinationRecords(this global::System.Span<SourceRecord> source)
+            
+                var target = new global::System.Collections.Generic.List<global::MapTo.Tests.DestinationRecord>(source.Count);
+                for (var i = 0; i < source.Count; i++)
                 {
-                    var target = new DestinationRecord[source.Length];
-                    for (var i = 0; i < target.Length; i++)
-                    {
-                        target[i] = MapToDestinationRecord(source[i]);
-                    }
-                
-                    return target;
+                    target.Add(global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecord(source[i]));
                 }
-                """);
+            
+                return target;
+            }
+            """);
     }
 
     [Fact]
@@ -331,55 +301,29 @@ public class MapProjectionTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceRecordMapToExtensions")
-            .ShouldContain(
-                """
-                [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
-                public static global::System.Memory<DestinationRecord>? MapToDestinationRecords(this global::System.Memory<SourceRecord>? source)
+        var extensionClass = compilation.GetClassDeclaration("SourceRecordMapToExtensions").ShouldNotBeNull();
+        var methods = extensionClass.Members.OfType<MethodDeclarationSyntax>().ToArray();
+        methods.Length.ShouldBe(2);
+        methods[1].ShouldBe(
+            ignoreWhitespace: true,
+            """
+            [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
+            public static global::System.Memory<global::MapTo.Tests.DestinationRecord>? MapToDestinationRecords(this global::System.Memory<global::MapTo.Tests.SourceRecord>? source)
+            {
+                if (source is null)
                 {
-                    if (source is null)
-                    {
-                        return null;
-                    }
-                
-                    var sourceSpan = source.Value.Span;
-                    var target = new DestinationRecord[sourceSpan.Length];
-                
-                    for (var i = 0; i < target.Length; i++)
-                    {
-                        target[i] = MapToDestinationRecord(sourceSpan[i]);
-                    }
-                
-                    return target;
+                    return null;
                 }
-                """);
-    }
-
-    [Fact]
-    public void When_ProjectionIsReadOnlySpan_Should_GenerateProjectionExtensionMethods()
-    {
-        // Arrange
-        var builder = ScenarioBuilder.SimpleMappedRecordInSameNamespace(mapFromProjectionType: ProjectionType.ReadOnlySpan);
-
-        // Act
-        var (compilation, diagnostics) = builder.Compile();
-
-        // Assert
-        diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceRecordMapToExtensions")
-            .ShouldContain(
-                """
-                public static global::System.ReadOnlySpan<DestinationRecord> MapToDestinationRecords(this global::System.ReadOnlySpan<SourceRecord> source)
+            
+                var target = new global::MapTo.Tests.DestinationRecord[source.Value.Span.Length];
+                for (var i = 0; i < source.Value.Span.Length; i++)
                 {
-                    var target = new DestinationRecord[source.Length];
-                    for (var i = 0; i < target.Length; i++)
-                    {
-                        target[i] = MapToDestinationRecord(source[i]);
-                    }
-                
-                    return target;
+                    target[i] = global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecord(source.Value.Span[i]);
                 }
-                """);
+            
+                return target;
+            }
+            """);
     }
 
     [Fact]
@@ -393,27 +337,28 @@ public class MapProjectionTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceRecordMapToExtensions")
-            .ShouldContain(
-                """
-                [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
-                public static global::System.ReadOnlyMemory<DestinationRecord>? MapToDestinationRecords(this global::System.ReadOnlyMemory<SourceRecord>? source)
+        var extensionClass = compilation.GetClassDeclaration("SourceRecordMapToExtensions").ShouldNotBeNull();
+        var methods = extensionClass.Members.OfType<MethodDeclarationSyntax>().ToArray();
+        methods.Length.ShouldBe(2);
+        methods[1].ShouldBe(
+            ignoreWhitespace: true,
+            """
+            [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
+            public static global::System.ReadOnlyMemory<global::MapTo.Tests.DestinationRecord>? MapToDestinationRecords(this global::System.ReadOnlyMemory<global::MapTo.Tests.SourceRecord>? source)
+            {
+                if (source is null)
                 {
-                    if (source is null)
-                    {
-                        return null;
-                    }
-                
-                    var sourceSpan = source.Value.Span;
-                    var target = new DestinationRecord[sourceSpan.Length];
-                
-                    for (var i = 0; i < target.Length; i++)
-                    {
-                        target[i] = MapToDestinationRecord(sourceSpan[i]);
-                    }
-                
-                    return target;
+                    return null;
                 }
-                """);
+            
+                var target = new global::MapTo.Tests.DestinationRecord[source.Value.Span.Length];
+                for (var i = 0; i < source.Value.Span.Length; i++)
+                {
+                    target[i] = global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecord(source.Value.Span[i]);
+                }
+            
+                return target;
+            }
+            """);
     }
 }

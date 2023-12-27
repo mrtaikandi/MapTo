@@ -94,4 +94,26 @@ internal static class CompilationExtensions
 
         return typeSymbol?.GetMembers(methodName.ToString()).OfType<IMethodSymbol>().SingleOrDefault();
     }
+
+    public static ITypeSymbol CreateGenericTypeSymbol(
+        this Compilation compilation,
+        SpecialType specialType,
+        ITypeSymbol elementTypeSymbol,
+        NullableAnnotation nullableAnnotation = NullableAnnotation.None,
+        NullableAnnotation elementTypeNullableAnnotation = NullableAnnotation.None)
+    {
+        var type = compilation.GetSpecialType(specialType);
+        return type.Construct(elementTypeSymbol.WithNullableAnnotation(elementTypeNullableAnnotation)).WithNullableAnnotation(nullableAnnotation);
+    }
+
+    public static ITypeSymbol CreateGenericTypeSymbol(
+        this Compilation compilation,
+        string fullyQualifiedMetadataName,
+        ITypeSymbol elementTypeSymbol,
+        NullableAnnotation nullableAnnotation = NullableAnnotation.None,
+        NullableAnnotation elementTypeNullableAnnotation = NullableAnnotation.None)
+    {
+        var type = compilation.GetTypeByMetadataName(fullyQualifiedMetadataName) ?? throw new TypeLoadException($"Unable to find '{fullyQualifiedMetadataName}' type.");
+        return type.Construct(elementTypeSymbol.WithNullableAnnotation(elementTypeNullableAnnotation)).WithNullableAnnotation(nullableAnnotation);
+    }
 }

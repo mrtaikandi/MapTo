@@ -127,7 +127,11 @@ public class MapFromTests
     public void When_FoundMappingSource_WithReadOnlyPropertyNames_Should_UseGenerateAndUseConstructorInitializer()
     {
         // Arrange
-        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create());
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(analyzerConfigOptions: new Dictionary<string, string>
+        {
+            [nameof(CodeGeneratorOptions.ProjectionType)] = ProjectionType.None.ToString()
+        }));
+
         var sourceFile = builder.AddFile();
         sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
         sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: "[MapFrom(typeof(SourceClass))]")

@@ -189,7 +189,11 @@ public class MapRecordTests
     public void With_SimpleRecords_Should_GenerateWithConstructorInitializer()
     {
         // Arrange
-        var builder = new TestSourceBuilder();
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(analyzerConfigOptions: new Dictionary<string, string>
+        {
+            [nameof(CodeGeneratorOptions.ProjectionType)] = ProjectionType.None.ToString()
+        }));
+
         builder.AddFile(supportNullableReferenceTypes: true)
             .WithBody(
                 """
@@ -207,21 +211,21 @@ public class MapRecordTests
         var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldBe(
             $$"""
-            {{ScenarioBuilder.GeneratedCodeAttribute}}
-            public static class SourceMapToExtensions
-            {
-                [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
-                public static Target? MapToTarget(this Source? source)
-                {
-                    if (source is null)
-                    {
-                        return null;
-                    }
-            
-                    return new Target(source.FirstName, source.LastName);
-                }
-            }
-            """);
+              {{ScenarioBuilder.GeneratedCodeAttribute}}
+              public static class SourceMapToExtensions
+              {
+                  [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
+                  public static Target? MapToTarget(this Source? source)
+                  {
+                      if (source is null)
+                      {
+                          return null;
+                      }
+              
+                      return new Target(source.FirstName, source.LastName);
+                  }
+              }
+              """);
     }
 
     [Fact]

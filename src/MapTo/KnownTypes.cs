@@ -24,6 +24,8 @@ internal record KnownTypes(
     internal const string SystemReadOnlySpanOfT = "System.ReadOnlySpan`1";
     internal const string SystemMemoryOfT = "System.Memory`1";
     internal const string SystemReadOnlyMemoryOfT = "System.ReadOnlyMemory`1";
+    internal const string SystemCollectionsGenericListOfT = "System.Collections.Generic.List`1";
+    internal const string SystemLinqIQueryableOfT = "System.Linq.IQueryable`1";
     internal const string SystemCollectionImmutableArray = "System.Collections.Immutable.ImmutableArray";
     internal const string SystemCollectionImmutableArrayOfT = "System.Collections.Immutable.ImmutableArray`1";
 

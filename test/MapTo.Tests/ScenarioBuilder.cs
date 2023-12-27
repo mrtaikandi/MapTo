@@ -23,7 +23,10 @@ internal static class ScenarioBuilder
 
     public static ITestSourceBuilder SimpleMappedClassInDifferentNamespaceAsSource(TestSourceBuilderOptions? options = null)
     {
-        var builder = new TestSourceBuilder(options ?? TestSourceBuilderOptions.Create());
+        options ??= TestSourceBuilderOptions.Create();
+        options.AddAnalyzerConfigOption(nameof(CodeGeneratorOptions.ProjectionType), ProjectionType.None.ToString());
+
+        var builder = new TestSourceBuilder(options);
 
         var sourceFile1 = builder.AddFile(ns: "ExternalLib", usings: new[] { "MapTo" });
         sourceFile1.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
@@ -38,8 +41,8 @@ internal static class ScenarioBuilder
 
     public static ITestSourceBuilder SimpleMappedRecordInSameNamespace(TestSourceBuilderOptions? options = null, ProjectionType mapFromProjectionType = ProjectionType.None)
     {
-        var builder = new TestSourceBuilder(options ?? TestSourceBuilderOptions.Create());
-        builder.AddFile().WithBody(
+        var builder = new TestSourceBuilder(options ?? TestSourceBuilderOptions.Create(supportNullReferenceTypes: true));
+        builder.AddFile(supportNullableReferenceTypes: true).WithBody(
             $"""
              public record SourceRecord(int Value);
 
@@ -72,7 +75,10 @@ internal static class ScenarioBuilder
 
     public static ITestSourceBuilder SimpleMappedClassInSameNamespaceAsSource(TestSourceBuilderOptions? options = null)
     {
-        var builder = new TestSourceBuilder(options ?? TestSourceBuilderOptions.Create());
+        options ??= TestSourceBuilderOptions.Create();
+        options.AddAnalyzerConfigOption(nameof(CodeGeneratorOptions.ProjectionType), ProjectionType.None.ToString());
+
+        var builder = new TestSourceBuilder(options);
         var sourceFile = builder.AddFile();
         sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
         sourceFile.AddClass(Accessibility.Public, "TargetClass", attributes: "[MapFrom(typeof(SourceClass))]").WithProperty<int>("Id").WithProperty<string>("Name");
@@ -88,7 +94,10 @@ internal static class ScenarioBuilder
 
     public static ITestSourceBuilder SimpleMappedClassInSameNamespaceAsSourceWithInitProperty(LanguageVersion version = LanguageVersion.CSharp10)
     {
-        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(version, supportNullReferenceTypes: false));
+        var options = TestSourceBuilderOptions.Create(version, supportNullReferenceTypes: false);
+        options.AddAnalyzerConfigOption(nameof(CodeGeneratorOptions.ProjectionType), ProjectionType.None.ToString());
+
+        var builder = new TestSourceBuilder(options);
         var sourceFile = builder.AddFile();
         sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
         sourceFile.AddClass(Accessibility.Public, "TargetClass", attributes: "[MapFrom(typeof(SourceClass))]")
