@@ -64,7 +64,7 @@ public class MapProjectionMethodTests
                 var target = new global::MapTo.Tests.DestinationRecord[sourceRecords.Length];
                 for (var i = 0; i < sourceRecords.Length; i++)
                 {
-                    target[i] = global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecord(sourceRecords[i]);
+                    target[i] = MapToDestinationRecord(sourceRecords[i]);
                 }
             
                 return target;
@@ -244,7 +244,7 @@ public class MapProjectionMethodTests
         const string TestNamespace = "global::MapTo.Tests";
         const string ReturnElement = $"{TestNamespace}.DestinationRecord";
         const string EnumerableType = $"global::{KnownTypes.LinqEnumerable}";
-        const string MapMethodName = $"{TestNamespace}.SourceRecordMapToExtensions.MapToDestinationRecord";
+        const string MapMethodName = "MapToDestinationRecord";
 
         var expectedParameterType = parameterType switch
         {

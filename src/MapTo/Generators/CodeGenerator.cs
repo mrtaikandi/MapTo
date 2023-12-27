@@ -8,7 +8,7 @@ internal readonly record struct CodeGenerator(
     TargetMapping Mapping,
     CompilerOptions CompilerOptions)
 {
-    public string HintName => $"{Mapping.Namespace}.{Mapping.Name}.g.cs";
+    public string HintName => Mapping.Namespace.IsGlobalNamespace ? $"{Mapping.Name}.g.cs" : $"{Mapping.Namespace}.{Mapping.Name}.g.cs";
 
     public string Build()
     {

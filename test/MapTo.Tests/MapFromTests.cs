@@ -268,6 +268,30 @@ public class MapFromTests
     }
 
     [Fact]
+    public void When_SourceAndTargetNamespacesAreGlobal_Should_UseApplicationName()
+    {
+        // Arrange
+        var options = TestSourceBuilderOptions.Create(analyzerConfigOptions: new Dictionary<string, string>
+        {
+            [nameof(CodeGeneratorOptions.ProjectionType)] = ProjectionType.None.ToString()
+        });
+
+        var builder = new TestSourceBuilder(options);
+        var sourceFile = builder.AddFile(ns: string.Empty, usings: new[] { "MapTo" });
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", attributes: "[MapFrom(typeof(SourceClass))]").WithProperty<int>("Id").WithProperty<string>("Name");
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        compilation.Dump(_output);
+        diagnostics.ShouldBeSuccessful();
+        var generatedFile = compilation.GetGeneratedFileSyntaxTree("TargetClass.g.cs").ShouldNotBeNull();
+        generatedFile.GetRoot().DescendantNodes().OfType<FileScopedNamespaceDeclarationSyntax>().SingleOrDefault()?.Name.ToString().ShouldBe("MapTo.Tests.Dynamic");
+    }
+
+    [Fact]
     public void When_TargetWithReadOnlyPropertyAndNoConstructor_Should_CreateConstructorForReadOnlyProperties()
     {
         // Arrange

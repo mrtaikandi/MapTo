@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>true</ImplicitUsings>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <LangVersion>latest</LangVersion>
         <NoWarn>$(NoWarn);SA1118</NoWarn>
     </PropertyGroup>
 
