@@ -26,7 +26,7 @@ internal readonly record struct ProjectionMapping(
 
         foreach (var projection in GetProjectionMethods(context))
         {
-            if (customProjectionMethods.All(m => m.MethodName != projection.MethodName))
+            if (customProjectionMethods.All(m => m.MethodName != projection.MethodName || m.ParameterType.FullName != projection.ParameterType.FullName))
             {
                 customProjectionMethods.Add(projection);
             }

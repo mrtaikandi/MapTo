@@ -248,7 +248,7 @@ public class MapProjectionTests
                 {
                     target.Add(MapToDestinationRecord(source[i]));
                 }
-    
+
                 return target;
             }
             """);
@@ -355,6 +355,81 @@ public class MapProjectionTests
                 for (var i = 0; i < source.Value.Span.Length; i++)
                 {
                     target[i] = MapToDestinationRecord(source.Value.Span[i]);
+                }
+            
+                return target;
+            }
+            """);
+    }
+
+    [Fact]
+    public void When_MultipleProjectionsExist_Should_GenerateProjectionExtensionMethodsForEach()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: true));
+        builder.AddFile(supportNullableReferenceTypes: true, usings: new[] { "System.Collections.Generic" }).WithBody(
+            """
+            public record SourceRecord(int Value);
+
+            [MapFrom(typeof(SourceRecord), ProjectTo = ProjectionType.Array | ProjectionType.IEnumerable | ProjectionType.List)]
+            public partial record DestinationRecord(int Value)
+            {
+                public static partial IEnumerable<DestinationRecord> MapToDestinationRecords(IEnumerable<SourceRecord> myRandomName);
+            }
+            """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        compilation.Dump(_output);
+        diagnostics.ShouldBeSuccessful();
+        var extensionClass = compilation.GetClassDeclaration("SourceRecordMapToExtensions").ShouldNotBeNull();
+        var methods = extensionClass.Members.OfType<MethodDeclarationSyntax>().ToArray();
+        methods.Length.ShouldBe(4);
+        methods[1].ShouldBe(
+            """
+            public static global::System.Collections.Generic.IEnumerable<global::MapTo.Tests.DestinationRecord> MapToDestinationRecords(this global::System.Collections.Generic.IEnumerable<global::MapTo.Tests.SourceRecord> myRandomName)
+            {
+                return global::System.Linq.Enumerable.Select(myRandomName, x => MapToDestinationRecord(x));
+            }
+            """);
+
+        methods[2].ShouldBe(
+            ignoreWhitespace: true,
+            """
+            [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
+            public static global::MapTo.Tests.DestinationRecord[]? MapToDestinationRecords(this global::MapTo.Tests.SourceRecord[]? source)
+            {
+                if (source is null)
+                {
+                    return null;
+                }
+            
+                var target = new global::MapTo.Tests.DestinationRecord[source.Length];
+                for (var i = 0; i < source.Length; i++)
+                {
+                    target[i] = MapToDestinationRecord(source[i]);
+                }
+            
+                return target;
+            }
+            """);
+
+        methods[3].ShouldBe(
+            """
+            [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
+            public static global::System.Collections.Generic.List<global::MapTo.Tests.DestinationRecord>? MapToDestinationRecords(this global::System.Collections.Generic.List<global::MapTo.Tests.SourceRecord>? source)
+            {
+                if (source is null)
+                {
+                    return null;
+                }
+            
+                var target = new global::System.Collections.Generic.List<global::MapTo.Tests.DestinationRecord>(source.Count);
+                for (var i = 0; i < source.Count; i++)
+                {
+                    target.Add(MapToDestinationRecord(source[i]));
                 }
             
                 return target;
