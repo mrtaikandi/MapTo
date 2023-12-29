@@ -33,5 +33,6 @@
     <PackageVersion Include="Mapster" Version="7.4.0-pre06" />
     <PackageVersion Include="TinyMapper" Version="3.0.3" />
     <PackageVersion Include="Riok.Mapperly" Version="3.2.0" />
+    <PackageVersion Include="MapTo" Version="0.9.14" />
   </ItemGroup>
 </Project>
