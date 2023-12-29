@@ -8,11 +8,13 @@ namespace MapTo.Tests.Extensions;
 
 internal static partial class ShouldlyExtensions
 {
+    private static readonly string EndOfLine = Environment.NewLine;
+
     internal static void ShouldBe(this MemberDeclarationSyntax? declarationSyntax, [StringSyntax("csharp")] string expected) =>
-        Verify(declarationSyntax?.NormalizeWhitespace().ToString() ?? string.Empty, expected, "Should be equal but is not.", Assert.Equal, false);
+        Verify(declarationSyntax?.NormalizeWhitespace(eol: EndOfLine).ToString() ?? string.Empty, expected, "Should be equal but is not.", Assert.Equal, false);
 
     internal static void ShouldBe(this MemberDeclarationSyntax? declarationSyntax, bool ignoreWhitespace, [StringSyntax("csharp")] string expected) =>
-        Verify(declarationSyntax?.NormalizeWhitespace().ToString() ?? string.Empty, expected, "Should be equal but is not.", Assert.Equal, ignoreWhitespace);
+        Verify(declarationSyntax?.NormalizeWhitespace(eol: EndOfLine).ToString() ?? string.Empty, expected, "Should be equal but is not.", Assert.Equal, ignoreWhitespace);
 
     internal static void ShouldBeSuccessful(this Compilation compilation, IEnumerable<string>? ignoreDiagnosticsIds = null) =>
         compilation.GetDiagnostics().ShouldBeSuccessful(compilation, ignoreDiagnosticsIds);
@@ -184,8 +186,9 @@ internal static partial class ShouldlyExtensions
                 assertion(actual, expected);
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Console.WriteLine(ex);
             Assert.Fail(
                 $"""
                  {failError}
