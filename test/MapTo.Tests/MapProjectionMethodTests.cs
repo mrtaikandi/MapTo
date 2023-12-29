@@ -155,6 +155,7 @@ public class MapProjectionMethodTests
     [InlineData("ICollection", "IList")]
     [InlineData("ICollection", "IReadOnlyList")]
     [InlineData("ICollection", "IReadOnlyCollection")]
+    [InlineData("ICollection", "ICollection")]
     [InlineData("ICollection", "Span")]
     [InlineData("ICollection", "Memory")]
     [InlineData("ICollection", "ImmutableArray")]
@@ -281,6 +282,7 @@ public class MapProjectionMethodTests
             _ => $"new {ReturnElement}[{parameterName}.{parameterSizeProperty}]"
         };
 
+        var hasIndexer = new[] { "[]", "IEnumerable", "Memory", "ReadOnlyMemory", "Span", "ReadOnlySpan" }.Contains(returnType);
         var hasForeachLoop = new[] { "ICollection", "IReadOnlyCollection" }.Contains(parameterType) && returnType != "ImmutableArray";
         var hasForLoop = !hasForeachLoop && !new[] { "IEnumerable" }.Contains(parameterType) && returnType != "ImmutableArray";
         var parameterItem = hasForeachLoop ? "item" : $"{parameterName}[i]";
@@ -355,14 +357,14 @@ public class MapProjectionMethodTests
 
             projectionBody.Statements[2].ToString().ShouldBe("return target;");
         }
-        else if (hasForeachLoop)
+        else if (hasForeachLoop && hasIndexer)
         {
             projectionBody.Statements.Count.ShouldBe(4);
             projectionBody.Statements[0].ToString().ShouldBe($"var target = {expectedTargetVariable};");
             projectionBody.Statements[1].ToString().ShouldBe("var i = 0;");
 
             var loopStatement = projectionBody.Statements[2].ShouldBeOfType<ForEachStatementSyntax>().ShouldNotBeNull();
-            loopStatement.Expression?.ToString().ShouldBe(parameterName);
+            loopStatement.Expression.ToString().ShouldBe(parameterName);
             loopStatement.Identifier.ToString().ShouldBe("item");
 
             var loopBody = loopStatement.Statement.ShouldBeOfType<BlockSyntax>().ShouldNotBeNull();
@@ -371,6 +373,21 @@ public class MapProjectionMethodTests
             loopBody.Statements[1].ToString().ShouldBe("i++;");
 
             projectionBody.Statements[3].ToString().ShouldBe("return target;");
+        }
+        else if (hasForeachLoop && !hasIndexer)
+        {
+            projectionBody.Statements.Count.ShouldBe(3);
+            projectionBody.Statements[0].ToString().ShouldBe($"var target = {expectedTargetVariable};");
+
+            var loopStatement = projectionBody.Statements[1].ShouldBeOfType<ForEachStatementSyntax>().ShouldNotBeNull();
+            loopStatement.Expression.ToString().ShouldBe(parameterName);
+            loopStatement.Identifier.ToString().ShouldBe("item");
+
+            var loopBody = loopStatement.Statement.ShouldBeOfType<BlockSyntax>().ShouldNotBeNull();
+            loopBody.Statements.Count.ShouldBe(1);
+            loopBody.Statements[0].ToString().ShouldBe(expectedLoopBody);
+
+            projectionBody.Statements[2].ToString().ShouldBe("return target;");
         }
         else
         {

@@ -174,11 +174,9 @@ internal static class ProjectionGenerator
         else
         {
             writer
-                .WriteLine("var i = 0;")
                 .WriteLine($"foreach (var item in {parameterName})")
                 .WriteOpeningBracket()
                 .WriteLine($"target.Add({mapMethodName}(item));")
-                .WriteLine("i++;")
                 .WriteClosingBracket();
         }
 

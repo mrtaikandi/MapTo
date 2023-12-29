@@ -132,11 +132,9 @@ public class MapProjectionTests
                 }
             
                 var target = new global::System.Collections.Generic.List<global::MapTo.Tests.DestinationRecord>(source.Count);
-                var i = 0;
                 foreach (var item in source)
                 {
                     target.Add(MapToDestinationRecord(item));
-                    i++;
                 }
             
                 return target;
@@ -170,11 +168,9 @@ public class MapProjectionTests
                 }
             
                 var target = new global::System.Collections.Generic.List<global::MapTo.Tests.DestinationRecord>(source.Count);
-                var i = 0;
                 foreach (var item in source)
                 {
                     target.Add(MapToDestinationRecord(item));
-                    i++;
                 }
             
                 return target;
