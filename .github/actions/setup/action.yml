@@ -16,7 +16,7 @@ runs:
           exit 1
         fi
         if [ -z "${{ env.DOTNET_VERSION }}" ]; then
-          echo "::error::DOTNET_VERSION environment variable is not set. Using 7.0.x instead."          
+          echo "::error::DOTNET_VERSION environment variable is not set. Using 8.0.x instead."          
         fi
       shell: bash
         
