@@ -29,7 +29,7 @@
         <PackageReference Include="TinyMapper"/>
         <PackageReference Include="Riok.Mapperly"/>
         <PackageReference Include="Humanizer.Core" />
-        <PackageReference Include="MapTo" Version="0.9.14" />
+        <PackageReference Include="MapTo" />
     </ItemGroup>
 
 </Project>
