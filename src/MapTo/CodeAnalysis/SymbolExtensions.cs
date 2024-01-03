@@ -154,6 +154,11 @@ internal static class SymbolExtensions
         namedTypeSymbol.ContainingNamespace.ToDisplayString() == "System.Collections.Immutable" &&
         namedTypeSymbol.MetadataName == "ImmutableArray`1";
 
+    public static bool IsQueryableOfT(this ITypeSymbol typeSymbol) =>
+        typeSymbol is INamedTypeSymbol { IsGenericType: true } namedTypeSymbol &&
+        namedTypeSymbol.ContainingNamespace.ToDisplayString() == "System.Linq" &&
+        namedTypeSymbol.MetadataName == "IQueryable`1";
+
     public static string ToFullyQualifiedDisplayString(this ITypeSymbol typeSymbol) =>
         $"{typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}{(typeSymbol.NullableAnnotation is NullableAnnotation.Annotated ? "?" : string.Empty)}";
 

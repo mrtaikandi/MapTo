@@ -316,61 +316,6 @@ static file class ExtensionClassGeneratorExtensions
         };
     }
 
-    private static CodeWriter WriteConstructorInitializer(this CodeWriter writer, TargetMapping mapping)
-    {
-        var sourceType = mapping.Source.Name;
-        var parameterName = sourceType.ToParameterNameCasing();
-        var hasObjectInitializer = mapping.Properties.Any(p => p.InitializationMode == PropertyInitializationMode.ObjectInitializer);
-
-        if (!mapping.Constructor.HasParameters)
-        {
-            writer.Write($"new {mapping.Name}");
-            return hasObjectInitializer ? writer.WriteNewLine() : writer.WriteLine("();");
-        }
-
-        writer.Write($"new {mapping.Name}(");
-
-        for (var i = 0; i < mapping.Constructor.Parameters.Length; i++)
-        {
-            var parameter = mapping.Constructor.Parameters[i];
-
-            if (mapping.Constructor.HasParameterWithDefaultValue)
-            {
-                writer.Write(parameter.Name).Write(": ");
-            }
-
-            PropertyGenerator.Instance.Generate(new(writer, parameter.Property, parameterName, null, mapping.Options.CopyPrimitiveArrays, null));
-            writer.WriteIf(i < mapping.Constructor.Parameters.Length - 1, ", ");
-        }
-
-        return hasObjectInitializer ? writer.WriteLine(")") : writer.WriteLine(");");
-    }
-
-    private static CodeWriter WriteObjectInitializer(this CodeWriter writer, TargetMapping mapping)
-    {
-        var properties = mapping.Properties.Where(p => p.InitializationMode == PropertyInitializationMode.ObjectInitializer).ToArray();
-        if (properties.Length == 0)
-        {
-            return writer;
-        }
-
-        var sourceType = mapping.Source.Name;
-        var parameterName = sourceType.ToParameterNameCasing();
-
-        writer.WriteOpeningBracket();
-
-        for (var i = 0; i < properties.Length; i++)
-        {
-            var property = properties[i];
-
-            writer.Write($"{property.Name} = ");
-            PropertyGenerator.Instance.Generate(new(writer, property, parameterName, null, mapping.Options.CopyPrimitiveArrays, null));
-            writer.WriteIf(i < properties.Length - 1, ",").WriteLineIndented();
-        }
-
-        return writer.WriteClosingBracket(false).WriteLine(";");
-    }
-
     private static CodeWriter WriteParameterNullCheck(this CodeWriter writer, string parameterName) => writer
         .Write("if (").WriteIsNullCheck(parameterName).WriteLine(")")
         .WriteOpeningBracket()

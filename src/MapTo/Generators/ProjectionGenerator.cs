@@ -41,6 +41,7 @@ internal static class ProjectionGenerator
                 .WriteLine($"{accessibility} static {returnType.FullName}{nullSyntax} {methodName}(this {parameterType.FullName}{nullSyntax} {parameterName})")
                 .WriteOpeningBracket()
                 .WriteParameterNullCheckIf(parameterIsNullable, parameterName)
+                .WriteProjectionForIQueryableParameter(mapping, projection)
                 .WriteProjectionForIEnumerableParameter(projection, mapMethodName)
                 .WriteProjectionForCountableParameter(projection, mapMethodName)
                 .WriteClosingBracket();
@@ -49,10 +50,28 @@ internal static class ProjectionGenerator
         return writer;
     }
 
+    private static CodeWriter WriteProjectionForIQueryableParameter(this CodeWriter writer, TargetMapping targetMapping, ProjectionMapping projection)
+    {
+        var (_, _, _, _, parameterType, parameterName, _) = projection;
+        if (!parameterType.EnumerableType.IsQueryable())
+        {
+            return writer;
+        }
+
+        var initMapping = targetMapping.ToTypeInitializerMapping(sourceName: "x");
+        return writer
+            .WriteLine("#nullable disable")
+            .Write($"return global::{KnownTypes.LinqQueryable}.Select({parameterName}, x => ")
+            .WriteConstructorInitializer(initMapping, true)
+            .WriteObjectInitializer(initMapping, true)
+            .WriteLine(");")
+            .WriteLine("#nullable enable");
+    }
+
     private static CodeWriter WriteProjectionForIEnumerableParameter(this CodeWriter writer, ProjectionMapping projection, string mapMethodName)
     {
         var (_, _, _, returnType, parameterType, parameterName, _) = projection;
-        if (parameterType.IsCountable)
+        if (parameterType.IsCountable || parameterType.EnumerableType.IsQueryable())
         {
             return writer;
         }

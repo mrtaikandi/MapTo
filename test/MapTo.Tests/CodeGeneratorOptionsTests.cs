@@ -13,6 +13,7 @@ public class CodeGeneratorOptionsTests
     [InlineData(nameof(CodeGeneratorOptions.ProjectionType), "IEnumerable", ProjectionType.IEnumerable)]
     [InlineData(nameof(CodeGeneratorOptions.ProjectionType), "Array | IEnumerable", ProjectionType.Array | ProjectionType.IEnumerable)]
     [InlineData(nameof(CodeGeneratorOptions.ProjectionType), "3", ProjectionType.Array | ProjectionType.IEnumerable)]
+    [InlineData(nameof(CodeGeneratorOptions.QueryProjectionMethodPrefix), "Select", "Select")]
     public void Verify_AnalyzerConfigOption(string configName, string value, object expectedValue)
     {
         // Arrange

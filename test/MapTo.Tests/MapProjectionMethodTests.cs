@@ -330,7 +330,6 @@ public class MapProjectionMethodTests
         var (compilation, diagnostics) = builder.Compile();
 
         // Assert
-        compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
         var extensionClass = compilation.GetClassDeclaration("SourceRecordMapToExtensions").ShouldNotBeNull();
 
@@ -394,5 +393,45 @@ public class MapProjectionMethodTests
             projectionBody.Statements.Count.ShouldBe(1);
             projectionBody.Statements[0].ToString().ShouldBe(expectedReturnStatement);
         }
+    }
+
+    [Fact]
+    public void When_MapQueryableRecordProjectionMethodExists_Should_GenerateExtensionMethod()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: true));
+        builder.AddFile(
+                supportNullableReferenceTypes: true,
+                usings: new[] { "System", "System.Collections.Generic", "System.Collections.Immutable", "System.Collections.ObjectModel", "System.Linq" })
+            .WithBody(
+                """
+                public record SourceRecord(int Value1, string Value2, int Value3);
+
+                [MapFrom(typeof(SourceRecord), ProjectTo = ProjectionType.None)]
+                public partial record DestinationRecord([property:MapProperty(From = "Value1")] int Value4, string Value2)
+                {
+                    public int Value3 { get; init; }
+                    internal static partial IQueryable<DestinationRecord> MapProjectionTest(IQueryable<SourceRecord> sourceRecords);
+                }
+                """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+        var extensionClass = compilation.GetClassDeclaration("SourceRecordMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldContain(
+            """
+            internal static global::System.Linq.IQueryable<global::MapTo.Tests.DestinationRecord> MapProjectionTest(this global::System.Linq.IQueryable<global::MapTo.Tests.SourceRecord> sourceRecords)
+            {
+                #nullable disable
+                return global::System.Linq.Queryable.Select(sourceRecords, x => new DestinationRecord(x.Value1, x.Value2)
+                {
+                    Value3 = x.Value3
+                });
+                #nullable enable
+            }
+            """);
     }
 }

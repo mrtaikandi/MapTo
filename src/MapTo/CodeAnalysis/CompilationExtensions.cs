@@ -42,6 +42,7 @@ internal static class CompilationExtensions
         var memorySymbol = compilation.GetTypeByMetadataName(KnownTypes.SystemMemoryOfT);
         var readOnlyMemorySymbol = compilation.GetTypeByMetadataName(KnownTypes.SystemReadOnlyMemoryOfT);
         var immutableArraySymbol = compilation.GetTypeByMetadataName(KnownTypes.SystemCollectionImmutableArrayOfT);
+        var queryableSymbol = compilation.GetTypeByMetadataName(KnownTypes.SystemLinqIQueryableOfT);
 
         var originalDefinition = namedTypeSymbol.OriginalDefinition;
         typeArguments = namedTypeSymbol.TypeArguments;
@@ -51,7 +52,8 @@ internal static class CompilationExtensions
                 || SymbolEqualityComparer.Default.Equals(originalDefinition, readOnlySpanSymbol)
                 || SymbolEqualityComparer.Default.Equals(originalDefinition, memorySymbol)
                 || SymbolEqualityComparer.Default.Equals(originalDefinition, readOnlyMemorySymbol)
-                || SymbolEqualityComparer.Default.Equals(originalDefinition, immutableArraySymbol)) &&
+                || SymbolEqualityComparer.Default.Equals(originalDefinition, immutableArraySymbol)
+                || SymbolEqualityComparer.Default.Equals(originalDefinition, queryableSymbol)) &&
                namedTypeSymbol.TypeArguments.Length > 0;
     }
 
