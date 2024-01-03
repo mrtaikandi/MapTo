@@ -58,7 +58,7 @@ internal static class ScenarioBuilder
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(supportNullReferenceTypes: supportNullReferenceTypes));
         builder.AddFile(
                 supportNullableReferenceTypes: supportNullReferenceTypes,
-                usings: new[] { "System", "System.Collections.Generic", "System.Collections.Immutable", "System.Collections.ObjectModel" })
+                usings: new[] { "System", "System.Collections.Generic", "System.Collections.Immutable", "System.Collections.ObjectModel", "System.Linq" })
             .WithBody(
                 $$"""
                   public record SourceRecord(int Value);

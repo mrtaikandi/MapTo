@@ -1,7 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.RegularExpressions;
+using DiffPlex.Chunkers;
 using DiffPlex.DiffBuilder;
+using DiffPlex.DiffBuilder.Model;
 using Xunit.Sdk;
 
 namespace MapTo.Tests.Extensions;
@@ -10,10 +12,10 @@ internal static partial class ShouldlyExtensions
 {
     private static readonly string EndOfLine = Environment.NewLine;
 
-    internal static void ShouldBe(this MemberDeclarationSyntax? declarationSyntax, [StringSyntax("csharp")] string expected) =>
+    internal static void ShouldBe(this CSharpSyntaxNode? declarationSyntax, [StringSyntax("csharp")] string expected) =>
         Verify(declarationSyntax?.NormalizeWhitespace(eol: EndOfLine).ToString() ?? string.Empty, expected, "Should be equal but is not.", Assert.Equal, false);
 
-    internal static void ShouldBe(this MemberDeclarationSyntax? declarationSyntax, bool ignoreWhitespace, [StringSyntax("csharp")] string expected) =>
+    internal static void ShouldBe(this CSharpSyntaxNode? declarationSyntax, bool ignoreWhitespace, [StringSyntax("csharp")] string expected) =>
         Verify(declarationSyntax?.NormalizeWhitespace(eol: EndOfLine).ToString() ?? string.Empty, expected, "Should be equal but is not.", Assert.Equal, ignoreWhitespace);
 
     internal static void ShouldBeSuccessful(this Compilation compilation, IEnumerable<string>? ignoreDiagnosticsIds = null) =>
@@ -158,19 +160,60 @@ internal static partial class ShouldlyExtensions
 
     private static string BuildDiff(string? actual, string? expected)
     {
-        var diff = InlineDiffBuilder.Diff(actual, expected, false);
+        var diff = InlineDiffBuilder.Diff(actual, expected, false, false, new LineChunker());
         var builder = new StringBuilder();
         builder.AppendLine();
 
         var lineNumber = 0;
         var padding = diff.Lines.Count.ToString().Length + 1;
-        foreach (var line in diff.Lines)
+        for (var index = 0; index < diff.Lines.Count; index++)
         {
+            var line = diff.Lines[index];
             builder.Append($"{++lineNumber:00}:".PadRight(padding + 1));
-            builder.AppendLine(line);
+
+            WriteDiff(builder, diff, line, index);
         }
 
         return builder.ToString();
+
+        static void WriteDiff(StringBuilder builder, DiffPaneModel diff, DiffPiece line, int index)
+        {
+            switch (line.Type)
+            {
+                case ChangeType.Deleted:
+                    builder.Append("A ", AnsiColor.Error);
+                    var subDiff = InlineDiffBuilder.Diff(line.Text, diff.Lines[index + 1].Text, false, false, new WordChunker());
+
+                    foreach (var character in subDiff.Lines)
+                    {
+                        switch (character.Type)
+                        {
+                            case ChangeType.Deleted:
+                                builder.Append(character.Text, AnsiColor.Error);
+                                break;
+
+                            case ChangeType.Inserted:
+                                break;
+
+                            default:
+                                builder.Append(character.Text);
+                                break;
+                        }
+                    }
+
+                    builder.AppendLine();
+
+                    break;
+
+                case ChangeType.Inserted:
+                    builder.Append("E ", AnsiColor.Success).AppendLine(line.Text);
+                    break;
+
+                default:
+                    builder.Append("  ").AppendLine(line.Text);
+                    break;
+            }
+        }
     }
 
     private static void Verify(string actual, string expected, string failError, Action<string, string> assertion, bool ignoreWhitespace)
@@ -192,18 +235,18 @@ internal static partial class ShouldlyExtensions
             Assert.Fail(
                 $"""
                  {failError}
-                 
+
                  {BuildDiff(actual, expected)}
-                 
+
                  ---------------------------
                  Actual:
-                 
+
                  {actual}
-                 
+
                  Expected:
-                 
+
                  {expected}
-                 
+
                  """);
         }
     }

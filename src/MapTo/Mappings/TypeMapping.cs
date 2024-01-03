@@ -16,7 +16,6 @@ internal readonly record struct TypeMapping(
     NullableAnnotation ElementTypeNullableAnnotation,
     bool IsCountable,
     bool IsFixedSize,
-    bool IsImmutable,
     bool IsReferenceType,
     SpecialType SpecialType)
 {
@@ -65,7 +64,6 @@ internal static class TypeMappingExtensions
             SpecialType: typeSymbol.SpecialType,
             IsCountable: enumerableType.IsCountable(),
             IsFixedSize: enumerableType.IsFixedSize(),
-            IsImmutable: enumerableType.IsImmutable(),
             IsReferenceType: typeSymbol.IsReferenceType);
 
 #if DEBUG
@@ -92,6 +90,7 @@ internal static class TypeMappingExtensions
         _ when typeSymbol.IsReadOnlyMemoryOfT() => EnumerableType.ReadOnlyMemory,
         _ when typeSymbol.IsMemoryOfT() => EnumerableType.Memory,
         _ when typeSymbol.IsImmutableArrayOfT() => EnumerableType.ImmutableArray,
+        _ when typeSymbol.IsQueryableOfT() => EnumerableType.Queryable,
         _ when typeSymbol.IsGenericCollectionOf(SpecialType.System_Collections_Generic_IList_T) => EnumerableType.List,
         _ when typeSymbol.IsGenericCollectionOf(SpecialType.System_Collections_Generic_ICollection_T) => EnumerableType.Collection,
         _ when typeSymbol.IsGenericCollectionOf(SpecialType.System_Collections_Generic_IReadOnlyList_T) => EnumerableType.ReadOnlyList,

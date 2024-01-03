@@ -15,7 +15,7 @@
         <Rule Id="SA1007"  Action="Warning" />          <!-- Operator keyword should be followed by space -->
         <Rule Id="SA1008"  Action="Warning" />          <!-- Opening parenthesis should be spaced correctly -->
         <Rule Id="SA1009"  Action="Warning" />          <!-- Closing parenthesis should be spaced correctly -->
-        <Rule Id="SA1010"  Action="Warning" />          <!-- Opening square brackets should be spaced correctly -->
+        <Rule Id="SA1010"  Action="None" />             <!-- Opening square brackets should be spaced correctly -->
         <Rule Id="SA1011"  Action="Warning" />          <!-- Closing square brackets should be spaced correctly -->
         <Rule Id="SA1012"  Action="Warning" />          <!-- Opening braces should be spaced correctly -->
         <Rule Id="SA1013"  Action="Warning" />          <!-- Closing braces should be spaced correctly -->

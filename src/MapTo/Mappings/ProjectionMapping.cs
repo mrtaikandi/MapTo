@@ -56,7 +56,9 @@ internal readonly record struct ProjectionMapping(
             return Enumerable.Empty<ProjectionMapping>();
         }
 
-        var methodName = $"{context.CodeGeneratorOptions.MapMethodPrefix}{context.TargetTypeSyntax.Identifier.Text}".Pluralize();
+        static string GetMethodName(CodeGeneratorOptions o, string name, ProjectionType type) =>
+            type is ProjectionType.Queryable ? $"{o.QueryProjectionMethodPrefix}{name}".Pluralize() : $"{o.MapMethodPrefix}{name}".Pluralize();
+
         var accessibility = context.TargetTypeSyntax.GetAccessibility();
         var projectionType = context.CodeGeneratorOptions.ProjectionType;
 
@@ -66,7 +68,7 @@ internal readonly record struct ProjectionMapping(
             .Select(p => new ProjectionMapping(
                 Accessibility: accessibility,
                 OriginalAccessibility: accessibility,
-                MethodName: methodName,
+                MethodName: GetMethodName(context.CodeGeneratorOptions, context.TargetTypeSyntax.Identifier.Text, p),
                 ReturnType: CreateTypeMapping(context.TargetTypeSymbol, p, context.Compilation),
                 ParameterType: CreateTypeMapping(context.SourceTypeSymbol, p, context.Compilation),
                 ParameterName: "source",
@@ -86,6 +88,7 @@ internal readonly record struct ProjectionMapping(
             ProjectionType.List => compilation.CreateGenericTypeSymbol(KnownTypes.SystemCollectionsGenericListOfT, typeSymbol),
             ProjectionType.Memory => compilation.CreateGenericTypeSymbol(KnownTypes.SystemMemoryOfT, typeSymbol),
             ProjectionType.ReadOnlyMemory => compilation.CreateGenericTypeSymbol(KnownTypes.SystemReadOnlyMemoryOfT, typeSymbol),
+            ProjectionType.Queryable => compilation.CreateGenericTypeSymbol(KnownTypes.SystemLinqIQueryableOfT, typeSymbol),
             _ => throw new ArgumentOutOfRangeException(nameof(projectionType), projectionType, $"Invalid projection type '{projectionType}'.")
         };
 
