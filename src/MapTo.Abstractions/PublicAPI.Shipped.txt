@@ -68,5 +68,4 @@ MapTo.ProjectionType.IReadOnlyList = 32 -> MapTo.ProjectionType
 MapTo.ProjectionType.List = 64 -> MapTo.ProjectionType
 MapTo.ProjectionType.Memory = 128 -> MapTo.ProjectionType
 MapTo.ProjectionType.ReadOnlyMemory = 256 -> MapTo.ProjectionType
-MapTo.ProjectionType.Queryable = 512 -> MapTo.ProjectionType
 MapTo.ProjectionType.All = -1 -> MapTo.ProjectionType
