@@ -20,7 +20,6 @@ internal record KnownTypes(
     internal const string LinqEnumerable = "System.Linq.Enumerable";
     internal const string LinqToArray = "System.Linq.Enumerable.ToArray";
     internal const string LinqToList = "System.Linq.Enumerable.ToList";
-    internal const string LinqQueryable = "System.Linq.Queryable";
     internal const string SystemSpanOfT = "System.Span`1";
     internal const string SystemReadOnlySpanOfT = "System.ReadOnlySpan`1";
     internal const string SystemMemoryOfT = "System.Memory`1";

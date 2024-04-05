@@ -60,11 +60,6 @@ public enum ProjectionType
     ReadOnlyMemory = 1 << 8,
 
     /// <summary>
-    /// Specifies that projection mappings should be generated for <see cref="IQueryable{T}" />.
-    /// </summary>
-    Queryable = 1 << 9,
-
-    /// <summary>
     /// Specifies that projection mappings should be generated for all supported types.
     /// </summary>
     All = ~None
