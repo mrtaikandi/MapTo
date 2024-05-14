@@ -409,7 +409,6 @@ public class MapFromCollectionTests
         var (compilation, diagnostics) = builder.Compile();
 
         // Assert
-        compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
 
         var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
@@ -432,5 +431,26 @@ public class MapFromCollectionTests
                 target.Prop4 = sourceClass.Prop4.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToList();
             }
             """);
+    }
+
+    [Fact]
+    public void When_PropertyIsEnumerableAndHasPropertyTypeConverter_Should_UseTheConverterMethodInstead()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        var globalUsings = new[] { "System.Collections", "System.Collections.Generic" };
+
+        var nestedSourceFile = builder.AddFile(usings: globalUsings);
+        nestedSourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty("List<byte>", "Prop1");
+        nestedSourceFile.AddClass(accessibility: Accessibility.Public, name: "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+            .WithProperty("byte[]", "Prop1", attributes: ["[PropertyTypeConverter(nameof(MapProp1))]"])
+            .WithStaticMethod("byte[]", "MapProp1", "return segment.ToArray();", parameter: "List<byte> segment");
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+        diagnostics.ShouldBeSuccessful();
+
+        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldContain("target.Prop1 = global::MapTo.Tests.TargetClass.MapProp1(sourceClass.Prop1);");
     }
 }

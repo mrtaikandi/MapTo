@@ -23,6 +23,7 @@ internal class EnumTypeConverterResolver : ITypeConverterResolver
             ContainingType: string.Empty,
             MethodName: $"{methodPrefix}{sourceProperty.TypeSymbol.Name}",
             Type: property.Type.ToTypeMapping(),
+            Explicit: false,
             EnumMapping: new EnumTypeMapping(
                 Strategy: enumMappingStrategy,
                 Mappings: memberMappings.Value,

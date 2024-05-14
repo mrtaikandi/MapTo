@@ -10,7 +10,7 @@ internal sealed class ArrayPropertyMappingGenerator : PropertyMappingGenerator
     protected override bool HandleCore(PropertyGeneratorContext context)
     {
         var (writer, property, parameterName, targetInstanceName, copyPrimitiveArrays, refHandler) = context;
-        if (property is { TypeConverter: not { Type.EnumerableType: EnumerableType.Array } } || targetInstanceName is null)
+        if (property is { TypeConverter: not { Type.EnumerableType: EnumerableType.Array, Explicit: false } } || targetInstanceName is null)
         {
             return false;
         }
