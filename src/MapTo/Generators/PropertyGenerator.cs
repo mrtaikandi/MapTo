@@ -24,7 +24,7 @@ internal sealed class PropertyGenerator
         if (!_root.Handle(context))
         {
             throw new InvalidOperationException(
-                $"Unable to find a property mapping generator for the {context.PropertyMapping.TypeName}.{context.PropertyMapping.Name}." +
+                $"Unable to find a property mapping generator for the {context.PropertyMapping.TypeName}.{context.PropertyMapping.Name}. " +
                 $"Please open an issue at https://github.com/mrtaikandi/mapto");
         }
     }

@@ -14,11 +14,12 @@ internal class NestedTypeConverterResolver : ITypeConverterResolver
             null => ResolverResult.Undetermined<TypeConverterMapping>(),
             { TypeKind: TypeKind.Enum } => ResolverResult.Undetermined<TypeConverterMapping>(), // Is handled by EnumTypeConverterResolver
             _ => new TypeConverterMapping(
-                mappedSourcePropertyType.ToExtensionClassName(context.CodeGeneratorOptions),
-                mappedSourcePropertyType.IsPrimitiveType() ? $"{methodPrefix}{mappedSourcePropertyType.Name}" : $"{methodPrefix}{property.Type.Name}",
-                property.Type.ToTypeMapping(),
-                null,
-                true,
+                ContainingType: mappedSourcePropertyType.ToExtensionClassName(context.CodeGeneratorOptions),
+                MethodName: mappedSourcePropertyType.IsPrimitiveType() ? $"{methodPrefix}{mappedSourcePropertyType.Name}" : $"{methodPrefix}{property.Type.Name}",
+                Type: property.Type.ToTypeMapping(),
+                Explicit: false,
+                Parameter: null,
+                IsMapToExtensionMethod: true,
                 UsingDirectives: ImmutableArray.Create("global::System.Linq"),
                 ReferenceHandling: context.CodeGeneratorOptions.ReferenceHandling switch
                 {

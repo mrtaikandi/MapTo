@@ -20,6 +20,7 @@ internal class ArrayTypeConverterResolver : ITypeConverterResolver
             MethodName: mappedSourcePropertyType.IsPrimitiveType() ? $"{methodPrefix}{mappedSourcePropertyType.Name}" : $"{methodPrefix}{propertyTypeName}",
             Parameter: null,
             Type: property.Type.ToTypeMapping(),
+            Explicit: false,
             IsMapToExtensionMethod: mapFromAttribute is not null,
             UsingDirectives: ImmutableArray.Create("global::System.Linq"),
             ReferenceHandling: context.CodeGeneratorOptions.ReferenceHandling switch

@@ -6,6 +6,7 @@ internal readonly record struct TypeConverterMapping(
     string ContainingType,
     string MethodName,
     TypeMapping Type,
+    bool Explicit,
     string? Parameter = null,
     bool IsMapToExtensionMethod = false,
     bool ReferenceHandling = false,
@@ -17,7 +18,8 @@ internal readonly record struct TypeConverterMapping(
             ContainingType: method.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
             MethodName: method.Name,
             Parameter: parameters.IsNull ? null : parameters.ToSourceCodeString(),
-            Type: method.ReturnType.ToTypeMapping()) { }
+            Type: method.ReturnType.ToTypeMapping(),
+            Explicit: true) { }
 
     [MemberNotNullWhen(true, nameof(Parameter))]
     public bool HasParameter => Parameter is not null;

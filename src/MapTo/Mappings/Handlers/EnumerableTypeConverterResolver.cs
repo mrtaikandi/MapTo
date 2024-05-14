@@ -26,11 +26,12 @@ internal class EnumerableTypeConverterResolver : ITypeConverterResolver
         var methodPrefix = context.CodeGeneratorOptions.MapMethodPrefix;
 
         return new TypeConverterMapping(
-            mappedSourcePropertyType.ToExtensionClassName(context.CodeGeneratorOptions),
-            mappedSourcePropertyType.IsPrimitiveType() ? $"{methodPrefix}{mappedSourcePropertyType.Name}" : $"{methodPrefix}{propertyTypeName}",
-            property.Type.ToTypeMapping(),
-            null,
-            true,
+            ContainingType: mappedSourcePropertyType.ToExtensionClassName(context.CodeGeneratorOptions),
+            MethodName: mappedSourcePropertyType.IsPrimitiveType() ? $"{methodPrefix}{mappedSourcePropertyType.Name}" : $"{methodPrefix}{propertyTypeName}",
+            Type: property.Type.ToTypeMapping(),
+            Explicit: false,
+            Parameter: null,
+            IsMapToExtensionMethod: true,
             UsingDirectives: ImmutableArray.Create("global::System.Linq"),
             ReferenceHandling: context.CodeGeneratorOptions.ReferenceHandling switch
             {
