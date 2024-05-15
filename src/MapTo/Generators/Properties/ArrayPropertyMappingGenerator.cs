@@ -96,7 +96,9 @@ internal sealed class ArrayPropertyMappingGenerator : PropertyMappingGenerator
                 break;
 
             case { NullHandling: Auto, SourceType.NullableAnnotation: not NotAnnotated, TypeConverter.Type.NullableAnnotation: Annotated } when targetInstanceName is null:
-                writer.Wrap(Map(writer, property, parameterName, copyPrimitiveArrays, refHandler));
+                writer.WriteIsNullCheck(parameterName)
+                    .Write(" ? ").Write("default")
+                    .Write(" : ").Wrap(Map(writer, property, parameterName, copyPrimitiveArrays, refHandler));
                 break;
 
             case { NullHandling: Auto, SourceType.NullableAnnotation: not NotAnnotated, TypeConverter.Type.NullableAnnotation: Annotated }:
