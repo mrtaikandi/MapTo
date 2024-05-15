@@ -500,4 +500,74 @@ public class MapFromCollectionTests
             return target;
             """);
     }
+
+    [Fact]
+    public void When_PropertyIsPrimitiveArrayAndInitOnly_Should_MapAccordingly()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder(
+            supportNullReferenceTypes: true,
+            new Dictionary<string, string>
+            {
+                [nameof(CodeGeneratorOptions.CopyPrimitiveArrays)] = "true"
+            });
+
+        var globalUsings = new[] { "System", "System.Collections", "System.Collections.Generic" };
+
+        var nestedSourceFile = builder.AddFile(usings: globalUsings);
+        nestedSourceFile.WithBody(
+            """
+            public sealed class SourceClass
+            {
+                public byte[] Prop1 { get; set; }
+                public int[] Prop2 { get; set; }
+                public int[] Prop3 { get; set; }
+                public int[] Prop4 { get; set; }
+            }
+            """);
+
+        builder.AddFile(usings: globalUsings, supportNullableReferenceTypes: true)
+            .WithBody(
+                """
+                [MapFrom(typeof(SourceClass), CopyPrimitiveArrays = false)]
+                internal class TargetClass
+                {
+                    public byte[]? Prop1 { get; init; }
+                    public int[]? Prop2 { get; init; }
+                    public int[]? Prop3 { get; set; }
+                    public int[]? Prop4 { get; set; }
+                }
+                """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+        compilation.Dump(_output);
+        diagnostics.ShouldBeSuccessful();
+
+        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldContain(
+            """
+            if (sourceClass is null)
+            {
+                return null;
+            }
+
+            var target = new TargetClass
+            {
+                Prop1 = sourceClass.Prop1,
+                Prop2 = sourceClass.Prop2
+            };
+
+            if (sourceClass.Prop3 is not null)
+            {
+                target.Prop3 = sourceClass.Prop3;
+            }
+            if (sourceClass.Prop4 is not null)
+            {
+                target.Prop4 = sourceClass.Prop4;
+            }
+
+            return target;
+            """);
+    }
 }

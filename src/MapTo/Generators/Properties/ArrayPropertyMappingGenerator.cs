@@ -10,7 +10,7 @@ internal sealed class ArrayPropertyMappingGenerator : PropertyMappingGenerator
     protected override bool HandleCore(PropertyGeneratorContext context)
     {
         var (writer, property, parameterName, targetInstanceName, copyPrimitiveArrays, refHandler) = context;
-        if (property is { TypeConverter: not { Type.EnumerableType: EnumerableType.Array, Explicit: false } } || targetInstanceName is null)
+        if (property is { TypeConverter: not { Type.EnumerableType: EnumerableType.Array, Explicit: false } })
         {
             return false;
         }
@@ -29,35 +29,44 @@ internal sealed class ArrayPropertyMappingGenerator : PropertyMappingGenerator
         return true;
     }
 
-    private static void MapArray(CodeWriter writer, PropertyMapping property, string parameterName, string targetInstanceName, bool copyPrimitiveArrays, string? refHandler)
+    private static void MapArray(CodeWriter writer, PropertyMapping property, string parameterName, string? targetInstanceName, bool copyPrimitiveArrays, string? refHandler)
     {
         switch (property)
         {
             case { NullHandling: ThrowException, SourceType.IsNullable: true, TypeConverter.IsMapToExtensionMethod: false } when !copyPrimitiveArrays:
-                writer.Write($"{targetInstanceName}.{property.Name} = ")
+                writer.WriteIf(targetInstanceName is not null, $"{targetInstanceName}.{property.Name} = ")
                     .Wrap(Map(writer, property, parameterName, copyPrimitiveArrays, refHandler))
-                    .Write(" ?? ").WriteThrowArgumentNullException(parameterName).WriteLine(";");
+                    .Write(" ?? ").WriteThrowArgumentNullException(parameterName).WriteLineIf(targetInstanceName is not null, ";");
 
                 break;
 
             case { NullHandling: ThrowException }:
-                writer.Write($"{targetInstanceName}.{property.Name} = ")
-                    .WriteIsNullCheck(parameterName).Write(" ? ").WriteThrowArgumentNullException(parameterName)
-                    .Write(" : ").Wrap(Map(writer, property, parameterName, copyPrimitiveArrays, refHandler)).WriteLine(";");
+                writer.WriteIf(targetInstanceName is not null, $"{targetInstanceName}.{property.Name} = ")
+                    .WriteIsNullCheck(parameterName)
+                    .Write(" ? ").WriteThrowArgumentNullException(parameterName)
+                    .Write(" : ").Wrap(Map(writer, property, parameterName, copyPrimitiveArrays, refHandler)).WriteLineIf(targetInstanceName is not null, ";");
 
                 break;
 
             case { NullHandling: SetEmptyCollection, SourceType.IsNullable: true, TypeConverter.IsMapToExtensionMethod: false } when !copyPrimitiveArrays:
-                writer.Write($"{targetInstanceName}.{property.Name} = ")
+                writer.WriteIf(targetInstanceName is not null, $"{targetInstanceName}.{property.Name} = ")
                     .Wrap(Map(writer, property, parameterName, copyPrimitiveArrays, refHandler))
-                    .Write(" ?? ").Write(property.TypeConverter.Type.EmptySourceCodeString()).WriteLine(";");
+                    .Write(" ?? ").Write(property.TypeConverter.Type.EmptySourceCodeString()).WriteLineIf(targetInstanceName is not null, ";");
 
                 break;
 
             case { NullHandling: SetEmptyCollection }:
-                writer.Write($"{targetInstanceName}.{property.Name} = ")
-                    .WriteIsNullCheck(parameterName).Write(" ? ").Write(property.TypeConverter.Type.EmptySourceCodeString())
-                    .Write(" : ").Wrap(Map(writer, property, parameterName, copyPrimitiveArrays, refHandler)).WriteLine(";");
+                writer.WriteIf(targetInstanceName is not null, $"{targetInstanceName}.{property.Name} = ")
+                    .WriteIsNullCheck(parameterName)
+                    .Write(" ? ").Write(property.TypeConverter.Type.EmptySourceCodeString())
+                    .Write(" : ").Wrap(Map(writer, property, parameterName, copyPrimitiveArrays, refHandler)).WriteLineIf(targetInstanceName is not null, ";");
+
+                break;
+
+            case { NullHandling: SetNull, SourceType.IsNullable: true } when targetInstanceName is null:
+                writer.WriteIsNullCheck(parameterName)
+                    .Write(" ? ").Write("default")
+                    .Write(" : ").Wrap(Map(writer, property, parameterName, copyPrimitiveArrays, refHandler));
 
                 break;
 
@@ -72,17 +81,22 @@ internal sealed class ArrayPropertyMappingGenerator : PropertyMappingGenerator
                 break;
 
             case { NullHandling: Auto, SourceType.NullableAnnotation: not NotAnnotated, TypeConverter.Type.NullableAnnotation: NotAnnotated } when !copyPrimitiveArrays:
-                writer.Write($"{targetInstanceName}.{property.Name} = ")
+                writer.WriteIf(targetInstanceName is not null, $"{targetInstanceName}.{property.Name} = ")
                     .Wrap(Map(writer, property, parameterName, copyPrimitiveArrays, refHandler))
-                    .Write(" ?? ").Write(property.TypeConverter.Type.EmptySourceCodeString()).WriteLine(";");
+                    .Write(" ?? ").Write(property.TypeConverter.Type.EmptySourceCodeString()).WriteLineIf(targetInstanceName is not null, ";");
 
                 break;
 
             case { NullHandling: Auto, SourceType.NullableAnnotation: not NotAnnotated, TypeConverter.Type.NullableAnnotation: NotAnnotated } when copyPrimitiveArrays:
-                writer.Write($"{targetInstanceName}.{property.Name} = ")
-                    .WriteIsNullCheck(parameterName).Write(" ? ").Write(property.TypeConverter.Type.EmptySourceCodeString())
-                    .Write(" : ").Wrap(Map(writer, property, parameterName, copyPrimitiveArrays, refHandler)).WriteLine(";");
+                writer.WriteIf(targetInstanceName is not null, $"{targetInstanceName}.{property.Name} = ")
+                    .WriteIsNullCheck(parameterName)
+                    .Write(" ? ").Write(property.TypeConverter.Type.EmptySourceCodeString())
+                    .Write(" : ").Wrap(Map(writer, property, parameterName, copyPrimitiveArrays, refHandler)).WriteLineIf(targetInstanceName is not null, ";");
 
+                break;
+
+            case { NullHandling: Auto, SourceType.NullableAnnotation: not NotAnnotated, TypeConverter.Type.NullableAnnotation: Annotated } when targetInstanceName is null:
+                writer.Wrap(Map(writer, property, parameterName, copyPrimitiveArrays, refHandler));
                 break;
 
             case { NullHandling: Auto, SourceType.NullableAnnotation: not NotAnnotated, TypeConverter.Type.NullableAnnotation: Annotated }:
@@ -96,7 +110,9 @@ internal sealed class ArrayPropertyMappingGenerator : PropertyMappingGenerator
                 break;
 
             default:
-                writer.Write($"{targetInstanceName}.{property.Name} = ").Wrap(Map(writer, property, parameterName, copyPrimitiveArrays, refHandler)).WriteLine(";");
+                writer.WriteIf(targetInstanceName is not null, $"{targetInstanceName}.{property.Name} = ")
+                    .Wrap(Map(writer, property, parameterName, copyPrimitiveArrays, refHandler))
+                    .WriteLineIf(targetInstanceName is not null, ";");
                 break;
         }
 
@@ -115,21 +131,28 @@ internal sealed class ArrayPropertyMappingGenerator : PropertyMappingGenerator
         }
     }
 
-    private static void SelectArray(CodeWriter writer, PropertyMapping property, string parameterName, string targetInstanceName, string? refHandler)
+    private static void SelectArray(CodeWriter writer, PropertyMapping property, string parameterName, string? targetInstanceName, string? refHandler)
     {
         switch (property.NullHandling)
         {
             case ThrowException when property.SourceType.IsNullable:
-                writer.Write($"{targetInstanceName}.{property.Name} = ")
+                writer.WriteIf(targetInstanceName is not null, $"{targetInstanceName}.{property.Name} = ")
                     .Wrap(Map(writer, property, parameterName, refHandler))
                     .Write(" ?? ").WriteThrowArgumentNullException(parameterName);
 
                 break;
 
             case SetEmptyCollection when property.SourceType.IsNullable:
-                writer.Write($"{targetInstanceName}.{property.Name} = ")
+                writer.WriteIf(targetInstanceName is not null, $"{targetInstanceName}.{property.Name} = ")
                     .Wrap(Map(writer, property, parameterName, refHandler))
                     .Write(" ?? ").Write(property.TypeConverter.Type.EmptySourceCodeString());
+
+                break;
+
+            case SetNull when property.SourceType.IsNullable && targetInstanceName is null:
+                writer.WriteIsNullCheck(parameterName)
+                    .Write(" ? ").Write("default")
+                    .Write(" : ").Wrap(Map(writer, property, parameterName, refHandler));
 
                 break;
 
@@ -145,7 +168,7 @@ internal sealed class ArrayPropertyMappingGenerator : PropertyMappingGenerator
 
             case Auto:
             default:
-                writer.Write($"{targetInstanceName}.{property.Name} = ").Wrap(Map(writer, property, parameterName, refHandler)).Write(";");
+                writer.WriteIf(targetInstanceName is not null, $"{targetInstanceName}.{property.Name} = ").Wrap(Map(writer, property, parameterName, refHandler)).Write(";");
                 break;
         }
 
