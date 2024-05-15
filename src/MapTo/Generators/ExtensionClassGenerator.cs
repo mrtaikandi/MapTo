@@ -198,7 +198,7 @@ static file class ExtensionClassGeneratorExtensions
         }
 
         var properties = mapping.Properties
-            .Where(p => p is { TypeConverter: { IsMapToExtensionMethod: false, Type.EnumerableType: EnumerableType.Array } });
+            .Where(p => p is { TypeConverter: { Explicit: false, IsMapToExtensionMethod: false, Type.EnumerableType: EnumerableType.Array } });
 
         foreach (var property in properties)
         {
