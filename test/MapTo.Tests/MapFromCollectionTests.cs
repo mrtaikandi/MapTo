@@ -453,4 +453,51 @@ public class MapFromCollectionTests
         var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain("target.Prop1 = global::MapTo.Tests.TargetClass.MapProp1(sourceClass.Prop1);");
     }
+
+    [Fact]
+    public void When_PropertyIsPrimitiveArrayAndHasPropertyTypeConverter_Should_UseTheConverterMethodInsteadOfPrimitiveCopy()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder(
+            supportNullReferenceTypes: true,
+            new Dictionary<string, string>
+            {
+                [nameof(CodeGeneratorOptions.CopyPrimitiveArrays)] = "true"
+            });
+
+        var globalUsings = new[] { "System.Collections", "System.Collections.Generic" };
+
+        var nestedSourceFile = builder.AddFile(usings: globalUsings);
+        nestedSourceFile.AddClass(Accessibility.Public, "SourceClass")
+            .WithProperty("List<byte>", "Prop1")
+            .WithProperty("byte[]", "Prop2");
+
+        var file2 = builder.AddFile(usings: globalUsings, supportNullableReferenceTypes: true);
+        file2.AddClass(accessibility: Accessibility.Public, name: "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+            .WithProperty("byte[]", "Prop1", attributes: ["[PropertyTypeConverter(nameof(Map2Prop1))]"], defaultValue: "null!")
+            .WithProperty("byte[]?", "Prop2")
+            .WithStaticMethod("byte[]", "Map2Prop1", "return segment.ToArray();", parameter: "List<byte> segment");
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+        compilation.Dump(_output);
+        diagnostics.ShouldBeSuccessful();
+
+        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldContain(
+            """
+            var target = new TargetClass();
+
+            if (sourceClass.Prop1 is not null)
+            {
+                target.Prop1 = global::MapTo.Tests.TargetClass.Map2Prop1(sourceClass.Prop1);
+            }
+            if (sourceClass.Prop2 is not null)
+            {
+                target.Prop2 = MapToByteArray(sourceClass.Prop2);
+            }
+
+            return target;
+            """);
+    }
 }
