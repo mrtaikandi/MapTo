@@ -31,17 +31,20 @@ static file class ExtensionClassGeneratorExtensions
 
     internal static CodeWriter WriteMapArrayMethods(this CodeWriter writer, TargetMapping mapping)
     {
+        const string ParameterName = "sourceArray";
         var referenceHandler = mapping.Options.ReferenceHandling == ReferenceHandling.Enabled ? "referenceHandler" : null;
         var properties = mapping.Properties
-            .Where(p => p is { SourceType.IsArray: true, TypeConverter: { IsMapToExtensionMethod: true, Type.EnumerableType: EnumerableType.Array } });
+            .Where(p => p is { SourceType.IsArray: true, TypeConverter: { IsMapToExtensionMethod: true, Type.EnumerableType: EnumerableType.Array } })
+            .Select(p => (
+                ReturnType: $"{p.Type.FullName}[]",
+                MethodName: p.GetMapArrayMethodName(),
+                SourceType: p.SourceType.FullName,
+                TypeName: p.TypeName,
+                TypeConverter: p.TypeConverter))
+            .Distinct();
 
-        foreach (var property in properties)
+        foreach (var (returnType, methodName, sourceType, typeName, typeConverter) in properties)
         {
-            const string ParameterName = "sourceArray";
-            var returnType = $"{property.TypeName}[]";
-            var methodName = property.GetMapArrayMethodName();
-            var sourceType = property.SourceType.FullName;
-            var typeConverter = property.TypeConverter;
             var propertyMap = typeConverter switch
             {
                 { HasParameter: false, ReferenceHandling: false } => $"{typeConverter.ContainingType}.{typeConverter.MethodName}({ParameterName}[i])",
@@ -62,7 +65,7 @@ static file class ExtensionClassGeneratorExtensions
                 .WriteIf(typeConverter.ReferenceHandling, ", global::System.Collections.Generic.Dictionary<int, object> referenceHandler")
                 .WriteClosingParenthesis()
                 .WriteOpeningBracket() // Method opening bracket
-                .WriteLine($"var targetArray = new {property.TypeName}[{ParameterName}.Length];")
+                .WriteLine($"var targetArray = new {typeName}[{ParameterName}.Length];")
                 .WriteLine($"for (var i = 0; i < {ParameterName}.Length; i++)")
                 .WriteOpeningBracket()
                 .WriteLine($"targetArray[i] = {propertyMap};")
@@ -197,16 +200,19 @@ static file class ExtensionClassGeneratorExtensions
             return writer;
         }
 
+        const string ParameterName = "sourceArray";
         var properties = mapping.Properties
-            .Where(p => p is { TypeConverter: { Explicit: false, IsMapToExtensionMethod: false, Type.EnumerableType: EnumerableType.Array } });
+            .Where(p => p is { TypeConverter: { Explicit: false, IsMapToExtensionMethod: false, Type.EnumerableType: EnumerableType.Array } })
+            .Select(p =>
+            (
+                ReturnType: $"{p.Type.FullName}[]",
+                MethodName: p.GetMapArrayMethodName(),
+                SourceType: p.SourceType.FullName,
+                TypeFullName: p.Type.FullName))
+            .Distinct();
 
-        foreach (var property in properties)
+        foreach (var (returnType, methodName, sourceType, typeFullName) in properties)
         {
-            const string ParameterName = "sourceArray";
-            var returnType = $"{property.Type.FullName}[]";
-            var methodName = property.GetMapArrayMethodName();
-            var sourceType = property.SourceType.FullName;
-
             writer
                 .WriteLine()
                 .Write("private static ")
@@ -219,7 +225,7 @@ static file class ExtensionClassGeneratorExtensions
                 .Write(ParameterName)
                 .WriteClosingParenthesis()
                 .WriteOpeningBracket() // Method opening bracket
-                .WriteLine($"var targetArray = new {property.Type.FullName}[{ParameterName}.Length];")
+                .WriteLine($"var targetArray = new {typeFullName}[{ParameterName}.Length];")
                 .WriteLine("global::System.Array.Copy(sourceArray, targetArray, sourceArray.Length);")
                 .WriteLine()
                 .WriteLine("return targetArray;")
