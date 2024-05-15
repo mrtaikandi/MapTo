@@ -177,7 +177,7 @@ public class MapFromCollectionTests
                     {
                         targetArray[i] = global::MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeModel(sourceArray[i]);
                     }
-                
+
                     return targetArray;
                 }
                 """);
@@ -211,7 +211,7 @@ public class MapFromCollectionTests
                 {
                     targetArray[i] = global::MapTo.Tests.ArtistMapToExtensions.MapToArtistViewModel(sourceArray[i], referenceHandler);
                 }
-            
+
                 return targetArray;
             }
             """);
@@ -245,7 +245,7 @@ public class MapFromCollectionTests
                 {
                     targetArray[i] = global::ExternalTestData.Models.ArtistDtoMapToExtensions.MapToArtist(sourceArray[i]);
                 }
-            
+
                 return targetArray;
             }
             """);
@@ -281,7 +281,7 @@ public class MapFromCollectionTests
                 {
                     targetArray[i] = global::ExternalTestData.Models.ArtistDtoMapToExtensions.MapToArtist(sourceArray[i], referenceHandler);
                  }
-            
+
                  return targetArray;
              }
             """);
@@ -297,7 +297,7 @@ public class MapFromCollectionTests
                 {
                     targetArray[i] = global::ExternalTestData.Models.CopyrightDtoMapToExtensions.MapToCopyright(sourceArray[i]);
                 }
-            
+
                 return targetArray;
             }
             """);
@@ -332,7 +332,7 @@ public class MapFromCollectionTests
             {
                 var targetArray = new string[sourceArray.Length];
                 global::System.Array.Copy(sourceArray, targetArray, sourceArray.Length);
-            
+
                 return targetArray;
             }
             """);

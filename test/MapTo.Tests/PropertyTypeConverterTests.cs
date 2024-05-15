@@ -286,4 +286,35 @@ public class PropertyTypeConverterTests
         methodSymbol.ShouldNotBeNull();
         diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.PropertyTypeConverterMethodInputTypeNullCompatibilityError(sourceProperty.Name, methodSymbol));
     }
+
+    [Fact]
+    public void When_PropertyIsEnumerableAndHasIncorrectPropertyTypeConverter_Should_UseReportDiagnostics()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        var globalUsings = new[] { "System", "System.Collections", "System.Collections.Generic" };
+
+        var nestedSourceFile = builder.AddFile(usings: globalUsings, supportNullableReferenceTypes: true);
+        nestedSourceFile.AddClass(Accessibility.Public, "SourceClass")
+            .WithProperty("ArraySegment<byte>", "Prop1");
+
+        nestedSourceFile.AddClass(accessibility: Accessibility.Public, name: "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+            .WithProperty("byte[]?", "Prop1", attributes: ["[PropertyTypeConverter(nameof(MapProp1))]"])
+            .WithStaticMethod("byte[]?", "MapProp1", "return segment?.ToArray();", parameter: "ArraySegment<byte>? segment");
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile(assertOutputCompilation: false);
+
+        // Assert
+        var targetClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
+        var sourceClassDeclaration = compilation.GetClassDeclaration("SourceClass", "TestFile1.g.cs").ShouldNotBeNull();
+        var semanticModel = compilation.GetSemanticModel(targetClassDeclaration.SyntaxTree);
+
+        var sourceProperty = (semanticModel.GetDeclaredSymbol(sourceClassDeclaration.Members[0]) as IPropertySymbol).ShouldNotBeNull();
+        var methodSymbol = semanticModel.GetDeclaredSymbol(targetClassDeclaration.Members[1]) as IMethodSymbol;
+
+        methodSymbol.ShouldNotBeNull();
+
+        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.PropertyTypeConverterMethodInputTypeCompatibilityError(sourceProperty.Name, sourceProperty.Type, methodSymbol));
+    }
 }
