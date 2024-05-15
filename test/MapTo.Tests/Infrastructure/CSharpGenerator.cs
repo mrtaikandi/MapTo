@@ -96,7 +96,7 @@ internal static class CSharpGenerator
         if (assertCompilation)
         {
             // NB: fail tests when the injected program isn't valid _before_ running generators
-            compilation.GetDiagnostics().ShouldBeSuccessful();
+            compilation.ShouldBeSuccessful();
         }
 
         var driver = CSharpGeneratorDriver.Create(
@@ -113,7 +113,7 @@ internal static class CSharpGenerator
 
             generateDiagnostics.Union(compilationDiagnostics)
                 .Where(d => suppressedErrors.All(i => !d.Id.StartsWith(i)))
-                .ShouldBeSuccessful();
+                .ShouldBeSuccessful(outputCompilation);
         }
 
         return new(outputCompilation, generateDiagnostics);

@@ -10,6 +10,12 @@ internal class EnumerableTypeConverterResolver : ITypeConverterResolver
             return ResolverResult.Undetermined<TypeConverterMapping>();
         }
 
+        var typeConverterAttribute = property.GetAttribute(context.KnownTypes.PropertyTypeConverterAttributeTypeSymbol);
+        if (typeConverterAttribute is not null)
+        {
+            return ResolverResult.Undetermined<TypeConverterMapping>();
+        }
+
         if (property.Type is not INamedTypeSymbol enumerableTypeSymbol || enumerableTypeSymbol.TypeArguments.IsEmpty)
         {
             return DiagnosticsFactory.SuitableMappingTypeInNestedPropertyNotFoundError(property, property.Type);
