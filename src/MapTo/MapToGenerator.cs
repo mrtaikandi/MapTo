@@ -1,4 +1,3 @@
-using MapTo.Configuration;
 using MapTo.Generators;
 using MapTo.Mappings;
 
