@@ -554,8 +554,8 @@ public class MapFromCollectionTests
 
             var target = new TargetClass
             {
-                Prop1 = sourceClass.Prop1,
-                Prop2 = sourceClass.Prop2
+                Prop1 = sourceClass.Prop1 is null ? default : sourceClass.Prop1,
+                Prop2 = sourceClass.Prop2 is null ? default : sourceClass.Prop2
             };
 
             if (sourceClass.Prop3 is not null)
