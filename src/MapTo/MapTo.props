@@ -5,5 +5,9 @@
         <CompilerVisibleProperty Include="MapTo_ReferenceHandling"/>
         <CompilerVisibleProperty Include="MapTo_CopyPrimitiveArrays"/>
         <CompilerVisibleProperty Include="MapTo_NullHandling"/>
+        <CompilerVisibleProperty Include="MapTo_EnumMappingStrategy"/>
+        <CompilerVisibleProperty Include="MapTo_StrictEnumMapping"/>
+        <CompilerVisibleProperty Include="MapTo_ProjectionType"/>
+        <CompilerVisibleProperty Include="MapTo_SuppressXmlDocWarnings"/>
     </ItemGroup>
 </Project>

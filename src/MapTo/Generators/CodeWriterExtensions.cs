@@ -36,7 +36,13 @@ internal static class CodeWriterExtensions
         writer.WriteLine($"// {comment}");
 
     public static CodeWriter WriteNullableContextOptionIf(this CodeWriter writer, bool enabled) =>
-        writer.WriteLineIf(enabled, "#nullable enable").WriteLine();
+        writer.WriteLineIf(enabled, "#nullable enable");
+
+    public static CodeWriter WriteSuppressFileScopeCompilerWarning(this CodeWriter writer, string id, string? comment = null) =>
+        writer.Write($"#pragma warning disable {id}").WriteLineIf(comment is not null, $" // {comment}");
+
+    public static CodeWriter WriteSuppressFileScopeCompilerWarningIf(this CodeWriter writer, bool condition, string id, string? comment = null) =>
+        condition ? writer.WriteSuppressFileScopeCompilerWarning(id, comment) : writer;
 
     public static CodeWriter WriteReturnNotNullIfNotNullAttribute(this CodeWriter writer, string parameterName) =>
         writer.WriteLine($"""[return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("{parameterName}")]""");

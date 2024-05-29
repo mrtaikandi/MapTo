@@ -13,6 +13,7 @@ namespace MapTo.Configuration;
 /// <param name="EnumMappingStrategy">Indicates the strategy to use when mapping enum values.</param>
 /// <param name="StrictEnumMapping">Indicates how strict the enum mapping should be.</param>
 /// <param name="ProjectionType">Indicates the type of projection mappings to generate.</param>
+/// <param name="SuppressXmlDocWarnings">Indicates whether to suppress XML doc warnings.</param>
 internal readonly record struct CodeGeneratorOptions(
     string MapMethodPrefix = "MapTo",
     string MapExtensionClassSuffix = "MapToExtensions",
@@ -21,7 +22,8 @@ internal readonly record struct CodeGeneratorOptions(
     NullHandling NullHandling = NullHandling.Auto,
     EnumMappingStrategy EnumMappingStrategy = EnumMappingStrategy.ByValue,
     StrictEnumMapping StrictEnumMapping = StrictEnumMapping.Off,
-    ProjectionType ProjectionType = ProjectionType.Array | ProjectionType.IEnumerable | ProjectionType.List)
+    ProjectionType ProjectionType = ProjectionType.Array | ProjectionType.IEnumerable | ProjectionType.List,
+    bool SuppressXmlDocWarnings = true)
 {
     /// <summary>
     /// The prefix of the property name in the .editorconfig file.
@@ -45,6 +47,7 @@ internal readonly record struct CodeGeneratorOptions(
             NullHandling: provider.GlobalOptions.GetOption<NullHandling>(nameof(NullHandling)),
             EnumMappingStrategy: provider.GlobalOptions.GetOption(nameof(EnumMappingStrategy), EnumMappingStrategy.ByValue),
             StrictEnumMapping: provider.GlobalOptions.GetOption(nameof(StrictEnumMapping), StrictEnumMapping.Off),
-            ProjectionType: provider.GlobalOptions.GetOption(nameof(ProjectionType),  ProjectionType.Array | ProjectionType.IEnumerable | ProjectionType.List));
+            ProjectionType: provider.GlobalOptions.GetOption(nameof(ProjectionType), ProjectionType.Array | ProjectionType.IEnumerable | ProjectionType.List),
+            SuppressXmlDocWarnings: provider.GlobalOptions.GetOption(nameof(SuppressXmlDocWarnings), true));
     }
 }
