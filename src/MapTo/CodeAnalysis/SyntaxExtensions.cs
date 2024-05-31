@@ -4,7 +4,7 @@ namespace MapTo.CodeAnalysis;
 
 internal static class SyntaxExtensions
 {
-    public static Accessibility GetAccessibility(this TypeDeclarationSyntax syntax) => syntax.Modifiers.FirstOrDefault().Kind() switch
+    public static Accessibility GetAccessibility(this BaseTypeDeclarationSyntax syntax) => syntax.Modifiers.FirstOrDefault().Kind() switch
     {
         SyntaxKind.PublicKeyword => Accessibility.Public,
         SyntaxKind.PrivateKeyword => Accessibility.Private,
@@ -17,8 +17,21 @@ internal static class SyntaxExtensions
             .SelectMany(al => al.Attributes)
             .SingleOrDefault(a =>
                 (a.Name as IdentifierNameSyntax)?.Identifier.ValueText == attributeName ||
-                ((a.Name as QualifiedNameSyntax)?.Right as IdentifierNameSyntax)?.Identifier.ValueText == attributeName);
+                ((a.Name as QualifiedNameSyntax)?.Right as IdentifierNameSyntax)?.Identifier.ValueText == attributeName ||
+                ((a.Name as GenericNameSyntax)?.Identifier.ValueText == attributeName));
     }
+
+    public static bool HasAnyAttributes(this BaseTypeDeclarationSyntax typeDeclarationSyntax, params string[] attributeNames) =>
+        attributeNames.Any(typeDeclarationSyntax.HasAttribute);
+
+    public static bool HasAttribute(this BaseTypeDeclarationSyntax typeDeclarationSyntax, string attributeName) => typeDeclarationSyntax.AttributeLists
+        .SelectMany(al => al.Attributes)
+        .Any(a => a.Name switch
+        {
+            QualifiedNameSyntax q => q.Right.Identifier.ValueText == attributeName,
+            SimpleNameSyntax s => s.Identifier.ValueText == attributeName,
+            _ => false
+        });
 
     public static string? GetNamespace(this TypeDeclarationSyntax typeDeclarationSyntax) => typeDeclarationSyntax
         .Ancestors()
@@ -27,5 +40,12 @@ internal static class SyntaxExtensions
         ?.Name
         .ToString();
 
-    public static bool IsPartial(this TypeDeclarationSyntax syntax) => syntax.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword));
+    public static bool IsPartial(this BaseTypeDeclarationSyntax syntax) => syntax.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword));
+
+    public static string GetKeywordText(this BaseTypeDeclarationSyntax syntax) => syntax switch
+    {
+        TypeDeclarationSyntax t => t.Keyword.Text,
+        EnumDeclarationSyntax e => e.EnumKeyword.Text,
+        _ => string.Empty
+    };
 }

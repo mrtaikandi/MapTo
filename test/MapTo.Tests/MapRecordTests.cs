@@ -104,7 +104,7 @@ public class MapRecordTests
                     {
                         return null;
                     }
-                
+
                     return new TargetRecord(sourceRecord.Id);
                 }
                 """);
@@ -125,7 +125,7 @@ public class MapRecordTests
                   public record TargetRecord
                   {
                         public int Id { get; init; }
-                  
+
                         [property: IgnoreProperty]
                         public string Name { get; init; }
                   }
@@ -162,9 +162,9 @@ public class MapRecordTests
                   public record TargetRecord(int Id)
                   {
                       public TargetRecord(int id, string name) : this(id) => Name = name;
-                  
+
                       public string Name { get; }
-                      
+
                       public string Description { get; init; }
                   }
                   """);
@@ -197,10 +197,10 @@ public class MapRecordTests
         builder.AddFile(supportNullableReferenceTypes: true)
             .WithBody(
                 """
-                public record Source(string FirstName, string LastName);
+                public record Source(string FirstName, string LastName, string[] Tags);
 
                 [MapFrom(typeof(Source))]
-                public record Target(string FirstName, string LastName);
+                public record Target(string FirstName, string LastName, string[] Tags);
                 """);
 
         // Act
@@ -221,8 +221,8 @@ public class MapRecordTests
                       {
                           return null;
                       }
-              
-                      return new Target(source.FirstName, source.LastName);
+
+                      return new Target(source.FirstName, source.LastName, source.Tags);
                   }
               }
               """);

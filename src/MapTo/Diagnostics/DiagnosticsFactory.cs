@@ -25,7 +25,7 @@ internal static class DiagnosticsFactory
     /// <summary>
     /// Missing constructor on '{0}' class.
     /// </summary>
-    internal static Diagnostic MissingConstructorOnTargetClassError(TypeDeclarationSyntax targetType, string classTypeDisplayName) => Create(
+    internal static Diagnostic MissingConstructorOnTargetClassError(BaseTypeDeclarationSyntax targetType, string classTypeDisplayName) => Create(
         DiagnosticDescriptors.MissingConstructorOnTargetClassError,
         targetType.GetLocation(),
         classTypeDisplayName);

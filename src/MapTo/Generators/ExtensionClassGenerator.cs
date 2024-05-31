@@ -36,10 +36,10 @@ static file class ExtensionClassGeneratorExtensions
         var properties = mapping.Properties
             .Where(p => p is { SourceType.IsArray: true, TypeConverter: { IsMapToExtensionMethod: true, Type.EnumerableType: EnumerableType.Array } })
             .Select(p => (
-                ReturnType: $"{p.Type.FullName}[]",
+                ReturnType: $"{p.Type.ElementTypeName}[]",
                 MethodName: p.GetMapArrayMethodName(),
                 SourceType: p.SourceType.FullName,
-                TypeName: p.TypeName,
+                TypeName: p.Type.ElementTypeName,
                 TypeConverter: p.TypeConverter))
             .Distinct();
 
@@ -205,10 +205,10 @@ static file class ExtensionClassGeneratorExtensions
             .Where(p => p is { TypeConverter: { Explicit: false, IsMapToExtensionMethod: false, Type.EnumerableType: EnumerableType.Array } })
             .Select(p =>
             (
-                ReturnType: $"{p.Type.FullName}[]",
+                ReturnType: $"{p.Type.ElementTypeName}[]",
                 MethodName: p.GetMapArrayMethodName(),
                 SourceType: p.SourceType.FullName,
-                TypeFullName: p.Type.FullName))
+                TypeFullName: p.Type.ElementTypeName))
             .Distinct();
 
         foreach (var (returnType, methodName, sourceType, typeFullName) in properties)

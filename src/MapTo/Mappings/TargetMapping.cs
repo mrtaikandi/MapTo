@@ -34,7 +34,7 @@ internal static class TargetMappingFactory
             Name: targetTypeSyntax.Identifier.Text,
             Namespace: NamespaceMapping.Create(targetTypeSymbol),
             IsPartial: targetTypeSyntax.IsPartial(),
-            TypeKeyword: targetTypeSyntax.Keyword.Text,
+            TypeKeyword: targetTypeSyntax.GetKeywordText(),
             Source: SourceMapping.Create(sourceTypeSymbol),
             Constructor: constructorMapping,
             Properties: properties,

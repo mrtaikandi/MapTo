@@ -19,7 +19,7 @@ internal class TestSourceBuilderOptions
     public bool SupportNullReferenceTypes { get; init; }
 
     public static TestSourceBuilderOptions Create(
-        LanguageVersion languageVersion = LanguageVersion.CSharp10,
+        LanguageVersion languageVersion = LanguageVersion.CSharp11,
         bool fileScopedNamespace = true,
         bool supportNullReferenceTypes = true,
         bool generateXmlDoc = false,

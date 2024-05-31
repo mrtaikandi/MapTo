@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
 using MapTo.Extensions;
@@ -70,7 +71,7 @@ internal static class PropertyMappingFactory
 
         return new(
             Name: property.Name,
-            Type: property.GetTypeNamedSymbol().ToTypeMapping(),
+            Type: property.Type.ToTypeMapping(),
             SourceName: sourceProperty.Name,
             SourceType: sourceProperty.Type,
             InitializationMode: property.GetInitializationMode(),
