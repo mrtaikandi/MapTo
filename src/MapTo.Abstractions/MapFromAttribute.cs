@@ -6,7 +6,20 @@ namespace MapTo;
 /// Specifies the source type to map from.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Enum, Inherited = false)]
-public sealed class MapFromAttribute : Attribute
+public sealed class MapFromAttribute<T> : MapFromAttribute
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MapFromAttribute{T}" /> class.
+    /// </summary>
+    public MapFromAttribute()
+        : base(typeof(T)) { }
+}
+
+/// <summary>
+/// Specifies the source type to map from.
+/// </summary>
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Enum, Inherited = false)]
+public class MapFromAttribute : Attribute
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="MapFromAttribute" /> class.

@@ -13,20 +13,23 @@ public class MapFromTests
     }
 
     [Theory]
-    [InlineData(LanguageVersion.CSharp7_3, false)]
-    [InlineData(LanguageVersion.CSharp7_3, true)]
-    [InlineData(LanguageVersion.CSharp10, false)]
-    [InlineData(LanguageVersion.CSharp10, true)]
-    public void Should_AlwaysAnnotateTheReturnTypeWithNotNullIfNotNull(LanguageVersion version, bool supportNullReferenceTypes)
+    [InlineData(LanguageVersion.CSharp7_3, false, false)]
+    [InlineData(LanguageVersion.CSharp7_3, true, false)]
+    [InlineData(LanguageVersion.CSharp10, false, false)]
+    [InlineData(LanguageVersion.CSharp10, true, false)]
+    [InlineData(LanguageVersion.CSharp11, false, true)]
+    [InlineData(LanguageVersion.CSharp11, true, true)]
+    public void Should_AlwaysAnnotateTheReturnTypeWithNotNullIfNotNull(LanguageVersion version, bool supportNullReferenceTypes, bool genericMapFromAttribute)
     {
         // Arrange
         var options = TestSourceBuilderOptions.Create(version, supportNullReferenceTypes: supportNullReferenceTypes);
-        var builder = ScenarioBuilder.SimpleMappedClassInSameNamespaceAsSource(options);
+        var builder = ScenarioBuilder.SimpleMappedClassInSameNamespaceAsSource(options, genericMapFromAttribute);
 
         // Act
         var (compilation, diagnostics) = builder.Compile();
 
         // Assert
+        compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
         compilation
             .GetClassDeclaration("SourceClassMapToExtensions")
@@ -100,7 +103,7 @@ public class MapFromTests
                                 {
                                     return null;
                                 }
-                        
+
                                 return new TargetClass
                                 {
                                     Id = sourceClass.Id,
@@ -155,7 +158,7 @@ public class MapFromTests
                                 {
                                     return null;
                                 }
-                        
+
                                 return new TargetClass(sourceClass.Id)
                                 {
                                     Name = sourceClass.Name
@@ -256,7 +259,7 @@ public class MapFromTests
                       {
                           return null;
                       }
-              
+
                       return new TargetClass
                       {
                           Id = sourceClass.Id,

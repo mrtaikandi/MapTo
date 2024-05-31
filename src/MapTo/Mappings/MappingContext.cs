@@ -8,6 +8,7 @@ internal readonly record struct MappingContext(
     SemanticModel TargetSemanticModel,
     INamedTypeSymbol SourceTypeSymbol,
     KnownTypes KnownTypes,
+    AttributeData MapFromAttributeData,
     CodeGeneratorOptions CodeGeneratorOptions = default,
     CompilerOptions CompilerOptions = default)
 {
@@ -19,7 +20,23 @@ internal readonly record struct MappingContext(
 
     internal Compilation Compilation => TargetSemanticModel.Compilation;
 
-    internal AttributeData MapFromAttributeData { get; init; }
+    public void Deconstruct(
+        out BaseTypeDeclarationSyntax targetTypeSyntax,
+        out INamedTypeSymbol targetTypeSymbol,
+        out SemanticModel targetSemanticModel,
+        out INamedTypeSymbol sourceTypeSymbol,
+        out KnownTypes knownTypes,
+        out CodeGeneratorOptions codeGeneratorOptions,
+        out CompilerOptions compilerOptions)
+    {
+        targetTypeSyntax = TargetTypeSyntax;
+        targetTypeSymbol = TargetTypeSymbol;
+        targetSemanticModel = TargetSemanticModel;
+        sourceTypeSymbol = SourceTypeSymbol;
+        knownTypes = KnownTypes;
+        codeGeneratorOptions = CodeGeneratorOptions;
+        compilerOptions = CompilerOptions;
+    }
 
     public static MappingContext WithOptions((MappingContext Builder, CodeGeneratorOptions Options) source, CancellationToken cancellationToken)
     {
@@ -67,22 +84,33 @@ internal readonly record struct MappingContext(
 
 internal static class MappingContextExtensions
 {
-    public static IncrementalValuesProvider<MappingContext> CreateMappingContext(this SyntaxValueProvider provider) => provider.ForAttributeWithMetadataName(
-            typeof(MapFromAttribute).FullName!,
-            static (node, _) => node is ClassDeclarationSyntax or RecordDeclarationSyntax,
-            static (context, _) =>
+    public static IncrementalValuesProvider<MappingContext> CreateMappingContext(this SyntaxValueProvider provider) => provider.CreateSyntaxProvider(
+            static (node, _) => node.HasMapFromAttribute(),
+            static (context, ctx) =>
             {
-                var mapFromAttribute = context.Attributes.Single();
+                var semanticModel = context.SemanticModel;
+
+                var knownTypes = KnownTypes.Create(semanticModel.Compilation);
+                var targetNode = context.Node as TypeDeclarationSyntax ?? throw new InvalidOperationException("TargetNode is not a ClassDeclarationSyntax");
+                var targetSymbol = semanticModel.GetDeclaredSymbol(targetNode, cancellationToken: ctx) ?? throw new InvalidOperationException("TargetSymbol is not a ITypeSymbol");
+
+                var mapFromAttribute = targetSymbol.GetAttribute(knownTypes.GenericMapFromAttributeTypeSymbol)
+                                       ?? targetSymbol.GetAttribute<MapFromAttribute>() ?? throw new InvalidOperationException("MapFromAttribute is not found");
+
+                var sourceTypeSymbol = mapFromAttribute.AttributeClass!.IsGenericType
+                    ? mapFromAttribute.AttributeClass.TypeArguments.First() as INamedTypeSymbol
+                    : mapFromAttribute.ConstructorArguments.First().Value as INamedTypeSymbol ?? throw new InvalidOperationException("SourceType is not a ITypeSymbol");
+
                 return new MappingContext(
-                    TargetTypeSyntax: context.TargetNode as TypeDeclarationSyntax ?? throw new InvalidOperationException("TargetNode is not a ClassDeclarationSyntax"),
-                    TargetTypeSymbol: context.TargetSymbol as INamedTypeSymbol ?? throw new InvalidOperationException("TargetSymbol is not a ITypeSymbol"),
-                    TargetSemanticModel: context.SemanticModel,
-                    SourceTypeSymbol: mapFromAttribute.ConstructorArguments.First().Value as INamedTypeSymbol ??
-                                      throw new InvalidOperationException("SourceType is not a ITypeSymbol"),
-                    KnownTypes: KnownTypes.Create(context.SemanticModel.Compilation))
-                {
-                    MapFromAttributeData = mapFromAttribute
-                };
+                    TargetTypeSyntax: targetNode,
+                    TargetTypeSymbol: targetSymbol,
+                    TargetSemanticModel: semanticModel,
+                    SourceTypeSymbol: sourceTypeSymbol ?? throw new InvalidOperationException("SourceType is not a ITypeSymbol"),
+                    KnownTypes: knownTypes,
+                    MapFromAttributeData: mapFromAttribute);
             })
         .WithTrackingName(nameof(CreateMappingContext));
+
+    private static bool HasMapFromAttribute(this SyntaxNode node) =>
+        node is TypeDeclarationSyntax typeDeclarationSyntax && typeDeclarationSyntax.HasAttribute(KnownTypes.FriendlyMapFromAttributeName);
 }

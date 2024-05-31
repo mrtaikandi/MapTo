@@ -19,7 +19,7 @@ internal static class SymbolExtensions
         symbol.GetAttributes().FirstOrDefault(a => a.AttributeClass?.ToDisplayString() == fullyQualifiedAttributeName);
 
     public static IEnumerable<AttributeData> GetAttributes(this ISymbol symbol, ITypeSymbol attributeSymbol) =>
-        symbol.GetAttributes().Where(a => a.AttributeClass?.Equals(attributeSymbol, SymbolEqualityComparer.Default) == true);
+        symbol.GetAttributes().Where(a => a.AttributeClass?.OriginalDefinition.Equals(attributeSymbol, SymbolEqualityComparer.Default) == true);
 
     public static IEnumerable<ITypeSymbol> GetBaseTypesAndThis(this ITypeSymbol type)
     {
