@@ -13,6 +13,7 @@ internal readonly record struct PropertyMapping(
     TypeMapping SourceType,
     PropertyInitializationMode InitializationMode,
     string ParameterName,
+    bool IsRequired,
     TypeConverterMapping TypeConverter,
     ImmutableArray<string> UsingDirectives,
     NullHandling NullHandling)
@@ -34,7 +35,7 @@ internal static class PropertyMappingFactory
             .OfType<IPropertySymbol>()
             .Where(p => p.DeclaredAccessibility is Accessibility.Public or Accessibility.Internal &&
                         !p.HasAttribute(knownTypes.CompilerGeneratedAttributeTypeSymbol) &&
-                        !p.HasAttribute(knownTypes.IgnorePropertyAttributeTypeSymbol))
+                        (!p.HasAttribute(knownTypes.IgnorePropertyAttributeTypeSymbol) || p.IsRequired))
             .Select(p => CreatePropertyMapping(context, p))
             .WhereNotNull()
             .ToImmutableArray();
@@ -73,8 +74,9 @@ internal static class PropertyMappingFactory
             Type: property.Type.ToTypeMapping(),
             SourceName: sourceProperty.Name,
             SourceType: sourceProperty.Type,
-            InitializationMode: property.GetInitializationMode(),
+            InitializationMode: property.GetInitializationMode(context.KnownTypes),
             ParameterName: property.Name.ToParameterNameCasing(),
+            IsRequired: property.IsRequired,
             TypeConverter: converter,
             UsingDirectives: converter.UsingDirectives ?? ImmutableArray<string>.Empty,
             NullHandling: mapPropertyAttribute.GetNamedArgument(nameof(MapPropertyAttribute.NullHandling), context.CodeGeneratorOptions.NullHandling));
@@ -138,13 +140,21 @@ internal static class PropertyMappingFactory
             Name: sourcePropertyName.ToString());
     }
 
-    private static PropertyInitializationMode GetInitializationMode(this IPropertySymbol property) => property.SetMethod switch
+    private static PropertyInitializationMode GetInitializationMode(this IPropertySymbol property, KnownTypes knownTypes)
     {
-        null => PropertyInitializationMode.Constructor,
-        { IsInitOnly: true } => PropertyInitializationMode.ObjectInitializer,
-        { IsInitOnly: false } when property.Type.IsPrimitiveType(true) => PropertyInitializationMode.ObjectInitializer,
-        _ => PropertyInitializationMode.Setter
-    };
+        if (property.HasAttribute(knownTypes.IgnorePropertyAttributeTypeSymbol))
+        {
+            return PropertyInitializationMode.None;
+        }
+
+        return property.SetMethod switch
+        {
+            null => PropertyInitializationMode.Constructor,
+            { IsInitOnly: true } => PropertyInitializationMode.ObjectInitializer,
+            { IsInitOnly: false } when property.Type.IsPrimitiveType(true) => PropertyInitializationMode.ObjectInitializer,
+            _ => PropertyInitializationMode.Setter
+        };
+    }
 
     private static bool IsTargetTypeInheritFromMappedBaseClass(this MappingContext context)
     {

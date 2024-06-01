@@ -47,10 +47,14 @@ internal static class TypeInitializerGenerator
     internal static CodeWriter WriteObjectInitializer(this CodeWriter writer, TargetMapping mapping) =>
         WriteObjectInitializer(writer, mapping.ToTypeInitializerMapping());
 
-    internal static CodeWriter WriteObjectInitializer(this CodeWriter writer, TypeInitializerMapping mapping, bool inline = false)
+    private static CodeWriter WriteObjectInitializer(this CodeWriter writer, TypeInitializerMapping mapping, bool inline = false)
     {
         var (sourceName, _, _, targetProperties, options) = mapping;
-        var properties = targetProperties.Where(p => p.InitializationMode == PropertyInitializationMode.ObjectInitializer).ToArray();
+        var properties = targetProperties
+            .Where(p => p.InitializationMode is PropertyInitializationMode.ObjectInitializer ||
+                        (p.InitializationMode is PropertyInitializationMode.None && p.IsRequired))
+            .ToArray();
+
         if (properties.Length == 0)
         {
             return writer;
@@ -66,7 +70,16 @@ internal static class TypeInitializerGenerator
             var property = properties[i];
 
             writer.Write($"{property.Name} = ");
-            PropertyGenerator.Instance.Generate(new(writer, property, parameterName, null, options.CopyPrimitiveArrays, null));
+
+            if (property.InitializationMode is PropertyInitializationMode.None)
+            {
+                writer.Write(property.Name.ToParameterNameCasing());
+            }
+            else
+            {
+                PropertyGenerator.Instance.Generate(new(writer, property, parameterName, null, options.CopyPrimitiveArrays, null));
+            }
+
             writer.WriteIf(i < properties.Length - 1, ",").WriteLineIndented();
         }
 

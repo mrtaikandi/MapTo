@@ -2,6 +2,7 @@
 
 internal enum PropertyInitializationMode
 {
+    None,
     Constructor,
     ObjectInitializer,
     Setter

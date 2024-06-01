@@ -158,7 +158,17 @@ static file class ExtensionClassGeneratorExtensions
             .Write(sourceType)
             .Write(compilerOptions.NullableReferenceSyntax)
             .WriteWhitespace()
-            .Write(parameterName)
+            .Write(parameterName);
+
+        // If there are any required properties with ignored attribute, we should add them as parameters
+        foreach (var property in mapping.Properties.Where(p => p is { IsRequired: true, InitializationMode: PropertyInitializationMode.None }))
+        {
+            var parameterType = property.TypeName;
+            var parameter = property.Name.ToParameterNameCasing();
+            writer.Write(", ").Write(parameterType).WriteWhitespace().Write(parameter);
+        }
+
+        writer
             .WriteClosingParenthesis()
             .WriteOpeningBracket(); // Method opening bracket
 

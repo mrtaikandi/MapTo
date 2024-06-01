@@ -389,4 +389,91 @@ public class MapRecordTests
         var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain("return new Target(LastName: source.LastName, FirstName: source.FirstName);");
     }
+
+    [Fact]
+    public void Whit_RecordsWithInitRequiredProperty_Should_GenerateWithObjectInitializer()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile(supportNullableReferenceTypes: true)
+            .WithBody(
+                """
+                public record Source
+                {
+                    public int Prop1 { get; init; }
+                    public double Prop2 { get; init; }
+                }
+
+                [MapFrom(typeof(Source))]
+                public record Target
+                {
+                    public required int Prop1 { get; init; }
+                    public required double Prop2 { get; init; }
+                }
+                """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldContain(
+            """
+            return new Target
+            {
+                Prop1 = source.Prop1,
+                Prop2 = source.Prop2
+            };
+            """);
+    }
+
+    [Fact]
+    public void Whit_RecordsWithIgnoredRequiredProperty_Should_RequestValueFromExtensionArgs()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile(supportNullableReferenceTypes: true)
+            .WithBody(
+                """
+                public record Source
+                {
+                    public int Prop1 { get; init; }
+                    public double Prop2 { get; init; }
+                }
+
+                [MapFrom(typeof(Source))]
+                public record Target
+                {
+                    public required int Prop1 { get; init; }
+
+                    [IgnoreProperty]
+                    public required double Prop2 { get; init; }
+                }
+                """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        compilation.Dump(_output);
+        diagnostics.ShouldBeSuccessful();
+        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldContain(
+            """
+            public static Target? MapToTarget(this Source? source, double prop2)
+            {
+                if (source is null)
+                {
+                    return null;
+                }
+
+                return new Target
+                {
+                    Prop1 = source.Prop1,
+                    Prop2 = prop2
+                };
+            }
+            """);
+    }
 }
