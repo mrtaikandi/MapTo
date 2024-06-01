@@ -58,18 +58,17 @@ internal static class PropertyMappingFactory
         var (_, _, _, sourceTypeSymbol, knownTypes, _, _) = context;
         var mapPropertyAttribute = property.GetAttribute(knownTypes.MapPropertyAttributeTypeSymbol);
         var sourceProperty = property.FindSource(sourceTypeSymbol, mapPropertyAttribute);
-        var initializationMode = property.GetInitializationMode(context.KnownTypes);
 
         if (sourceProperty.NotFound)
         {
-            if (property.IsRequired && initializationMode is PropertyInitializationMode.None)
+            if (property.IsRequired)
             {
                 return new PropertyMapping(
                     Name: property.Name,
                     Type: property.Type.ToTypeMapping(),
                     SourceName: string.Empty,
                     SourceType: default,
-                    InitializationMode: initializationMode,
+                    InitializationMode: PropertyInitializationMode.None,
                     ParameterName: property.Name.ToParameterNameCasing(),
                     IsRequired: property.IsRequired,
                     TypeConverter: default,
@@ -90,7 +89,7 @@ internal static class PropertyMappingFactory
             Type: property.Type.ToTypeMapping(),
             SourceName: sourceProperty.Name,
             SourceType: sourceProperty.Type,
-            InitializationMode: initializationMode,
+            InitializationMode: property.GetInitializationMode(context.KnownTypes),
             ParameterName: property.Name.ToParameterNameCasing(),
             IsRequired: property.IsRequired,
             TypeConverter: converter,
