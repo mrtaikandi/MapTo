@@ -10,6 +10,11 @@ internal readonly record struct ExtensionClassGenerator(
     /// <inheritdoc />
     public void BeginWrite(CodeWriter writer)
     {
+        if (TargetMapping.TypeKeyword.Equals("enum", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
         writer
             .WriteGeneratedCodeAttribute()
             .WriteExtensionClassDefinition(TargetMapping)
