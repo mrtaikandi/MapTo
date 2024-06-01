@@ -525,4 +525,51 @@ public class MapRecordTests
             }
             """);
     }
+
+    [Fact]
+    public void When_SourceRecordDoesNotHaveRequiredProperty_Should_RequestValueFromExtensionArgs()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile(supportNullableReferenceTypes: true)
+            .WithBody(
+                """
+                public record Source
+                {
+                    public int Prop1 { get; init; }
+                    public double Prop2 { get; init; }
+                }
+
+                [MapFrom(typeof(Source))]
+                public record Target
+                {
+                    public required int Prop1 { get; init; }
+                    public required double Prop3 { get; init; }
+                }
+                """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        compilation.Dump(_output);
+        diagnostics.ShouldBeSuccessful();
+        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldContain(
+            """
+            public static Target? MapToTarget(this Source? source, double prop3)
+            {
+                if (source is null)
+                {
+                    return null;
+                }
+
+                return new Target
+                {
+                    Prop1 = source.Prop1,
+                    Prop3 = prop3
+                };
+            }
+            """);
+    }
 }
