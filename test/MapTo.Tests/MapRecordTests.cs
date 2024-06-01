@@ -186,7 +186,7 @@ public class MapRecordTests
     }
 
     [Fact]
-    public void With_SimpleRecords_Should_GenerateWithConstructorInitializer()
+    public void When_SimpleRecords_Should_GenerateWithConstructorInitializer()
     {
         // Arrange
         var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(analyzerConfigOptions: new Dictionary<string, string>
@@ -229,7 +229,7 @@ public class MapRecordTests
     }
 
     [Fact]
-    public void Whit_RecordsWithInitProperty_Should_GenerateWithObjectInitializer()
+    public void When_RecordsWithInitProperty_Should_GenerateWithObjectInitializer()
     {
         // Arrange
         var builder = new TestSourceBuilder();
@@ -267,7 +267,7 @@ public class MapRecordTests
     }
 
     [Fact]
-    public void With_RecordsWithConstructorAndInitProperty_Should_GenerateWithConstructorAndObjectInitializer()
+    public void When_RecordsWithConstructorAndInitProperty_Should_GenerateWithConstructorAndObjectInitializer()
     {
         // Arrange
         var builder = new TestSourceBuilder();
@@ -328,7 +328,7 @@ public class MapRecordTests
     }
 
     [Fact]
-    public void With_RecordsWithConstructorAndDefaultValue_Should_GenerateWithConstructorAndIgnoreTheDefault()
+    public void When_RecordsWithConstructorAndDefaultValue_Should_GenerateWithConstructorAndIgnoreTheDefault()
     {
         // Arrange
         var builder = new TestSourceBuilder();
@@ -363,7 +363,7 @@ public class MapRecordTests
     }
 
     [Fact]
-    public void With_RecordsWithConstructorAndMultipleDefaultValues_Should_GenerateWithConstructorAndIgnoreTheDefault()
+    public void When_RecordsWithConstructorAndMultipleDefaultValues_Should_GenerateWithConstructorAndIgnoreTheDefault()
     {
         // Arrange
         var builder = new TestSourceBuilder();
@@ -391,7 +391,7 @@ public class MapRecordTests
     }
 
     [Fact]
-    public void Whit_RecordsWithInitRequiredProperty_Should_GenerateWithObjectInitializer()
+    public void When_RecordsWithInitRequiredProperty_Should_GenerateWithObjectInitializer()
     {
         // Arrange
         var builder = new TestSourceBuilder();
@@ -429,7 +429,7 @@ public class MapRecordTests
     }
 
     [Fact]
-    public void Whit_RecordsWithIgnoredRequiredProperty_Should_RequestValueFromExtensionArgs()
+    public void When_RecordsWithIgnoredRequiredProperty_Should_RequestValueFromExtensionArgs()
     {
         // Arrange
         var builder = new TestSourceBuilder();
@@ -472,6 +472,55 @@ public class MapRecordTests
                 {
                     Prop1 = source.Prop1,
                     Prop2 = prop2
+                };
+            }
+            """);
+    }
+
+    [Fact]
+    public void When_SourceRecordDoesNotHaveIgnoredRequiredProperty_Should_RequestValueFromExtensionArgs()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile(supportNullableReferenceTypes: true)
+            .WithBody(
+                """
+                public record Source
+                {
+                    public int Prop1 { get; init; }
+                    public double Prop2 { get; init; }
+                }
+
+                [MapFrom(typeof(Source))]
+                public record Target
+                {
+                    public required int Prop1 { get; init; }
+
+                    [IgnoreProperty]
+                    public required double Prop3 { get; init; }
+                }
+                """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        compilation.Dump(_output);
+        diagnostics.ShouldBeSuccessful();
+        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldContain(
+            """
+            public static Target? MapToTarget(this Source? source, double prop3)
+            {
+                if (source is null)
+                {
+                    return null;
+                }
+
+                return new Target
+                {
+                    Prop1 = source.Prop1,
+                    Prop3 = prop3
                 };
             }
             """);

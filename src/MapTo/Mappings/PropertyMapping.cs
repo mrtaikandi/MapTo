@@ -58,9 +58,25 @@ internal static class PropertyMappingFactory
         var (_, _, _, sourceTypeSymbol, knownTypes, _, _) = context;
         var mapPropertyAttribute = property.GetAttribute(knownTypes.MapPropertyAttributeTypeSymbol);
         var sourceProperty = property.FindSource(sourceTypeSymbol, mapPropertyAttribute);
+        var initializationMode = property.GetInitializationMode(context.KnownTypes);
 
         if (sourceProperty.NotFound)
         {
+            if (property.IsRequired && initializationMode is PropertyInitializationMode.None)
+            {
+                return new PropertyMapping(
+                    Name: property.Name,
+                    Type: property.Type.ToTypeMapping(),
+                    SourceName: string.Empty,
+                    SourceType: default,
+                    InitializationMode: initializationMode,
+                    ParameterName: property.Name.ToParameterNameCasing(),
+                    IsRequired: property.IsRequired,
+                    TypeConverter: default,
+                    UsingDirectives: ImmutableArray<string>.Empty,
+                    NullHandling: mapPropertyAttribute.GetNamedArgument(nameof(MapPropertyAttribute.NullHandling), context.CodeGeneratorOptions.NullHandling));
+            }
+
             return null;
         }
 
@@ -69,12 +85,12 @@ internal static class PropertyMappingFactory
             return null;
         }
 
-        return new(
+        return new PropertyMapping(
             Name: property.Name,
             Type: property.Type.ToTypeMapping(),
             SourceName: sourceProperty.Name,
             SourceType: sourceProperty.Type,
-            InitializationMode: property.GetInitializationMode(context.KnownTypes),
+            InitializationMode: initializationMode,
             ParameterName: property.Name.ToParameterNameCasing(),
             IsRequired: property.IsRequired,
             TypeConverter: converter,
