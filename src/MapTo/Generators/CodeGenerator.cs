@@ -17,7 +17,8 @@ internal readonly record struct CodeGenerator(
         {
             new FileGenerator(CompilerOptions.NullableReferenceTypes, CompilerOptions.FileScopedNamespace, Mapping),
             new PartialClassGenerator(Mapping, CompilerOptions),
-            new ExtensionClassGenerator(CompilerOptions, Mapping)
+            new ExtensionClassGenerator(CompilerOptions, Mapping),
+            new ExtensionEnumGenerator(CompilerOptions, Mapping)
         };
 
         return writer

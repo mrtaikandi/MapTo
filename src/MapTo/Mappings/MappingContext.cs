@@ -3,12 +3,12 @@
 namespace MapTo.Mappings;
 
 internal readonly record struct MappingContext(
-    TypeDeclarationSyntax TargetTypeSyntax,
+    BaseTypeDeclarationSyntax TargetTypeSyntax,
     INamedTypeSymbol TargetTypeSymbol,
     SemanticModel TargetSemanticModel,
     INamedTypeSymbol SourceTypeSymbol,
     KnownTypes KnownTypes,
-    AttributeData MapFromAttributeData,
+    AttributeData MapFromAttribute,
     CodeGeneratorOptions CodeGeneratorOptions = default,
     CompilerOptions CompilerOptions = default)
 {
@@ -40,20 +40,20 @@ internal readonly record struct MappingContext(
 
     public static MappingContext WithOptions((MappingContext Builder, CodeGeneratorOptions Options) source, CancellationToken cancellationToken)
     {
-        var mapFromAttributeData = source.Builder.MapFromAttributeData;
+        var mapFromAttributeData = source.Builder.MapFromAttribute;
         var compilation = source.Builder.TargetSemanticModel.Compilation;
         return source.Builder with
         {
             CompilerOptions = CompilerOptions.From(compilation),
             CodeGeneratorOptions = source.Options with
             {
-                CopyPrimitiveArrays = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.CopyPrimitiveArrays), source.Options.CopyPrimitiveArrays),
-                ReferenceHandling = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.ReferenceHandling), source.Options.ReferenceHandling),
-                EnumMappingStrategy = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.EnumMappingStrategy), source.Options.EnumMappingStrategy),
-                StrictEnumMapping = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.StrictEnumMapping), source.Options.StrictEnumMapping),
-                ProjectionType = mapFromAttributeData.GetNamedArgument(nameof(MapFromAttribute.ProjectTo), source.Options.ProjectionType),
+                CopyPrimitiveArrays = mapFromAttributeData.GetNamedArgument(nameof(MapTo.MapFromAttribute.CopyPrimitiveArrays), source.Options.CopyPrimitiveArrays),
+                ReferenceHandling = mapFromAttributeData.GetNamedArgument(nameof(MapTo.MapFromAttribute.ReferenceHandling), source.Options.ReferenceHandling),
+                EnumMappingStrategy = mapFromAttributeData.GetNamedArgument(nameof(MapTo.MapFromAttribute.EnumMappingStrategy), source.Options.EnumMappingStrategy),
+                StrictEnumMapping = mapFromAttributeData.GetNamedArgument(nameof(MapTo.MapFromAttribute.StrictEnumMapping), source.Options.StrictEnumMapping),
+                ProjectionType = mapFromAttributeData.GetNamedArgument(nameof(MapTo.MapFromAttribute.ProjectTo), source.Options.ProjectionType),
                 NullHandling = mapFromAttributeData.GetNamedArgument(
-                    nameof(MapFromAttribute.NullHandling),
+                    nameof(MapTo.MapFromAttribute.NullHandling),
                     compilation.Options.NullableContextOptions is NullableContextOptions.Disable && source.Options.NullHandling == NullHandling.Auto
                         ? NullHandling.SetNull
                         : source.Options.NullHandling)
@@ -91,7 +91,7 @@ internal static class MappingContextExtensions
                 var semanticModel = context.SemanticModel;
 
                 var knownTypes = KnownTypes.Create(semanticModel.Compilation);
-                var targetNode = context.Node as TypeDeclarationSyntax ?? throw new InvalidOperationException("TargetNode is not a ClassDeclarationSyntax");
+                var targetNode = context.Node as BaseTypeDeclarationSyntax ?? throw new InvalidOperationException("TargetNode is not a ClassDeclarationSyntax");
                 var targetSymbol = semanticModel.GetDeclaredSymbol(targetNode, cancellationToken: ctx) ?? throw new InvalidOperationException("TargetSymbol is not a ITypeSymbol");
 
                 var mapFromAttribute = targetSymbol.GetAttribute(knownTypes.GenericMapFromAttributeTypeSymbol)
@@ -107,10 +107,10 @@ internal static class MappingContextExtensions
                     TargetSemanticModel: semanticModel,
                     SourceTypeSymbol: sourceTypeSymbol ?? throw new InvalidOperationException("SourceType is not a ITypeSymbol"),
                     KnownTypes: knownTypes,
-                    MapFromAttributeData: mapFromAttribute);
+                    MapFromAttribute: mapFromAttribute);
             })
         .WithTrackingName(nameof(CreateMappingContext));
 
     private static bool HasMapFromAttribute(this SyntaxNode node) =>
-        node is TypeDeclarationSyntax typeDeclarationSyntax && typeDeclarationSyntax.HasAttribute(KnownTypes.FriendlyMapFromAttributeName);
+        node is BaseTypeDeclarationSyntax typeDeclarationSyntax && typeDeclarationSyntax.HasAttribute(KnownTypes.FriendlyMapFromAttributeName);
 }

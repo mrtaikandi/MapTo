@@ -10,4 +10,6 @@ internal static class SourceTypeMappingExtensions
 {
     internal static string ToFullyQualifiedName(this SourceMapping mapping) =>
         mapping.Namespace.IsGlobalNamespace ? mapping.Name : $"global::{mapping.Namespace}.{mapping.Name}";
+
+    internal static string ToFullName(this SourceMapping mapping) => $"{mapping.Namespace}.{mapping.Name}";
 }

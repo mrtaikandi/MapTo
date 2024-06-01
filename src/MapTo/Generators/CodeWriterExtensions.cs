@@ -78,7 +78,7 @@ internal static class CodeWriterExtensions
         writer.Write($"throw new global::{KnownTypes.ArgumentOutOfRangeException}(\"{parameterName}\", {source}, {message})");
 
     public static CodeWriter WriteThrowNotImplementedException(this CodeWriter writer) =>
-        writer.WriteLine("throw new System.NotImplementedException();");
+        writer.Write("throw new System.NotImplementedException()");
 
     public static CodeWriter WriteThrowInvalidOperationException(this CodeWriter writer, string message) =>
         writer.WriteLine($"throw new global::{KnownTypes.InvalidOperationException}(\"{message}\");");

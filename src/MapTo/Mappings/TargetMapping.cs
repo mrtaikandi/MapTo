@@ -6,6 +6,7 @@ internal readonly record struct TargetMapping(
     NamespaceMapping Namespace,
     bool IsPartial,
     string TypeKeyword,
+    TypeKind TypeKind,
     SourceMapping Source,
     ConstructorMapping Constructor,
     ImmutableArray<PropertyMapping> Properties,
@@ -14,6 +15,7 @@ internal readonly record struct TargetMapping(
     MethodMapping BeforeMapMethod,
     MethodMapping AfterMapMethod,
     ImmutableArray<ProjectionMapping> Projections,
+    TypeConverterMapping? TypeConverter,
     CodeGeneratorOptions Options)
 {
     internal string ExtensionClassName => $"{Source.Name}{Options.MapExtensionClassSuffix}";
@@ -35,6 +37,7 @@ internal static class TargetMappingFactory
             Namespace: NamespaceMapping.Create(targetTypeSymbol),
             IsPartial: targetTypeSyntax.IsPartial(),
             TypeKeyword: targetTypeSyntax.GetKeywordText(),
+            TypeKind: targetTypeSymbol.TypeKind,
             Source: SourceMapping.Create(sourceTypeSymbol),
             Constructor: constructorMapping,
             Properties: properties,
@@ -43,6 +46,7 @@ internal static class TargetMappingFactory
             BeforeMapMethod: MethodMapping.CreateBeforeMapMethod(context),
             AfterMapMethod: MethodMapping.CreateAfterMapMethod(context),
             Projections: ProjectionMapping.Create(context),
+            TypeConverter: CreateTypeConverter(context),
             Options: codeGeneratorOptions with
             {
                 ReferenceHandling = context.UseReferenceHandling(properties)
@@ -56,6 +60,8 @@ internal static class TargetMappingFactory
 
     internal static string GetSourceType(this TargetMapping mapping) =>
         mapping.UseFullyQualifiedName() ? mapping.Source.ToFullyQualifiedName() : mapping.Source.Name;
+
+    internal static string GetFullName(this TargetMapping mapping) => $"{mapping.Namespace}.{mapping.Name}";
 
     private static string ToFullyQualifiedName(this TargetMapping mapping) =>
         mapping.Namespace.IsGlobalNamespace ? mapping.Name : $"global::{mapping.Namespace}.{mapping.Name}";
@@ -81,5 +87,22 @@ internal static class TargetMappingFactory
         }
 
         return true;
+    }
+
+    private static TypeConverterMapping? CreateTypeConverter(MappingContext context)
+    {
+        if (context.TargetTypeSymbol.TypeKind is not TypeKind.Enum)
+        {
+            return null;
+        }
+
+        var methodPrefix = context.CodeGeneratorOptions.MapMethodPrefix;
+
+        return new TypeConverterMapping(
+            ContainingType: string.Empty,
+            MethodName: $"{methodPrefix}{context.SourceTypeSymbol.Name}",
+            Type: context.TargetTypeSymbol.ToTypeMapping(),
+            Explicit: false,
+            EnumMapping: EnumTypeMappingFactory.Create(context));
     }
 }

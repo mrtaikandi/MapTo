@@ -19,7 +19,7 @@ internal readonly record struct MethodMapping(
 
     internal static MethodMapping CreateBeforeMapMethod(MappingContext context)
     {
-        var mapFromAttribute = context.MapFromAttributeData;
+        var mapFromAttribute = context.MapFromAttribute;
         if (mapFromAttribute.GetNamedArgument(nameof(MapFromAttribute.BeforeMap)) is null)
         {
             return default;
@@ -31,7 +31,7 @@ internal readonly record struct MethodMapping(
 
     internal static MethodMapping CreateAfterMapMethod(MappingContext context)
     {
-        var mapFromAttribute = context.MapFromAttributeData;
+        var mapFromAttribute = context.MapFromAttribute;
         if (mapFromAttribute.GetNamedArgument(nameof(MapFromAttribute.AfterMap)) is null)
         {
             return default;
@@ -63,7 +63,7 @@ internal readonly record struct MethodMapping(
     {
         var sourceTypeSymbol = context.SourceTypeSymbol;
         var compilation = context.Compilation;
-        var mapFromAttribute = context.MapFromAttributeData;
+        var mapFromAttribute = context.MapFromAttribute;
         var compilerOptions = context.CompilerOptions;
 
         if (methodSymbol is null)
@@ -127,7 +127,7 @@ internal readonly record struct MethodMapping(
         var targetTypeSymbol = context.TargetTypeSymbol;
         var sourceTypeSymbol = context.SourceTypeSymbol;
         var compilation = context.Compilation;
-        var mapFromAttribute = context.MapFromAttributeData;
+        var mapFromAttribute = context.MapFromAttribute;
         var compilerOptions = context.CompilerOptions;
 
         if (methodSymbol is null)
