@@ -1,4 +1,5 @@
-﻿using MapTo.Mappings;
+﻿using MapTo.Extensions;
+using MapTo.Mappings;
 
 namespace MapTo.Generators;
 
@@ -38,18 +39,33 @@ internal static class ProjectionGenerator
             writer
                 .WriteLine()
                 .WriteReturnNotNullIfNotNullAttributeIf(parameterIsNullable, parameterName)
-                .WriteLine($"{accessibility} static {returnType.FullName}{nullSyntax} {methodName}(this {parameterType.FullName}{nullSyntax} {parameterName})")
+                .Write($"{accessibility} static {returnType.FullName}{nullSyntax} {methodName}(this {parameterType.FullName}{nullSyntax} {parameterName}");
+
+            // If there are any required properties with ignored attribute, we should add them as parameters
+            var requiredProperties = mapping.Properties.Where(p => p is { IsRequired: true, InitializationMode: PropertyInitializationMode.None }).ToArray();
+            var mapMethodParameters = new string[requiredProperties.Length];
+
+            for (var i = 0; i < requiredProperties.Length; i++)
+            {
+                var property = requiredProperties[i];
+                mapMethodParameters[i] = property.Name.ToParameterNameCasing();
+
+                writer.Write(", ").Write(property.TypeName).WriteWhitespace().Write(mapMethodParameters[i]);
+            }
+
+            writer
+                .WriteClosingParenthesis()
                 .WriteOpeningBracket()
                 .WriteParameterNullCheckIf(parameterIsNullable, parameterName)
-                .WriteProjectionForIEnumerableParameter(projection, mapMethodName)
-                .WriteProjectionForCountableParameter(projection, mapMethodName)
+                .WriteProjectionForIEnumerableParameter(projection, mapMethodName, mapMethodParameters)
+                .WriteProjectionForCountableParameter(projection, mapMethodName, mapMethodParameters)
                 .WriteClosingBracket();
         }
 
         return writer;
     }
 
-    private static CodeWriter WriteProjectionForIEnumerableParameter(this CodeWriter writer, ProjectionMapping projection, string mapMethodName)
+    private static CodeWriter WriteProjectionForIEnumerableParameter(this CodeWriter writer, ProjectionMapping projection, string mapMethodName, string[] mapMethodParameters)
     {
         var (_, _, _, returnType, parameterType, parameterName, _) = projection;
         if (parameterType.IsCountable)
@@ -68,13 +84,13 @@ internal static class ProjectionGenerator
                 EnumerableType.ImmutableArray => $"global::{KnownTypes.SystemCollectionImmutableArray}.ToImmutableArray(",
                 _ => $"global::{KnownTypes.LinqToArray}("
             })
-            .Write($"global::{KnownTypes.LinqEnumerable}.Select({parameterName}, x => {mapMethodName}(x))")
+            .Write($"global::{KnownTypes.LinqEnumerable}.Select({parameterName}, x => {mapMethodName}(x").WriteJoinedParameterNames(mapMethodParameters).Write("))")
             .WriteIf(returnType.EnumerableType is not EnumerableType.Enumerable, ")")
             .WriteIf(returnType.EnumerableType is EnumerableType.Span or EnumerableType.Memory or EnumerableType.ReadOnlyMemory or EnumerableType.ReadOnlySpan, ")")
             .WriteLine(";");
     }
 
-    private static CodeWriter WriteProjectionForCountableParameter(this CodeWriter writer, ProjectionMapping projection, string mapMethodName)
+    private static CodeWriter WriteProjectionForCountableParameter(this CodeWriter writer, ProjectionMapping projection, string mapMethodName, string[] mapMethodParameters)
     {
         var (_, _, _, returnType, parameterType, parameterName, _) = projection;
         if (!parameterType.IsCountable)
@@ -100,9 +116,9 @@ internal static class ProjectionGenerator
 
         return returnType switch
         {
-            { EnumerableType: EnumerableType.ImmutableArray } => writer.WriteExtensionBodyForImmutables(projection.ParameterName, mapMethodName),
-            { IsFixedSize: true } or { IsCountable: false } => writer.WriteExtensionBodyForFixedSizeTypesOrSpans(projection, mapMethodName),
-            { IsFixedSize: false, IsCountable: true } => writer.WriteExtensionBodyForCountableTypes(projection, mapMethodName)
+            { EnumerableType: EnumerableType.ImmutableArray } => writer.WriteExtensionBodyForImmutables(projection.ParameterName, mapMethodName, mapMethodParameters),
+            { IsFixedSize: true } or { IsCountable: false } => writer.WriteExtensionBodyForFixedSizeTypesOrSpans(projection, mapMethodName, mapMethodParameters),
+            { IsFixedSize: false, IsCountable: true } => writer.WriteExtensionBodyForCountableTypes(projection, mapMethodName, mapMethodParameters)
         };
     }
 
@@ -125,11 +141,11 @@ internal static class ProjectionGenerator
         return writer;
     }
 
-    private static CodeWriter WriteExtensionBodyForImmutables(this CodeWriter writer, string parameterName, string mapMethodName) => writer
+    private static CodeWriter WriteExtensionBodyForImmutables(this CodeWriter writer, string parameterName, string mapMethodName, string[] mapMethodParameters) => writer
         .Write($"return global::{KnownTypes.SystemCollectionImmutableArray}.ToImmutableArray(")
-        .WriteLine($"global::{KnownTypes.LinqEnumerable}.Select({parameterName}, x => {mapMethodName}(x)));");
+        .Write($"global::{KnownTypes.LinqEnumerable}.Select({parameterName}, x => {mapMethodName}(x").WriteJoinedParameterNames(mapMethodParameters).WriteLine(")));");
 
-    private static CodeWriter WriteExtensionBodyForFixedSizeTypesOrSpans(this CodeWriter writer, ProjectionMapping projection, string mapMethodName)
+    private static CodeWriter WriteExtensionBodyForFixedSizeTypesOrSpans(this CodeWriter writer, ProjectionMapping projection, string mapMethodName, string[] mapMethodParameters)
     {
         var (_, _, _, returnType, parameterType, parameterName, _) = projection;
         var lengthMethodName = parameterType.IsFixedSize ? "Length" : "Count";
@@ -140,7 +156,7 @@ internal static class ProjectionGenerator
             writer
                 .WriteLine($"for (var i = 0; i < {parameterName}.{lengthMethodName}; i++)")
                 .WriteOpeningBracket()
-                .WriteLine($"target[i] = {mapMethodName}({parameterName}[i]);")
+                .Write($"target[i] = {mapMethodName}({parameterName}[i]").WriteJoinedParameterNames(mapMethodParameters).WriteLine(");")
                 .WriteClosingBracket();
         }
         else
@@ -149,7 +165,7 @@ internal static class ProjectionGenerator
                 .WriteLine("var i = 0;")
                 .WriteLine($"foreach (var item in {parameterName})")
                 .WriteOpeningBracket()
-                .WriteLine($"target[i] = {mapMethodName}(item);")
+                .Write($"target[i] = {mapMethodName}(item").WriteJoinedParameterNames(mapMethodParameters).WriteLine(");")
                 .WriteLine("i++;")
                 .WriteClosingBracket();
         }
@@ -157,7 +173,7 @@ internal static class ProjectionGenerator
         return writer.WriteLine().WriteLine("return target;");
     }
 
-    private static CodeWriter WriteExtensionBodyForCountableTypes(this CodeWriter writer, ProjectionMapping projection, string mapMethodName)
+    private static CodeWriter WriteExtensionBodyForCountableTypes(this CodeWriter writer, ProjectionMapping projection, string mapMethodName, string[] mapMethodParameters)
     {
         var (_, _, _, returnType, parameterType, parameterName, _) = projection;
         var lengthMethodName = parameterType.IsFixedSize ? "Length" : "Count";
@@ -168,7 +184,7 @@ internal static class ProjectionGenerator
             writer
                 .WriteLine($"for (var i = 0; i < {parameterName}.{lengthMethodName}; i++)")
                 .WriteOpeningBracket()
-                .WriteLine($"target.Add({mapMethodName}({parameterName}[i]));")
+                .Write($"target.Add({mapMethodName}({parameterName}[i]").WriteJoinedParameterNames(mapMethodParameters).WriteLine("));")
                 .WriteClosingBracket();
         }
         else
@@ -176,10 +192,20 @@ internal static class ProjectionGenerator
             writer
                 .WriteLine($"foreach (var item in {parameterName})")
                 .WriteOpeningBracket()
-                .WriteLine($"target.Add({mapMethodName}(item));")
+                .Write($"target.Add({mapMethodName}(item").WriteJoinedParameterNames(mapMethodParameters).WriteLine("));")
                 .WriteClosingBracket();
         }
 
         return writer.WriteLine().WriteLine("return target;");
+    }
+
+    private static CodeWriter WriteJoinedParameterNames(this CodeWriter writer, string[] parameters)
+    {
+        foreach (var parameter in parameters)
+        {
+            writer.Write(", ").Write(parameter);
+        }
+
+        return writer;
     }
 }
