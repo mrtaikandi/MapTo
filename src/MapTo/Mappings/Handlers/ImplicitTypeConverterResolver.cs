@@ -9,11 +9,6 @@ internal class ImplicitTypeConverterResolver : ITypeConverterResolver
             return ResolverResult.Success<TypeConverterMapping>();
         }
 
-        if (!context.Compilation.IsNonGenericEnumerable(property.Type) && context.Compilation.IsNonGenericEnumerable(sourceProperty.TypeSymbol))
-        {
-            return DiagnosticsFactory.PropertyTypeConverterRequiredError(property);
-        }
-
         return ResolverResult.Undetermined<TypeConverterMapping>();
     }
 }

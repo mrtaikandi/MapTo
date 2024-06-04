@@ -317,4 +317,32 @@ public class PropertyTypeConverterTests
 
         diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.PropertyTypeConverterMethodInputTypeCompatibilityError(sourceProperty.Name, sourceProperty.Type, methodSymbol));
     }
+
+    [Fact]
+    public void When_PropertyIsGenericEnumerableAndHasPropertyTypeConverter_Should_UseTheTypeConverter()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        var globalUsings = new[] { "System", "System.Collections", "System.Collections.Generic" };
+
+        builder
+            .AddFile(usings: globalUsings, supportNullableReferenceTypes: false)
+            .AddClass(Accessibility.Public, "SourceClass")
+            .WithProperty("IDictionary", "Prop1");
+
+        builder
+            .AddFile(usings: globalUsings, supportNullableReferenceTypes: true)
+            .AddClass(accessibility: Accessibility.Public, name: "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+            .WithProperty("IReadOnlyDictionary<object, object?>?", "Prop1", attributes: ["[PropertyTypeConverter(nameof(MapProp1))]"])
+            .WithStaticMethod("IReadOnlyDictionary<object, object?>?", "MapProp1", "throw new NotImplementedException();", parameter: "IDictionary? segment");
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+
+        var targetClassDeclaration = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        targetClassDeclaration.ShouldContain("target.Prop1 = global::MapTo.Tests.TargetClass.MapProp1(sourceClass.Prop1);");
+    }
 }
