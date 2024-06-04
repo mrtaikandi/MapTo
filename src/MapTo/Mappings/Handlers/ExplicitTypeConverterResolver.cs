@@ -8,6 +8,11 @@ internal class ExplicitTypeConverterResolver : ITypeConverterResolver
         var converterMethodSymbolResult = GetTypeConverterMethod(context, property, sourceProperty);
         if (converterMethodSymbolResult.IsFailure)
         {
+            if (!context.Compilation.IsNonGenericEnumerable(property.Type) && context.Compilation.IsNonGenericEnumerable(sourceProperty.TypeSymbol))
+            {
+                return converterMethodSymbolResult.Error;
+            }
+
             return ResolverResult.Undetermined<TypeConverterMapping>(converterMethodSymbolResult.Error);
         }
 

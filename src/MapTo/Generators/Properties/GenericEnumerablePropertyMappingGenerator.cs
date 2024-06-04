@@ -10,7 +10,9 @@ internal sealed class GenericEnumerablePropertyMappingGenerator : PropertyMappin
     protected override bool HandleCore(PropertyGeneratorContext context)
     {
         var (writer, property, parameter, targetInstanceName, _, refHandler) = context;
-        if (property.TypeConverter is { Type.EnumerableType: EnumerableType.Array or EnumerableType.None } || targetInstanceName is null)
+        if (property.TypeConverter is { Explicit: true } ||
+            property.TypeConverter.Type is { EnumerableType: EnumerableType.Array or EnumerableType.None } ||
+            targetInstanceName is null)
         {
             return false;
         }
