@@ -1,4 +1,6 @@
-﻿namespace MapTo.Mappings.Handlers;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+
+namespace MapTo.Mappings.Handlers;
 
 internal class ExplicitTypeConverterResolver : ITypeConverterResolver
 {
@@ -41,23 +43,40 @@ internal class ExplicitTypeConverterResolver : ITypeConverterResolver
         };
     }
 
-    private static ResolverResult<IMethodSymbol> GetTypeConverterMethod(MappingContext context, IPropertySymbol property, SourceProperty sourceProperty)
+    private static Diagnostic? TryGetConverterMethodSymbol(MappingContext context, IPropertySymbol property, out IMethodSymbol? converterMethodSymbol)
     {
+        converterMethodSymbol = null;
         var typeConverterAttribute = property.GetAttribute(context.KnownTypes.PropertyTypeConverterAttributeTypeSymbol);
-        var firstArgument = typeConverterAttribute?.ConstructorArguments.First();
+        var argumentExpressions = typeConverterAttribute.GetArgumentsExpressions();
 
-        if (firstArgument?.Value is not string converterMethodName)
+        if (argumentExpressions.Length == 0)
         {
             return DiagnosticsFactory.PropertyTypeConverterRequiredError(property);
         }
 
-        var converterMethodSymbol = property.ContainingType.GetMembers(converterMethodName).OfType<IMethodSymbol>().SingleOrDefault();
-        if (converterMethodSymbol is null)
+        converterMethodSymbol = argumentExpressions.FirstOrDefault() switch
         {
-            return DiagnosticsFactory.PropertyTypeConverterMethodNotFoundInTargetClassError(property, typeConverterAttribute!);
+            InvocationExpressionSyntax { Expression: IdentifierNameSyntax { Identifier.ValueText: "nameof" }, ArgumentList.Arguments: { Count: 1 } arguments } =>
+                context.TargetSemanticModel.GetSymbolInfo(arguments[0].Expression).GetSymbolOrBestCandidate<IMethodSymbol>(),
+            LiteralExpressionSyntax { Token.Value: string value } when value.Contains(".") => context.Compilation.GetMethodSymbolByFullyQualifiedName(value.AsSpan()),
+            LiteralExpressionSyntax { Token.Value: string value } => context.TargetTypeSymbol.GetMembers(value).OfType<IMethodSymbol>().SingleOrDefault(),
+            _ => null
+        };
+
+        return converterMethodSymbol is null
+            ? DiagnosticsFactory.PropertyTypeConverterMethodNotFoundInTargetClassError(property, typeConverterAttribute!)
+            : null;
+    }
+
+    private static ResolverResult<IMethodSymbol> GetTypeConverterMethod(MappingContext context, IPropertySymbol property, SourceProperty sourceProperty)
+    {
+        var converterMethodSymbolDiagnostic = TryGetConverterMethodSymbol(context, property, out var converterMethodSymbol);
+        if (converterMethodSymbolDiagnostic is not null)
+        {
+            return converterMethodSymbolDiagnostic;
         }
 
-        if (!converterMethodSymbol.IsStatic)
+        if (!converterMethodSymbol!.IsStatic)
         {
             return DiagnosticsFactory.PropertyTypeConverterMethodIsNotStaticError(converterMethodSymbol);
         }

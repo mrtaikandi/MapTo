@@ -345,4 +345,53 @@ public class PropertyTypeConverterTests
         var targetClassDeclaration = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
         targetClassDeclaration.ShouldContain("target.Prop1 = global::MapTo.Tests.TargetClass.MapProp1(sourceClass.Prop1);");
     }
+
+    [Fact]
+    public void When_PropertyTypeConverterMethodExistsInAnotherClass_Should_UseTheExternalClass()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        var sourceFile = builder.AddFile(supportNullableReferenceTypes: true);
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty("string", "Id", defaultValue: "string.Empty");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+            .WithProperty<int>("Id", attribute: """[PropertyTypeConverter("MapTo.Internals.TypeConverter.StringToIntTypeConverter")]""")
+            .WithProperty<int>("Index");
+
+        builder.AddFile("TypeConverters", supportNullableReferenceTypes: true, ns: "MapTo.Internals")
+            .AddClass(Accessibility.Internal, "TypeConverter", isStatic: true)
+            .WithStaticMethod("int", "StringToIntTypeConverter", parameters: new[] { "string source" }, body: "return int.Parse(source);");
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+        var targetClassDeclaration = compilation.GetClassDeclaration("SourceClassMapToExtensions", "MapTo.Tests.TargetClass.g.cs").ShouldNotBeNull();
+        targetClassDeclaration.ShouldContain("Id = global::MapTo.Internals.TypeConverter.StringToIntTypeConverter(sourceClass.Id)");
+    }
+
+    [Fact]
+    public void When_PropertyTypeConverterMethodExistsInAnotherClass_Should_UseTheExternalClassWithImportedNamespace()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        var sourceFile = builder.AddFile(supportNullableReferenceTypes: true, usings: ["MapTo.Internals"]);
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty("string", "Id", defaultValue: "string.Empty");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+            .WithProperty<int>("Id", attribute: """[PropertyTypeConverter(nameof(TypeConverter.StringToIntTypeConverter))]""")
+            .WithProperty<int>("Index");
+
+        builder.AddFile("TypeConverters", supportNullableReferenceTypes: true, ns: "MapTo.Internals")
+            .AddClass(Accessibility.Internal, "TypeConverter", isStatic: true)
+            .WithStaticMethod("int", "StringToIntTypeConverter", parameters: new[] { "string source" }, body: "return int.Parse(source);");
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+
+        var targetClassDeclaration = compilation.GetClassDeclaration("SourceClassMapToExtensions", "MapTo.Tests.TargetClass.g.cs").ShouldNotBeNull();
+        targetClassDeclaration.ShouldContain("Id = global::MapTo.Internals.TypeConverter.StringToIntTypeConverter(sourceClass.Id)");
+    }
 }
