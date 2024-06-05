@@ -20,6 +20,9 @@ internal static class AttributeDataExtensions
     internal static AttributeSyntax? GetAttributeSyntax(this AttributeData? attributeData) =>
         attributeData?.ApplicationSyntaxReference?.GetSyntax() as AttributeSyntax;
 
+    internal static ExpressionSyntax[] GetArgumentsExpressions(this AttributeData? attributeData) =>
+        attributeData?.GetAttributeSyntax()?.ArgumentList?.Arguments.Select(a => a.Expression).ToArray() ?? [];
+
     internal static ExpressionSyntax? GetNamedArgumentExpression(this AttributeData? attributeData, string name) =>
         attributeData?.GetAttributeSyntax().GetNamedArgumentExpression(name);
 
