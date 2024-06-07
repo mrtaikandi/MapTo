@@ -1,4 +1,6 @@
-﻿namespace MapTo.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+
+namespace MapTo.CodeAnalysis;
 
 internal static class CompilationExtensions
 {
@@ -93,6 +95,24 @@ internal static class CompilationExtensions
         var typeSymbol = compilation.GetTypeByMetadataName(typeMetadataName.ToString());
 
         return typeSymbol?.GetMembers(methodName.ToString()).OfType<IMethodSymbol>().SingleOrDefault();
+    }
+
+    public static IMethodSymbol? GetMethodSymbol(this Compilation compilation, InvocationExpressionSyntax expressionSyntax)
+    {
+        var identifier = expressionSyntax.ArgumentList.Arguments.FirstOrDefault()?.Expression;
+        if (identifier is null)
+        {
+            return null;
+        }
+
+        var semanticModel = compilation.GetSemanticModel(expressionSyntax.SyntaxTree);
+        var symbolInfo = semanticModel.GetSymbolInfo(identifier);
+        if (symbolInfo.CandidateReason is CandidateReason.MemberGroup)
+        {
+            return symbolInfo.CandidateSymbols.OfType<IMethodSymbol>().FirstOrDefault();
+        }
+
+        return null;
     }
 
     public static ITypeSymbol CreateGenericTypeSymbol(
