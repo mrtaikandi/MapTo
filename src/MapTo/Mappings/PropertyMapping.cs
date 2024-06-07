@@ -28,10 +28,9 @@ internal static class PropertyMappingFactory
     internal static ImmutableArray<PropertyMapping> Create(MappingContext context)
     {
         var (_, targetTypeSymbol, _, _, knownTypes, _, _) = context;
-        var isInheritFromMappedBaseClass = context.IsTargetTypeInheritFromMappedBaseClass();
 
         return targetTypeSymbol
-            .GetAllMembers(isInheritFromMappedBaseClass)
+            .GetAllMembers()
             .OfType<IPropertySymbol>()
             .Where(p => p.DeclaredAccessibility is Accessibility.Public or Accessibility.Internal &&
                         !p.HasAttribute(knownTypes.CompilerGeneratedAttributeTypeSymbol) &&
@@ -107,7 +106,7 @@ internal static class PropertyMappingFactory
 
         var nullableAnnotation = NullableAnnotation.None;
         var sourcePropertyName = new StringBuilder();
-        var sourceType = sourceTypeSymbol;
+        ITypeSymbol? sourceType = sourceTypeSymbol;
 
         // No need to include the source type name if nameof is used.
         var i = propertySegments.Length > 1 && propertySegments[0] == sourceTypeSymbol.Name ? 1 : 0;
@@ -169,13 +168,5 @@ internal static class PropertyMappingFactory
             { IsInitOnly: false } when property.Type.IsPrimitiveType(true) => PropertyInitializationMode.ObjectInitializer,
             _ => PropertyInitializationMode.Setter
         };
-    }
-
-    private static bool IsTargetTypeInheritFromMappedBaseClass(this MappingContext context)
-    {
-        var (typeSyntax, _, semanticModel, _, knownTypes, _, _) = context;
-        return typeSyntax.BaseList is not null && typeSyntax.BaseList.Types
-            .Select(t => semanticModel.GetTypeInfo(t.Type).Type)
-            .Any(t => t?.GetAttribute(knownTypes.MapFromAttributeTypeSymbol) is not null);
     }
 }

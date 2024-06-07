@@ -1127,4 +1127,55 @@ public class MapFromTests
 
         diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.BeforeOrAfterMapMethodMissingParameterError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), targetTypeSymbol));
     }
+
+    [Fact]
+    public void When_SourceRecordDoesNotHaveRequiredPropertyAndTargetRequiredPropertyIsInBaseClass_Should_RequestValueFromExtensionArgs()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile(supportNullableReferenceTypes: true)
+            .WithBody(
+                """
+                public class Source
+                {
+                    public int Prop1 { get; init; }
+                    public double Prop2 { get; init; }
+                }
+
+                public abstract class TargetBase
+                {
+                    public required double Prop3 { get; init; }
+                }
+
+                [MapFrom<Source>]
+                public class Target : TargetBase
+                {
+                    public required int Prop1 { get; init; }
+                }
+                """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        compilation.Dump(_output);
+        diagnostics.ShouldBeSuccessful();
+        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldContain(
+            """
+            public static Target? MapToTarget(this Source? source, double prop3)
+            {
+                if (source is null)
+                {
+                    return null;
+                }
+
+                return new Target
+                {
+                    Prop1 = source.Prop1,
+                    Prop3 = prop3
+                };
+            }
+            """);
+    }
 }
