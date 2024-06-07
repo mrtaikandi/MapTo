@@ -51,8 +51,7 @@ internal readonly record struct MethodMapping(
 
         return argumentExpression switch
         {
-            InvocationExpressionSyntax { Expression: IdentifierNameSyntax { Identifier.ValueText: "nameof" }, ArgumentList.Arguments: { Count: 1 } arguments } =>
-                context.TargetSemanticModel.GetSymbolInfo(arguments[0].Expression).GetSymbolOrBestCandidate<IMethodSymbol>(),
+            InvocationExpressionSyntax { Expression: IdentifierNameSyntax { Identifier.ValueText: "nameof" } } i => context.Compilation.GetMethodSymbol(i),
             LiteralExpressionSyntax { Token.Value: string value } when value.Contains(".") => context.Compilation.GetMethodSymbolByFullyQualifiedName(value.AsSpan()),
             LiteralExpressionSyntax { Token.Value: string value } => context.TargetTypeSymbol.GetMembers(value).OfType<IMethodSymbol>().SingleOrDefault(),
             _ => default

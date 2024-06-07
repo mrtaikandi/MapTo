@@ -394,4 +394,73 @@ public class PropertyTypeConverterTests
         var targetClassDeclaration = compilation.GetClassDeclaration("SourceClassMapToExtensions", "MapTo.Tests.TargetClass.g.cs").ShouldNotBeNull();
         targetClassDeclaration.ShouldContain("Id = global::MapTo.Internals.TypeConverter.StringToIntTypeConverter(sourceClass.Id)");
     }
+
+    [Fact]
+    public void When_PropertyTypeConverterIsUsedInBaseClass_Should_UseTheConverterMethod()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile(supportNullableReferenceTypes: false)
+            .WithBody(
+                """
+                public class Source
+                {
+                    public int Prop1 { get; init; }
+                    public string Prop3 { get; init; } = "0";
+                }
+                """);
+
+        builder.AddFile(supportNullableReferenceTypes: true)
+            .WithBody(
+                """
+                public abstract class TargetBase
+                {
+                    [PropertyTypeConverter(nameof(TypeConverters.ConvertToDouble))]
+                    public double Prop3 { get; init; }
+                }
+                """);
+
+        builder.AddFile(supportNullableReferenceTypes: true)
+            .WithBody(
+                """
+                [MapFrom<Source>]
+                public class Target : TargetBase
+                {
+                    public int Prop1 { get; init; }
+                }
+                """);
+
+        builder.AddFile("TypeConverters", supportNullableReferenceTypes: true)
+            .WithBody(
+                """
+                public static class TypeConverters
+                {
+                    internal static double ConvertToDouble(string source) => double.Parse(source);
+                }
+                """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        compilation.Dump(_output);
+        diagnostics.ShouldBeSuccessful();
+        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldContain(
+            """
+            public static Target? MapToTarget(this Source? source)
+            {
+                if (source is null)
+                {
+                    return null;
+                }
+
+                return new Target
+                {
+                    Prop1 = source.Prop1,
+                    Prop3 = global::MapTo.Tests.TypeConverters.ConvertToDouble(source.Prop3)
+                };
+            }
+            """);
+    }
 }
