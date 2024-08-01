@@ -870,12 +870,22 @@ public class MapEnumsTests
                     return null;
                 }
 
-               return sourceEnum switch
-               {
-                   global::MapTo.Tests.SourceEnum.Value1 => global::MapTo.Tests.TargetEnum.Value1,
-                   global::MapTo.Tests.SourceEnum.Value2 => global::MapTo.Tests.TargetEnum.Value2,
-                   _ => throw new global::System.ArgumentOutOfRangeException("sourceEnum", sourceEnum, "Unable to map enum 'MapTo.Tests.SourceEnum' to 'MapTo.Tests.TargetEnum'.")
-               };
+                return sourceEnum switch
+                {
+                    global::MapTo.Tests.SourceEnum.Value1 => global::MapTo.Tests.TargetEnum.Value1,
+                    global::MapTo.Tests.SourceEnum.Value2 => global::MapTo.Tests.TargetEnum.Value2,
+                    _ => throw new global::System.ArgumentOutOfRangeException("sourceEnum", sourceEnum, "Unable to map enum 'MapTo.Tests.SourceEnum' to 'MapTo.Tests.TargetEnum'.")
+                };
+            }
+
+            public static TargetEnum MapToTargetEnum(this SourceEnum sourceEnum)
+            {
+                return sourceEnum switch
+                {
+                    global::MapTo.Tests.SourceEnum.Value1 => global::MapTo.Tests.TargetEnum.Value1,
+                    global::MapTo.Tests.SourceEnum.Value2 => global::MapTo.Tests.TargetEnum.Value2,
+                    _ => throw new global::System.ArgumentOutOfRangeException("sourceEnum", sourceEnum, "Unable to map enum 'MapTo.Tests.SourceEnum' to 'MapTo.Tests.TargetEnum'.")
+                };
             }
             """);
     }

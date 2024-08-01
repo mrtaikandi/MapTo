@@ -20,6 +20,7 @@ internal readonly record struct ExtensionEnumGenerator(
             .WriteExtensionClassDefinition(TargetMapping)
             .WriteOpeningBracket()
             .WriteMapExtensionMethod(TargetMapping, CompilerOptions)
+            .WriteNonNullableMapExtensionMethod(TargetMapping, CompilerOptions)
             .WriteClosingBracket();
     }
 }
@@ -66,6 +67,62 @@ static file class ExtensionClassGeneratorExtensions
             writer
                 .WriteParameterNullCheck(mapping.Source.Name.ToParameterNameCasing())
                 .WriteLine()
+                .WriteLine($"return {parameterName} switch")
+                .WriteOpeningBracket();
+
+            foreach (var member in typeConverter.EnumMapping.Mappings)
+            {
+                writer.Write("global::").Write(member.Source).Write(" => ").Write("global::").Write(member.Target).WriteLine(",");
+            }
+
+            if (typeConverter.EnumMapping.FallBackValue is not null)
+            {
+                writer.Write("_ => ").Write("global::").WriteLine(typeConverter.EnumMapping.FallBackValue);
+            }
+            else
+            {
+                writer
+                    .Write("_ => ")
+                    .WriteThrowArgumentOutOfRangeException(parameterName, $"\"Unable to map enum '{mapping.Source.ToFullName()}' to '{mapping.GetFullName()}'.\"")
+                    .WriteLineIndented();
+            }
+
+            writer.WriteClosingBracket(false).WriteLine(";"); // Switch expression closing bracket
+        }
+
+        return writer
+            .WriteClosingBracket() // Method closing bracket
+            .WriteLine();
+    }
+
+    internal static CodeWriter WriteNonNullableMapExtensionMethod(this CodeWriter writer, TargetMapping mapping, CompilerOptions compilerOptions)
+    {
+        Debug.Assert(mapping.TypeConverter != null, "mapping.TypeConverter != null");
+
+        var parameterName = mapping.Source.Name.ToParameterNameCasing();
+        var typeConverter = mapping.TypeConverter!.Value;
+
+        writer
+            .Write(mapping.Modifier.ToLowercaseString())
+            .Write(" static ")
+            .Write(mapping.GetReturnType())
+            .WriteWhitespace()
+            .Write($"{mapping.Options.MapMethodPrefix}{mapping.Name}")
+            .WriteOpenParenthesis()
+            .Write("this ")
+            .Write(mapping.GetSourceType())
+            .WriteWhitespace()
+            .Write(parameterName)
+            .WriteClosingParenthesis()
+            .WriteOpeningBracket(); // Method opening bracket
+
+        if (typeConverter.EnumMapping.Strategy is EnumMappingStrategy.ByValue)
+        {
+            writer.Write($"return ({mapping.GetReturnType()}){parameterName};");
+        }
+        else
+        {
+            writer
                 .WriteLine($"return {parameterName} switch")
                 .WriteOpeningBracket();
 
