@@ -52,32 +52,44 @@ static file class ExtensionClassGeneratorExtensions
             .WriteWhitespace()
             .Write(parameterName)
             .WriteClosingParenthesis()
-            .WriteOpeningBracket() // Method opening bracket
-            .WriteParameterNullCheck(mapping.Source.Name.ToParameterNameCasing())
-            .WriteLine()
-            .WriteLine($"return {parameterName} switch")
-            .WriteOpeningBracket();
+            .WriteOpeningBracket(); // Method opening bracket
 
-        foreach (var member in typeConverter.EnumMapping.Mappings)
+        if (typeConverter.EnumMapping.Strategy is EnumMappingStrategy.ByValue)
         {
-            writer.Write("global::").Write(member.Source).Write(" => ").Write("global::").Write(member.Target).WriteLine(",");
-        }
-
-        if (typeConverter.EnumMapping.FallBackValue is not null)
-        {
-            writer.Write("_ => ").Write("global::").WriteLine(typeConverter.EnumMapping.FallBackValue);
+            writer
+                .Write("return ")
+                .WriteTernaryIsNullCheck(parameterName, typeConverter.EnumMapping.FallBackValue ?? "null", $"({mapping.GetReturnType()}){parameterName}")
+                .WriteLine(";");
         }
         else
         {
             writer
-                .Write("_ => ")
-                .WriteThrowArgumentOutOfRangeException(parameterName, $"\"Unable to map enum '{mapping.Source.ToFullName()}' to '{mapping.GetFullName()}'.\"")
-                .WriteLineIndented();
+                .WriteParameterNullCheck(mapping.Source.Name.ToParameterNameCasing())
+                .WriteLine()
+                .WriteLine($"return {parameterName} switch")
+                .WriteOpeningBracket();
+
+            foreach (var member in typeConverter.EnumMapping.Mappings)
+            {
+                writer.Write("global::").Write(member.Source).Write(" => ").Write("global::").Write(member.Target).WriteLine(",");
+            }
+
+            if (typeConverter.EnumMapping.FallBackValue is not null)
+            {
+                writer.Write("_ => ").Write("global::").WriteLine(typeConverter.EnumMapping.FallBackValue);
+            }
+            else
+            {
+                writer
+                    .Write("_ => ")
+                    .WriteThrowArgumentOutOfRangeException(parameterName, $"\"Unable to map enum '{mapping.Source.ToFullName()}' to '{mapping.GetFullName()}'.\"")
+                    .WriteLineIndented();
+            }
+
+            writer.WriteClosingBracket(false).WriteLine(";"); // Switch expression closing bracket
         }
 
-        return writer
-            .WriteClosingBracket(false).WriteLine(";") // Switch expression closing bracket
-            .WriteClosingBracket(); // Method closing bracket
+        return writer.WriteClosingBracket(); // Method closing bracket
     }
 
     private static CodeWriter WriteParameterNullCheck(this CodeWriter writer, string parameterName) => writer

@@ -791,4 +791,141 @@ public class MapEnumsTests
             DiagnosticsFactory.IgnoreEnumMemberWithoutParameterTypeError(attribute, KnownTypes.Create(compilation).IgnoreEnumMemberAttributeTypeSymbol),
             ignoreDiagnosticsIds: new[] { "MT3002" });
     }
+
+    [Fact]
+    public void When_DirectlyMappingEnumByValue_Should_CastTheSourceEnum()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile().WithBody(
+            """
+            public enum SourceEnum
+            {
+                Value1,
+                Value2,
+                Value3
+            }
+
+            [MapFrom(typeof(SourceEnum))]
+            public enum TargetEnum
+            {
+                Value1,
+                Value2
+            }
+            """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+
+        var targetClass = compilation.GetClassDeclaration("SourceEnumMapToExtensions").ShouldNotBeNull();
+        targetClass.ShouldContain(
+            """
+            [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceEnum")]
+            public static TargetEnum? MapToTargetEnum(this SourceEnum? sourceEnum)
+            {
+                return sourceEnum is null ? null : (TargetEnum)sourceEnum;
+            }
+            """);
+    }
+
+    [Fact]
+    public void When_DirectlyMappingEnumByName_Should_MapSourceEnumMembers()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile().WithBody(
+            """
+            public enum SourceEnum
+            {
+                Value1,
+                Value2,
+                Value3
+            }
+
+            [MapFrom(typeof(SourceEnum), EnumMappingStrategy = EnumMappingStrategy.ByName)]
+            public enum TargetEnum
+            {
+                Value1,
+                Value2
+            }
+            """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+
+        var targetClass = compilation.GetClassDeclaration("SourceEnumMapToExtensions").ShouldNotBeNull();
+        targetClass.ShouldContain(
+            """
+            [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceEnum")]
+            public static TargetEnum? MapToTargetEnum(this SourceEnum? sourceEnum)
+            {
+                if (sourceEnum is null)
+                {
+                    return null;
+                }
+
+               return sourceEnum switch
+               {
+                   global::MapTo.Tests.SourceEnum.Value1 => global::MapTo.Tests.TargetEnum.Value1,
+                   global::MapTo.Tests.SourceEnum.Value2 => global::MapTo.Tests.TargetEnum.Value2,
+                   _ => throw new global::System.ArgumentOutOfRangeException("sourceEnum", sourceEnum, "Unable to map enum 'MapTo.Tests.SourceEnum' to 'MapTo.Tests.TargetEnum'.")
+               };
+            }
+            """);
+    }
+
+    [Fact]
+    public void When_DirectlyMappingEnumByNameCaseInsensitive_Should_MapSourceEnumMembers()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddFile().WithBody(
+            """
+            public enum SourceEnum
+            {
+                Value1,
+                value2,
+                Value3
+            }
+
+            [MapFrom(typeof(SourceEnum), EnumMappingStrategy = EnumMappingStrategy.ByNameCaseInsensitive)]
+            public enum TargetEnum
+            {
+                Value1,
+                Value2
+            }
+            """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+
+        var targetClass = compilation.GetClassDeclaration("SourceEnumMapToExtensions").ShouldNotBeNull();
+        targetClass.ShouldContain(
+            """
+            [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceEnum")]
+            public static TargetEnum? MapToTargetEnum(this SourceEnum? sourceEnum)
+            {
+                if (sourceEnum is null)
+                {
+                    return null;
+                }
+
+                return sourceEnum switch
+                {
+                    global::MapTo.Tests.SourceEnum.Value1 => global::MapTo.Tests.TargetEnum.Value1,
+                    global::MapTo.Tests.SourceEnum.value2 => global::MapTo.Tests.TargetEnum.Value2,
+                    _ => throw new global::System.ArgumentOutOfRangeException("sourceEnum", sourceEnum, "Unable to map enum 'MapTo.Tests.SourceEnum' to 'MapTo.Tests.TargetEnum'.")
+                };
+            }
+            """);
+    }
 }
