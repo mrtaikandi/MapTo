@@ -170,7 +170,9 @@ internal sealed class ArrayPropertyMappingGenerator : PropertyMappingGenerator
 
             case Auto:
             default:
-                writer.WriteIf(targetInstanceName is not null, $"{targetInstanceName}.{property.Name} = ").Wrap(Map(writer, property, parameterName, refHandler)).Write(";");
+                writer.WriteIf(targetInstanceName is not null, $"{targetInstanceName}.{property.Name} = ")
+                    .Wrap(Map(writer, property, parameterName, refHandler))
+                    .WriteIf(property.InitializationMode is PropertyInitializationMode.Setter, ";");
                 break;
         }
 
