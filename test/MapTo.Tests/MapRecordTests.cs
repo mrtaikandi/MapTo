@@ -13,14 +13,22 @@ public class MapRecordTests
     public void When_TargetRecord_Should_UseConstructorInitialization()
     {
         // Arrange
-        var builder = new TestSourceBuilder();
-        var sourceFile = builder.AddFile();
+        var builder = new TestSourceBuilder(supportNullReferenceTypes: false, null);
+        var sourceFile = builder.AddFile(usings: ["System.Collections.Generic"]);
 
-        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "SourceClass2").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "SourceClass")
+            .WithProperty<int>("Id")
+            .WithProperty<string>("Name")
+            .WithProperty("IReadOnlyCollection<SourceClass2>", "Targets");
+
         sourceFile.AddClass(
             body: """
                   [MapFrom(typeof(SourceClass))]
-                  public record TargetRecord(int Id, string Name);
+                  public record TargetRecord(int Id, string Name, TargetRecord2[] Targets);
+
+                  [MapFrom(typeof(SourceClass2))]
+                  public record TargetRecord2(int Id, string Name);
                   """);
 
         // Act
@@ -30,7 +38,7 @@ public class MapRecordTests
         diagnostics.ShouldBeSuccessful();
         compilation
             .GetClassDeclaration("SourceClassMapToExtensions")
-            .ShouldContain("return new TargetRecord(sourceClass.Id, sourceClass.Name);");
+            .ShouldContain("return new TargetRecord(sourceClass.Id, sourceClass.Name, sourceClass.Targets is null ? default : sourceClass.Targets.Select(global::MapTo.Tests.SourceClass2MapToExtensions.MapToTargetRecord2).ToArray());");
     }
 
     [Fact]

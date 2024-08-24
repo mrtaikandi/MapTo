@@ -1,10 +1,11 @@
-﻿using MapTo.Diagnostics;
-using MapTo.Extensions;
+﻿using MapTo.Extensions;
 
 namespace MapTo.Mappings;
 
 internal readonly record struct ConstructorMapping(string Name, bool IsGenerated, ImmutableArray<ConstructorParameterMapping> Parameters, bool HasParameterWithDefaultValue)
 {
+    internal static readonly ConstructorMapping Empty = new(string.Empty, false, ImmutableArray<ConstructorParameterMapping>.Empty, false);
+
     public bool HasParameters => !Parameters.IsDefaultOrEmpty;
 }
 
@@ -41,7 +42,7 @@ internal static class ConstructorMappingFactory
         var argumentMappings = constructor.GetArgumentMappings(properties);
         return argumentMappings.IsValid(context)
             ? new ConstructorMapping(constructorName, false, argumentMappings, constructor.Parameters.Any(p => p.HasExplicitDefaultValue))
-            : default;
+            : ConstructorMapping.Empty;
     }
 
     internal static bool IsEqual(this IParameterSymbol parameter, PropertyMapping property) =>

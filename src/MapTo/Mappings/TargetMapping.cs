@@ -28,8 +28,15 @@ internal static class TargetMappingFactory
         var (targetTypeSyntax, targetTypeSymbol, _, sourceTypeSymbol, _, codeGeneratorOptions, _) = context;
 
         var properties = PropertyMappingFactory.Create(context);
+
         var constructorMapping = ConstructorMappingFactory.Create(context, properties);
         properties = properties.ExceptConstructorInitializers(constructorMapping);
+
+        var usingDirectives = properties
+            .SelectMany(p => p.UsingDirectives)
+            .Union(constructorMapping.Parameters.SelectMany(p => p.Property.UsingDirectives))
+            .Distinct()
+            .ToImmutableArray();
 
         var mapping = new TargetMapping(
             Modifier: targetTypeSyntax.GetAccessibility(),
@@ -42,7 +49,7 @@ internal static class TargetMappingFactory
             Constructor: constructorMapping,
             Properties: properties,
             Location: targetTypeSyntax.Identifier.GetLocation(),
-            UsingDirectives: properties.SelectMany(p => p.UsingDirectives).Distinct().ToImmutableArray(),
+            UsingDirectives: usingDirectives,
             BeforeMapMethod: MethodMapping.CreateBeforeMapMethod(context),
             AfterMapMethod: MethodMapping.CreateAfterMapMethod(context),
             Projections: ProjectionMapping.Create(context),
