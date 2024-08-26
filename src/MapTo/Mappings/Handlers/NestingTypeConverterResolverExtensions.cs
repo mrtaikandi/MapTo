@@ -2,7 +2,16 @@
 
 internal static class NestingTypeConverterResolverExtensions
 {
-    public static string ToExtensionClassName(this INamedTypeSymbol typeSymbol, CodeGeneratorOptions options) => typeSymbol.IsPrimitiveType()
-        ? "System"
-        : $"{typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}{options.MapExtensionClassSuffix}";
+    public static string ToExtensionClassName(this INamedTypeSymbol typeSymbol, MappingContext context)
+    {
+        if (typeSymbol.IsPrimitiveType())
+        {
+            return "System";
+        }
+
+        var ns = context.TargetTypeSymbol.ContainingNamespace.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        var suffix = context.CodeGeneratorOptions.MapExtensionClassSuffix;
+
+        return $"{ns}.{typeSymbol.Name}{suffix}";
+    }
 }

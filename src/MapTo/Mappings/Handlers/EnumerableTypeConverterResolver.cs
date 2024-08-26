@@ -32,7 +32,7 @@ internal class EnumerableTypeConverterResolver : ITypeConverterResolver
         var methodPrefix = context.CodeGeneratorOptions.MapMethodPrefix;
 
         return new TypeConverterMapping(
-            ContainingType: mappedSourcePropertyType.ToExtensionClassName(context.CodeGeneratorOptions),
+            ContainingType: mappedSourcePropertyType.ToExtensionClassName(context),
             MethodName: mappedSourcePropertyType.IsPrimitiveType() ? $"{methodPrefix}{mappedSourcePropertyType.Name}" : $"{methodPrefix}{propertyTypeName}",
             Type: property.Type.ToTypeMapping(),
             Explicit: false,
