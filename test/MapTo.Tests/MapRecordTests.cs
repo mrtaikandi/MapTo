@@ -43,6 +43,41 @@ public class MapRecordTests
     }
 
     [Fact]
+    public void When_TargetRecordWithGenericAttribute_Should_UseConstructorInitialization()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        var sourceFile = builder.AddFile(usings: ["System.Collections.Generic", "MapTo"], ns: "SourceNamespace");
+
+        sourceFile.AddClass(Accessibility.Public, "Class2").WithProperty<int>("Id").WithProperty<string>("Name");
+        sourceFile.AddClass(Accessibility.Public, "Class1")
+            .WithProperty<int>("Id")
+            .WithProperty<string>("Name")
+            .WithProperty("Class2[]", "Targets");
+
+        var targetFile = builder.AddFile(usings: ["System.Collections.Generic", "MapTo"], ns: "TargetNamespace");
+        targetFile.AddClass(
+            body: """
+                  [MapFrom<SourceNamespace.Class1>]
+                  public record Class1(int Id, string Name, Class2[] Targets);
+
+                  [MapFrom<SourceNamespace.Class2>]
+                  public record Class2(int Id, string Name);
+                  """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile(false);
+        compilation.Dump(_output);
+        compilation.ShouldBeSuccessful();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+        compilation
+            .GetClassDeclaration("Class1MapToExtensions")
+            .ShouldContain("return new Class1(class1.Id, class1.Name, MapToClass2Array(class1.Targets));");
+    }
+
+    [Fact]
     public void When_TargetRecord_Should_UseConstructorInitializationArray()
     {
         // Arrange

@@ -2,7 +2,7 @@
 
 internal static class NestingTypeConverterResolverExtensions
 {
-    public static string ToExtensionClassName(this INamedTypeSymbol typeSymbol, MappingContext context)
+    public static string ToExtensionClassName(this ITypeSymbol typeSymbol, MappingContext context)
     {
         if (typeSymbol.IsPrimitiveType())
         {

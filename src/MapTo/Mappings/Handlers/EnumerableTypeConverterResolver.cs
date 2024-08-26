@@ -22,12 +22,13 @@ internal class EnumerableTypeConverterResolver : ITypeConverterResolver
         }
 
         var typeSymbol = enumerableTypeSymbol.TypeArguments.First();
-        var mapFromAttribute = typeSymbol.GetAttribute(context.KnownTypes.MapFromAttributeTypeSymbol);
-        if (mapFromAttribute?.ConstructorArguments.First().Value is not INamedTypeSymbol mappedSourcePropertyType)
+        var mapFromAttribute = typeSymbol.ToMapFromAttributeMapping(context.KnownTypes);
+        if (mapFromAttribute is null)
         {
             return DiagnosticsFactory.SuitableMappingTypeInNestedPropertyNotFoundError(property, property.Type);
         }
 
+        var mappedSourcePropertyType = mapFromAttribute.Value.SourceType;
         var propertyTypeName = typeSymbol.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
         var methodPrefix = context.CodeGeneratorOptions.MapMethodPrefix;
 

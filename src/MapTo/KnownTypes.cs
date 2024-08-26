@@ -2,6 +2,7 @@
 
 internal record KnownTypes(
     INamedTypeSymbol MapFromAttributeTypeSymbol,
+    INamedTypeSymbol MapFromAttributeGenericTypeSymbol,
     INamedTypeSymbol GenericMapFromAttributeTypeSymbol,
     INamedTypeSymbol IgnorePropertyAttributeTypeSymbol,
     INamedTypeSymbol MapPropertyAttributeTypeSymbol,
@@ -34,7 +35,8 @@ internal record KnownTypes(
 
     internal static KnownTypes Create(Compilation compilation) => new(
         MapFromAttributeTypeSymbol: compilation.GetTypeByMetadataNameOrThrow<MapFromAttribute>(),
-        GenericMapFromAttributeTypeSymbol: compilation.GetTypeByMetadataNameOrThrow(typeof(MapFromAttribute<>).FullName!),
+        MapFromAttributeGenericTypeSymbol: compilation.GetTypeByMetadataNameOrThrow(typeof(MapFromAttribute<>).FullName),
+        GenericMapFromAttributeTypeSymbol: compilation.GetTypeByMetadataNameOrThrow(typeof(MapFromAttribute<>).FullName),
         IgnorePropertyAttributeTypeSymbol: compilation.GetTypeByMetadataNameOrThrow<IgnorePropertyAttribute>(),
         MapPropertyAttributeTypeSymbol: compilation.GetTypeByMetadataNameOrThrow<MapPropertyAttribute>(),
         MapConstructorAttributeTypeSymbol: compilation.GetTypeByMetadataNameOrThrow<MapConstructorAttribute>(),
