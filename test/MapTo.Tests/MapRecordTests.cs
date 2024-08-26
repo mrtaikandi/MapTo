@@ -34,7 +34,6 @@ public class MapRecordTests
 
         // Act
         var (compilation, diagnostics) = builder.Compile();
-        compilation.Dump(_output);
 
         // Assert
         diagnostics.ShouldBeSuccessful();
@@ -73,10 +72,9 @@ public class MapRecordTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-
-        // compilation
-        //     .GetClassDeclaration("ClassMapToExtensions")
-        //     .ShouldContain("NOT IMPLEMENTED!!!!!");
+        compilation
+            .GetClassDeclaration("Class1MapToExtensions")
+            .ShouldContain("return new Class1(class1.Id, class1.Name, MapToClass2Array(class1.Targets));");
     }
 
     [Fact]
