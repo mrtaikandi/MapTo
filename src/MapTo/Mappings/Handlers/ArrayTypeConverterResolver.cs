@@ -22,7 +22,7 @@ internal class ArrayTypeConverterResolver : ITypeConverterResolver
         var methodPrefix = context.CodeGeneratorOptions.MapMethodPrefix;
 
         return new TypeConverterMapping(
-            ContainingType: mappedSourcePropertyType.ToExtensionClassName(context.CodeGeneratorOptions),
+            ContainingType: mappedSourcePropertyType.ToExtensionClassName(context),
             MethodName: mappedSourcePropertyType.IsPrimitiveType() ? $"{methodPrefix}{mappedSourcePropertyType.Name}" : $"{methodPrefix}{propertyTypeName}",
             Parameter: null,
             Type: property.Type.ToTypeMapping(),

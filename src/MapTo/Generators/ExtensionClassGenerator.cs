@@ -38,7 +38,8 @@ static file class ExtensionClassGeneratorExtensions
     {
         const string ParameterName = "sourceArray";
         var referenceHandler = mapping.Options.ReferenceHandling == ReferenceHandling.Enabled ? "referenceHandler" : null;
-        var properties = mapping.Properties
+
+        var properties = (!mapping.Properties.IsDefaultOrEmpty ? mapping.Properties : mapping.Constructor.Parameters.Select(p => p.Property))
             .Where(p => p is { SourceType.IsArray: true, TypeConverter: { IsMapToExtensionMethod: true, Type.EnumerableType: EnumerableType.Array } })
             .Select(p => (
                 ReturnType: $"{p.Type.ElementTypeName}[]",
@@ -52,7 +53,7 @@ static file class ExtensionClassGeneratorExtensions
         {
             var propertyMap = typeConverter switch
             {
-                { HasParameter: false, ReferenceHandling: false } => $"{typeConverter.ContainingType}.{typeConverter.MethodName}({ParameterName}[i])",
+                { HasParameter: false, ReferenceHandling: false } => $"{typeConverter.MethodFullName}({ParameterName}[i])",
                 { HasParameter: false, ReferenceHandling: true } => $"{typeConverter.ContainingType}.{typeConverter.MethodName}({ParameterName}[i], {referenceHandler})",
                 _ => $"{ParameterName}[i]"
             };
