@@ -4,8 +4,15 @@ namespace MapTo.CodeAnalysis;
 
 internal static class CompilationExtensions
 {
-    public static INamedTypeSymbol GetTypeByMetadataNameOrThrow(this Compilation compilation, string fullyQualifiedMetadataName) =>
-        compilation.GetTypeByMetadataName(fullyQualifiedMetadataName) ?? throw new TypeLoadException($"Unable to find '{fullyQualifiedMetadataName}' type.");
+    public static INamedTypeSymbol GetTypeByMetadataNameOrThrow(this Compilation compilation, string? fullyQualifiedMetadataName)
+    {
+        if (fullyQualifiedMetadataName == null)
+        {
+            throw new ArgumentNullException(nameof(fullyQualifiedMetadataName));
+        }
+
+        return compilation.GetTypeByMetadataName(fullyQualifiedMetadataName) ?? throw new TypeLoadException($"Unable to find '{fullyQualifiedMetadataName}' type.");
+    }
 
     public static INamedTypeSymbol GetTypeByMetadataNameOrThrow<T>(this Compilation compilation) =>
         compilation.GetTypeByMetadataNameOrThrow(typeof(T).FullName!);

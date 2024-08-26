@@ -16,10 +16,11 @@ internal class ArrayTypeConverterResolver : ITypeConverterResolver
             return ResolverResult.Undetermined<TypeConverterMapping>();
         }
 
-        var mapFromAttribute = arrayNamedTypeSymbol.GetAttribute(context.KnownTypes.MapFromAttributeTypeSymbol);
-        var propertyTypeName = arrayNamedTypeSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-        var mappedSourcePropertyType = mapFromAttribute?.ConstructorArguments.First().Value as INamedTypeSymbol ?? arrayNamedTypeSymbol;
         var methodPrefix = context.CodeGeneratorOptions.MapMethodPrefix;
+        var propertyTypeName = arrayNamedTypeSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+
+        var mapFromAttribute = arrayNamedTypeSymbol.ToMapFromAttributeMapping(context.KnownTypes);
+        var mappedSourcePropertyType = mapFromAttribute is null ? arrayNamedTypeSymbol : mapFromAttribute.Value.SourceType;
 
         return new TypeConverterMapping(
             ContainingType: mappedSourcePropertyType.ToExtensionClassName(context),

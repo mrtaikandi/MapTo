@@ -35,7 +35,9 @@ internal class EnumTypeConverterResolver : ITypeConverterResolver
         // NB: Check for the mapping strategy in order of precedence.
         // Property Type > Property > Containing Type > Fall back to code generator options.
         return property.Type.GetAttribute(context.KnownTypes.MapFromAttributeTypeSymbol)
-               ?? property.ContainingType.GetAttribute(context.KnownTypes.MapFromAttributeTypeSymbol);
+               ?? property.Type.GetAttribute(context.KnownTypes.MapFromAttributeGenericTypeSymbol)
+               ?? property.ContainingType.GetAttribute(context.KnownTypes.MapFromAttributeTypeSymbol)
+               ?? property.ContainingType.GetAttribute(context.KnownTypes.MapFromAttributeGenericTypeSymbol);
     }
 
     private static ResolverResult<ImmutableArray<EnumMemberMapping>> GetMemberMappings(

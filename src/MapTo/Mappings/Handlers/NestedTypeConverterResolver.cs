@@ -6,8 +6,8 @@ internal class NestedTypeConverterResolver : ITypeConverterResolver
     public ResolverResult<TypeConverterMapping> Get(MappingContext context, IPropertySymbol property, SourceProperty sourceProperty)
     {
         var methodPrefix = context.CodeGeneratorOptions.MapMethodPrefix;
-        var mapFromAttribute = property.Type.GetAttribute(context.KnownTypes.MapFromAttributeTypeSymbol);
-        var mappedSourcePropertyType = mapFromAttribute?.ConstructorArguments.First().Value as INamedTypeSymbol;
+        var mapFromAttribute = property.Type.ToMapFromAttributeMapping(context.KnownTypes);
+        var mappedSourcePropertyType = mapFromAttribute?.SourceType;
 
         return mappedSourcePropertyType switch
         {
