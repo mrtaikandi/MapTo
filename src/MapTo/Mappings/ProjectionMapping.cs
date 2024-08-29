@@ -56,8 +56,9 @@ internal readonly record struct ProjectionMapping(
             return Enumerable.Empty<ProjectionMapping>();
         }
 
-        var methodName = $"{context.CodeGeneratorOptions.MapMethodPrefix}{context.TargetTypeSyntax.Identifier.Text}".Pluralize();
-        var accessibility = context.TargetTypeSyntax.GetAccessibility();
+        var targetTypeName = context.TargetTypeSyntax?.Identifier.Text ?? context.TargetTypeSymbol.Name;
+        var methodName = $"{context.CodeGeneratorOptions.MapMethodPrefix}{targetTypeName}".Pluralize();
+        var accessibility = context.TargetTypeSyntax?.GetAccessibility() ?? context.TargetTypeSymbol.DeclaredAccessibility;
         var projectionType = context.CodeGeneratorOptions.ProjectionType;
 
         return Enum.GetValues(typeof(ProjectionType))

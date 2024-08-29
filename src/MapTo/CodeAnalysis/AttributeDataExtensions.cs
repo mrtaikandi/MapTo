@@ -8,9 +8,17 @@ internal static class AttributeDataExtensions
         attributeData?.NamedArguments.SingleOrDefault(a => a.Key == name).Value.Value;
 
     internal static T GetNamedArgument<T>(this AttributeData? attributeData, string name, T defaultValue = default!)
+        where T : struct
     {
         var value = attributeData?.NamedArguments.SingleOrDefault(a => a.Key == name).Value.Value;
         return value is null ? defaultValue : (T)value;
+    }
+
+    internal static T? GetNamedArgumentOrNull<T>(this AttributeData? attributeData, string name)
+        where T : struct
+    {
+        var value = attributeData?.NamedArguments.SingleOrDefault(a => a.Key == name).Value.Value;
+        return value is null ? null : (T)value;
     }
 
     internal static string? GetNamedArgumentStringValue(this AttributeData? attributeData, string name) => attributeData is null
@@ -39,4 +47,9 @@ internal static class AttributeDataExtensions
 
     internal static Location? GetLocation(this AttributeData? symbol) =>
         symbol?.GetAttributeSyntax()?.GetLocation();
+
+    internal static Location GetNamedArgumentLocation(this AttributeData attribute, string name) => attribute.ApplicationSyntaxReference?.GetSyntax()
+        .DescendantNodes()
+        .OfType<AttributeArgumentSyntax>()
+        .FirstOrDefault(a => a.NameEquals?.Name.Identifier.ValueText == name)?.GetLocation() ?? Location.None;
 }

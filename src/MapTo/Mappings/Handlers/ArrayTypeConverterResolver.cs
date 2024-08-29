@@ -19,12 +19,27 @@ internal class ArrayTypeConverterResolver : ITypeConverterResolver
         var methodPrefix = context.CodeGeneratorOptions.MapMethodPrefix;
         var propertyTypeName = arrayNamedTypeSymbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
 
-        var mapFromAttribute = arrayNamedTypeSymbol.ToMapFromAttributeMapping(context.KnownTypes);
-        var mappedSourcePropertyType = mapFromAttribute is null ? arrayNamedTypeSymbol : mapFromAttribute.Value.SourceType;
+        TypeMapping mappedSourcePropertyType;
+        var mapFromAttribute = arrayNamedTypeSymbol.ToMapFromAttributeMapping(context);
+        if (mapFromAttribute?.SourceType is not null)
+        {
+            mappedSourcePropertyType = mapFromAttribute.Value.SourceType;
+        }
+        else
+        {
+            var elementType = sourceProperty.TypeSymbol.GetElementType();
+            if (elementType is null)
+            {
+                return ResolverResult.Undetermined<TypeConverterMapping>();
+            }
+
+            mapFromAttribute = elementType.ToMapFromAttributeMapping(context);
+            mappedSourcePropertyType = mapFromAttribute?.SourceType ?? elementType.ToTypeMapping();
+        }
 
         return new TypeConverterMapping(
             ContainingType: mappedSourcePropertyType.ToExtensionClassName(context),
-            MethodName: mappedSourcePropertyType.IsPrimitiveType() ? $"{methodPrefix}{mappedSourcePropertyType.Name}" : $"{methodPrefix}{propertyTypeName}",
+            MethodName: mappedSourcePropertyType.IsPrimitive ? $"{methodPrefix}{mappedSourcePropertyType.Name}" : $"{methodPrefix}{propertyTypeName}",
             Parameter: null,
             Type: property.Type.ToTypeMapping(),
             Explicit: false,
@@ -34,7 +49,7 @@ internal class ArrayTypeConverterResolver : ITypeConverterResolver
             {
                 ReferenceHandling.Disabled => false,
                 ReferenceHandling.Enabled => true,
-                ReferenceHandling.Auto when mappedSourcePropertyType.HasNonPrimitiveProperties() => true,
+                ReferenceHandling.Auto when mappedSourcePropertyType.HasNonPrimitiveProperties => true,
                 _ => false
             });
     }

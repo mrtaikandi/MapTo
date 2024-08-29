@@ -19,42 +19,41 @@ internal readonly record struct MethodMapping(
 
     internal static MethodMapping CreateBeforeMapMethod(MappingContext context)
     {
-        var mapFromAttribute = context.MapFromAttribute;
-        if (mapFromAttribute.GetNamedArgument(nameof(MapFromAttribute.BeforeMap)) is null)
+        var methodExpressionSyntax = context.AttributeDataMapping.BeforeMap;
+        if (methodExpressionSyntax is null)
         {
             return default;
         }
 
-        var methodSymbol = GetMethodSymbol(mapFromAttribute, context, nameof(MapFromAttribute.BeforeMap));
-        return ValidateBeforeMapMethod(methodSymbol, context) ? new(methodSymbol) : default;
+        var methodSymbol = GetMethodSymbol(methodExpressionSyntax, context.Compilation, context.TargetTypeSymbol);
+        return ValidateBeforeMapMethod(methodSymbol, context) ? new MethodMapping(methodSymbol) : default;
     }
 
     internal static MethodMapping CreateAfterMapMethod(MappingContext context)
     {
-        var mapFromAttribute = context.MapFromAttribute;
-        if (mapFromAttribute.GetNamedArgument(nameof(MapFromAttribute.AfterMap)) is null)
+        var methodExpressionSyntax = context.AttributeDataMapping.AfterMap;
+        if (methodExpressionSyntax is null)
         {
             return default;
         }
 
-        var methodSymbol = GetMethodSymbol(mapFromAttribute, context, nameof(MapFromAttribute.AfterMap));
-        return ValidateAfterMapMethod(methodSymbol, context) ? new(methodSymbol) : default;
+        var methodSymbol = GetMethodSymbol(methodExpressionSyntax, context.Compilation, context.TargetTypeSymbol);
+        return ValidateAfterMapMethod(methodSymbol, context) ? new MethodMapping(methodSymbol) : default;
     }
 
-    private static IMethodSymbol? GetMethodSymbol(AttributeData attributeData, MappingContext context, string argumentName)
+    private static IMethodSymbol? GetMethodSymbol(ExpressionSyntax? expressionSyntax, Compilation compilation, INamedTypeSymbol targetTypeSymbol)
     {
-        var argumentExpression = attributeData.GetNamedArgumentExpression(argumentName);
-        if (argumentExpression is null)
+        if (expressionSyntax is null)
         {
             return null;
         }
 
-        return argumentExpression switch
+        return expressionSyntax switch
         {
-            InvocationExpressionSyntax { Expression: IdentifierNameSyntax { Identifier.ValueText: "nameof" } } i => context.Compilation.GetMethodSymbol(i),
-            LiteralExpressionSyntax { Token.Value: string value } when value.Contains(".") => context.Compilation.GetMethodSymbolByFullyQualifiedName(value.AsSpan()),
-            LiteralExpressionSyntax { Token.Value: string value } => context.TargetTypeSymbol.GetMembers(value).OfType<IMethodSymbol>().SingleOrDefault(),
-            _ => default
+            InvocationExpressionSyntax { Expression: IdentifierNameSyntax { Identifier.ValueText: "nameof" } } i => compilation.GetMethodSymbol(i),
+            LiteralExpressionSyntax { Token.Value: string value } when value.Contains(".") => compilation.GetMethodSymbolByFullyQualifiedName(value.AsSpan()),
+            LiteralExpressionSyntax { Token.Value: string value } => targetTypeSymbol.GetMembers(value).OfType<IMethodSymbol>().SingleOrDefault(),
+            _ => null
         };
     }
 
@@ -62,12 +61,12 @@ internal readonly record struct MethodMapping(
     {
         var sourceTypeSymbol = context.SourceTypeSymbol;
         var compilation = context.Compilation;
-        var mapFromAttribute = context.MapFromAttribute;
+        var mapFromAttribute = context.AttributeDataMapping;
         var compilerOptions = context.CompilerOptions;
 
         if (methodSymbol is null)
         {
-            context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodNotFoundError(mapFromAttribute, nameof(MapFromAttribute.BeforeMap)));
+            context.ReportDiagnostic(DiagnosticsFactory.BeforeMapMethodNotFoundError(mapFromAttribute));
             return false;
         }
 
@@ -76,13 +75,13 @@ internal readonly record struct MethodMapping(
         {
             if (methodSymbol.Parameters.Length > 1 || !compilation.HasCompatibleTypes(sourceTypeSymbol, methodParameter.Type))
             {
-                context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodInvalidParameterError(mapFromAttribute, nameof(MapFromAttribute.BeforeMap), sourceTypeSymbol));
+                context.ReportDiagnostic(DiagnosticsFactory.BeforeMapMethodInvalidParameterError(mapFromAttribute, sourceTypeSymbol));
                 return false;
             }
 
             if (compilerOptions.NullableReferenceTypes && methodParameter.NullableAnnotation is not NullableAnnotation.Annotated)
             {
-                context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodMissingParameterNullabilityAnnotationError(mapFromAttribute, nameof(MapFromAttribute.BeforeMap)));
+                context.ReportDiagnostic(DiagnosticsFactory.BeforeMapMethodMissingParameterNullabilityAnnotationError(mapFromAttribute));
                 return false;
             }
         }
@@ -91,20 +90,20 @@ internal readonly record struct MethodMapping(
         {
             if (!compilation.HasCompatibleTypes(methodSymbol.ReturnType, sourceTypeSymbol))
             {
-                context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodInvalidReturnTypeError(mapFromAttribute, nameof(MapFromAttribute.BeforeMap), sourceTypeSymbol));
+                context.ReportDiagnostic(DiagnosticsFactory.BeforeMapMethodInvalidReturnTypeError(mapFromAttribute, sourceTypeSymbol));
                 return false;
             }
 
             if (methodSymbol.Parameters.IsDefaultOrEmpty)
             {
-                context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodMissingParameterError(mapFromAttribute, nameof(MapFromAttribute.BeforeMap), sourceTypeSymbol));
+                context.ReportDiagnostic(DiagnosticsFactory.BeforeMapMethodMissingParameterError(mapFromAttribute, sourceTypeSymbol));
                 return false;
             }
 
             if (compilerOptions.NullableReferenceTypes && methodSymbol.ReturnType.NullableAnnotation is not NullableAnnotation.Annotated)
             {
                 context.ReportDiagnostic(
-                    DiagnosticsFactory.BeforeOrAfterMapMethodMissingReturnTypeNullabilityAnnotationError(mapFromAttribute, nameof(MapFromAttribute.BeforeMap)));
+                    DiagnosticsFactory.BeforeMapMethodMissingReturnTypeNullabilityAnnotationError(mapFromAttribute));
 
                 return false;
             }
@@ -126,12 +125,12 @@ internal readonly record struct MethodMapping(
         var targetTypeSymbol = context.TargetTypeSymbol;
         var sourceTypeSymbol = context.SourceTypeSymbol;
         var compilation = context.Compilation;
-        var mapFromAttribute = context.MapFromAttribute;
+        var mapFromAttribute = context.AttributeDataMapping;
         var compilerOptions = context.CompilerOptions;
 
         if (methodSymbol is null)
         {
-            context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodNotFoundError(mapFromAttribute, nameof(MapFromAttribute.AfterMap)));
+            context.ReportDiagnostic(DiagnosticsFactory.AfterMapMethodNotFoundError(mapFromAttribute));
             return false;
         }
 
@@ -144,14 +143,14 @@ internal readonly record struct MethodMapping(
                                             !parameters.Any(p => compilation.HasCompatibleTypes(sourceTypeSymbol, p.Type)))))
             {
                 context.ReportDiagnostic(
-                    DiagnosticsFactory.AfterMapMethodInvalidParametersError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), sourceTypeSymbol, targetTypeSymbol));
+                    DiagnosticsFactory.AfterMapMethodInvalidParametersError(mapFromAttribute, sourceTypeSymbol, targetTypeSymbol));
 
                 return false;
             }
 
             if (compilerOptions.NullableReferenceTypes && parameters.All(p => p.NullableAnnotation is not NullableAnnotation.Annotated))
             {
-                context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodMissingParameterNullabilityAnnotationError(mapFromAttribute, nameof(MapFromAttribute.AfterMap)));
+                context.ReportDiagnostic(DiagnosticsFactory.AfterMapMethodMissingParameterNullabilityAnnotationError(mapFromAttribute));
                 return false;
             }
         }
@@ -160,13 +159,13 @@ internal readonly record struct MethodMapping(
         {
             if (!compilation.HasCompatibleTypes(methodSymbol.ReturnType, targetTypeSymbol))
             {
-                context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodInvalidReturnTypeError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), targetTypeSymbol));
+                context.ReportDiagnostic(DiagnosticsFactory.AfterMapMethodInvalidReturnTypeError(mapFromAttribute, targetTypeSymbol));
                 return false;
             }
 
             if (methodSymbol.Parameters.IsDefaultOrEmpty)
             {
-                context.ReportDiagnostic(DiagnosticsFactory.BeforeOrAfterMapMethodMissingParameterError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), targetTypeSymbol));
+                context.ReportDiagnostic(DiagnosticsFactory.AfterMapMethodMissingParameterError(mapFromAttribute, targetTypeSymbol));
                 return false;
             }
         }

@@ -11,7 +11,7 @@ internal class EnumTypeConverterResolver : ITypeConverterResolver
         }
 
         var methodPrefix = context.CodeGeneratorOptions.MapMethodPrefix;
-        var mapFromAttribute = GetEffectiveMapFromAttribute(context, property);
+        var mapFromAttribute = GetEffectiveMapFromAttribute(context, property)?.ToMapAttributeData();
         var enumMappingStrategy = EnumTypeMappingFactory.GetEnumMappingStrategy(context, mapFromAttribute);
         var memberMappings = GetMemberMappings(context, property, sourceProperty, enumMappingStrategy);
         if (memberMappings.IsFailure)

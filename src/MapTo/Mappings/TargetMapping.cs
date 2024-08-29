@@ -32,16 +32,16 @@ internal static class TargetMappingFactory
         properties = properties.ExceptConstructorInitializers(constructorMapping);
 
         var mapping = new TargetMapping(
-            Modifier: targetTypeSyntax.GetAccessibility(),
-            Name: targetTypeSyntax.Identifier.Text,
+            Modifier: targetTypeSyntax?.GetAccessibility() ?? targetTypeSymbol.DeclaredAccessibility,
+            Name: targetTypeSyntax?.Identifier.Text ?? targetTypeSymbol.Name,
             Namespace: NamespaceMapping.Create(targetTypeSymbol),
-            IsPartial: targetTypeSyntax.IsPartial(),
-            TypeKeyword: targetTypeSyntax.GetKeywordText(),
+            IsPartial: targetTypeSyntax?.IsPartial() ?? false,
+            TypeKeyword: targetTypeSyntax?.GetKeywordText() ?? targetTypeSymbol.TypeKind.ToKeywordText(),
             TypeKind: targetTypeSymbol.TypeKind,
             Source: SourceMapping.Create(sourceTypeSymbol),
             Constructor: constructorMapping,
             Properties: properties,
-            Location: targetTypeSyntax.Identifier.GetLocation(),
+            Location: targetTypeSyntax?.Identifier.GetLocation() ?? targetTypeSymbol.GetLocation() ?? Location.None,
             BeforeMapMethod: MethodMapping.CreateBeforeMapMethod(context),
             AfterMapMethod: MethodMapping.CreateAfterMapMethod(context),
             Projections: ProjectionMapping.Create(context),

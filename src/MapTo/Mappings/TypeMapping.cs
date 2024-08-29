@@ -17,7 +17,9 @@ internal readonly record struct TypeMapping(
     bool IsCountable,
     bool IsFixedSize,
     bool IsReferenceType,
-    SpecialType SpecialType)
+    SpecialType SpecialType,
+    bool IsPrimitive,
+    bool HasNonPrimitiveProperties)
 {
 #if DEBUG
     [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global", Justification = "Is for debugging purposes only.")]
@@ -64,7 +66,9 @@ internal static class TypeMappingExtensions
             SpecialType: typeSymbol.SpecialType,
             IsCountable: enumerableType.IsCountable(),
             IsFixedSize: enumerableType.IsFixedSize(),
-            IsReferenceType: typeSymbol.IsReferenceType);
+            IsReferenceType: typeSymbol.IsReferenceType,
+            IsPrimitive: typeSymbol.IsPrimitiveType(),
+            HasNonPrimitiveProperties: typeSymbol.HasNonPrimitiveProperties());
 
 #if DEBUG
         return mapping with { OriginalTypeSymbol = typeSymbol };
