@@ -1,5 +1,6 @@
 ﻿using MapTo.CodeAnalysis;
 using MapTo.Diagnostics;
+using MapTo.Mappings;
 
 namespace MapTo.Tests;
 
@@ -362,6 +363,7 @@ public class MapFromTests
         var (compilation, diagnostics) = builder.Compile();
 
         // Assert
+        compilation.Dump(_output);
         var extensionClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
         var mapFromAttribute = compilation.GetSemanticModel(extensionClassDeclaration.SyntaxTree)
             .GetDeclaredSymbol(extensionClassDeclaration)
@@ -369,7 +371,10 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.BeforeOrAfterMapMethodNotFoundError(mapFromAttribute, nameof(MapFromAttribute.BeforeMap)));
+        var expectedError = DiagnosticsFactory.BeforeMapMethodNotFoundError(
+            mapFromAttribute.ToMapAttributeData());
+
+        diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
     [Theory]
@@ -437,6 +442,7 @@ public class MapFromTests
 
         // Assert
         var sourceTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.SourceClass").ShouldNotBeNull();
+        var targetTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.TargetClass").ShouldNotBeNull();
 
         var extensionClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
         var mapFromAttribute = compilation.GetSemanticModel(extensionClassDeclaration.SyntaxTree)
@@ -445,7 +451,8 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.BeforeOrAfterMapMethodInvalidParameterError(mapFromAttribute, nameof(MapFromAttribute.BeforeMap), sourceTypeSymbol));
+        var expectedError = DiagnosticsFactory.BeforeMapMethodInvalidParameterError(mapFromAttribute.ToMapAttributeData(), sourceTypeSymbol);
+        diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
     [Fact]
@@ -458,13 +465,14 @@ public class MapFromTests
         sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), BeforeMap = "CustomBeforeMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
-            .WithStaticVoidMethod("CustomBeforeMapMethod", string.Empty, parameters: new[] { "TargetClass sourceClass" });
+            .WithStaticVoidMethod("CustomBeforeMapMethod", string.Empty, parameters: ["TargetClass sourceClass"]);
 
         // Act
         var (compilation, diagnostics) = builder.Compile(assertOutputCompilation: false);
 
         // Assert
         var sourceTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.SourceClass").ShouldNotBeNull();
+        var targetTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.TargetClass").ShouldNotBeNull();
 
         var extensionClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
         var mapFromAttribute = compilation.GetSemanticModel(extensionClassDeclaration.SyntaxTree)
@@ -473,7 +481,8 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.BeforeOrAfterMapMethodInvalidParameterError(mapFromAttribute, nameof(MapFromAttribute.BeforeMap), sourceTypeSymbol));
+        var expectedError = DiagnosticsFactory.BeforeMapMethodInvalidParameterError(mapFromAttribute.ToMapAttributeData(), sourceTypeSymbol);
+        diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
     [Theory]
@@ -538,6 +547,7 @@ public class MapFromTests
 
         // Assert
         var sourceTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.SourceClass").ShouldNotBeNull();
+        var targetTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.TargetClass").ShouldNotBeNull();
 
         var extensionClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
         var mapFromAttribute = compilation.GetSemanticModel(extensionClassDeclaration.SyntaxTree)
@@ -546,7 +556,8 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.BeforeOrAfterMapMethodInvalidReturnTypeError(mapFromAttribute, nameof(MapFromAttribute.BeforeMap), sourceTypeSymbol));
+        var expectedError = DiagnosticsFactory.BeforeMapMethodInvalidReturnTypeError(mapFromAttribute.ToMapAttributeData(), sourceTypeSymbol);
+        diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
     [Fact]
@@ -586,6 +597,7 @@ public class MapFromTests
 
         // Act
         var (compilation, diagnostics) = builder.Compile(assertOutputCompilation: false);
+        var targetTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.TargetClass").ShouldNotBeNull();
 
         // Assert
         var sourceTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.SourceClass").ShouldNotBeNull();
@@ -597,7 +609,8 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.BeforeOrAfterMapMethodMissingParameterError(mapFromAttribute, nameof(MapFromAttribute.BeforeMap), sourceTypeSymbol));
+        var expectedError = DiagnosticsFactory.BeforeMapMethodMissingParameterError(mapFromAttribute.ToMapAttributeData(), sourceTypeSymbol);
+        diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
     [Fact]
@@ -638,6 +651,7 @@ public class MapFromTests
         var (compilation, diagnostics) = builder.Compile(assertOutputCompilation: false);
 
         // Assert
+        var targetTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.TargetClass").ShouldNotBeNull();
         var extensionClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
         var mapFromAttribute = compilation.GetSemanticModel(extensionClassDeclaration.SyntaxTree)
             .GetDeclaredSymbol(extensionClassDeclaration)
@@ -645,8 +659,8 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        diagnostics.ShouldNotBeSuccessful(
-            DiagnosticsFactory.BeforeOrAfterMapMethodMissingParameterNullabilityAnnotationError(mapFromAttribute, nameof(MapFromAttribute.BeforeMap)));
+        var expectedError = DiagnosticsFactory.BeforeMapMethodMissingParameterNullabilityAnnotationError(mapFromAttribute.ToMapAttributeData());
+        diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
     [Fact]
@@ -687,14 +701,15 @@ public class MapFromTests
 
         // Assert
         var extensionClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
+        var targetTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.TargetClass").ShouldNotBeNull();
         var mapFromAttribute = compilation.GetSemanticModel(extensionClassDeclaration.SyntaxTree)
             .GetDeclaredSymbol(extensionClassDeclaration)
             .ShouldNotBeNull()
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        diagnostics.ShouldNotBeSuccessful(
-            DiagnosticsFactory.BeforeOrAfterMapMethodMissingReturnTypeNullabilityAnnotationError(mapFromAttribute, nameof(MapFromAttribute.BeforeMap)));
+        var expectedError = DiagnosticsFactory.BeforeMapMethodMissingReturnTypeNullabilityAnnotationError(mapFromAttribute.ToMapAttributeData());
+        diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
     [Fact]
@@ -733,6 +748,7 @@ public class MapFromTests
         var (compilation, diagnostics) = builder.Compile();
 
         // Assert
+        var targetTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.TargetClass").ShouldNotBeNull();
         var extensionClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
         var mapFromAttribute = compilation.GetSemanticModel(extensionClassDeclaration.SyntaxTree)
             .GetDeclaredSymbol(extensionClassDeclaration)
@@ -740,7 +756,8 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.BeforeOrAfterMapMethodNotFoundError(mapFromAttribute, nameof(MapFromAttribute.AfterMap)));
+        var expectedError = DiagnosticsFactory.AfterMapMethodNotFoundError(mapFromAttribute.ToMapAttributeData());
+        diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
     [Theory]
@@ -817,8 +834,10 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        diagnostics.ShouldNotBeSuccessful(
-            DiagnosticsFactory.AfterMapMethodInvalidParametersError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), sourceTypeSymbol, targetTypeSymbol));
+        var expectedError = DiagnosticsFactory.AfterMapMethodInvalidParametersError(
+            mapFromAttribute.ToMapAttributeData(), sourceTypeSymbol, targetTypeSymbol);
+
+        diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
     [Fact]
@@ -847,8 +866,10 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        diagnostics.ShouldNotBeSuccessful(
-            DiagnosticsFactory.AfterMapMethodInvalidParametersError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), sourceTypeSymbol, targetTypeSymbol));
+        var expectedError = DiagnosticsFactory.AfterMapMethodInvalidParametersError(
+            mapFromAttribute.ToMapAttributeData(), sourceTypeSymbol, targetTypeSymbol);
+
+        diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
     [Fact]
@@ -861,7 +882,7 @@ public class MapFromTests
         sourceFile.AddClass(Accessibility.Public, "TargetClass", true, attributes: """[MapFrom(typeof(SourceClass), AfterMap = "CustomAfterMapMethod")]""")
             .WithProperty<int>("Id")
             .WithProperty<string>("Name")
-            .WithStaticVoidMethod("CustomAfterMapMethod", string.Empty, parameters: new[] { "SourceClass sourceClass", "string something" });
+            .WithStaticVoidMethod("CustomAfterMapMethod", string.Empty, parameters: ["SourceClass sourceClass", "string something"]);
 
         // Act
         var (compilation, diagnostics) = builder.Compile(assertOutputCompilation: false);
@@ -877,8 +898,10 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        diagnostics.ShouldNotBeSuccessful(
-            DiagnosticsFactory.AfterMapMethodInvalidParametersError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), sourceTypeSymbol, targetTypeSymbol));
+        var expectedError = DiagnosticsFactory.AfterMapMethodInvalidParametersError(
+            mapFromAttribute.ToMapAttributeData(), sourceTypeSymbol, targetTypeSymbol);
+
+        diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
     [Fact]
@@ -907,8 +930,10 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        diagnostics.ShouldNotBeSuccessful(
-            DiagnosticsFactory.AfterMapMethodInvalidParametersError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), sourceTypeSymbol, targetTypeSymbol));
+        var expectedError = DiagnosticsFactory.AfterMapMethodInvalidParametersError(
+            mapFromAttribute.ToMapAttributeData(), sourceTypeSymbol, targetTypeSymbol);
+
+        diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
     [Theory]
@@ -994,6 +1019,7 @@ public class MapFromTests
         var (compilation, diagnostics) = builder.Compile(assertOutputCompilation: false);
 
         // Assert
+        var targetTypeSymbol = compilation.GetTypeByMetadataName("MapTo.Tests.TargetClass").ShouldNotBeNull();
         var extensionClassDeclaration = compilation.GetClassDeclaration("TargetClass", "TestFile1.g.cs").ShouldNotBeNull();
         var mapFromAttribute = compilation.GetSemanticModel(extensionClassDeclaration.SyntaxTree)
             .GetDeclaredSymbol(extensionClassDeclaration)
@@ -1001,8 +1027,8 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        diagnostics.ShouldNotBeSuccessful(
-            DiagnosticsFactory.BeforeOrAfterMapMethodMissingParameterNullabilityAnnotationError(mapFromAttribute, nameof(MapFromAttribute.AfterMap)));
+        var expectedError = DiagnosticsFactory.AfterMapMethodMissingParameterNullabilityAnnotationError(mapFromAttribute.ToMapAttributeData());
+        diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
     [Fact]
@@ -1097,7 +1123,8 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.BeforeOrAfterMapMethodInvalidReturnTypeError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), targetTypeSymbol));
+        var expectedError = DiagnosticsFactory.AfterMapMethodInvalidReturnTypeError(mapFromAttribute.ToMapAttributeData(), targetTypeSymbol);
+        diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
     [Fact]
@@ -1125,7 +1152,10 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        diagnostics.ShouldNotBeSuccessful(DiagnosticsFactory.BeforeOrAfterMapMethodMissingParameterError(mapFromAttribute, nameof(MapFromAttribute.AfterMap), targetTypeSymbol));
+        var expectedError = DiagnosticsFactory
+            .AfterMapMethodMissingParameterError(mapFromAttribute.ToMapAttributeData(), targetTypeSymbol);
+
+        diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
     [Fact]

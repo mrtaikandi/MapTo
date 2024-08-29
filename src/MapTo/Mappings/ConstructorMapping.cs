@@ -14,7 +14,7 @@ internal static class ConstructorMappingFactory
     public static ConstructorMapping Create(MappingContext context, ImmutableArray<PropertyMapping> properties)
     {
         var (targetType, targetTypeSymbol, _, _, knownTypes, _, _) = context;
-        var constructorName = targetType.Identifier.ValueText;
+        var constructorName = targetType?.Identifier.ValueText ?? targetTypeSymbol.Name;
 
         var constructor = targetTypeSymbol.Constructors.SingleOrDefault(c => c.HasAttribute(knownTypes.MapConstructorAttributeTypeSymbol));
 
@@ -70,17 +70,19 @@ internal static class ConstructorMappingFactory
     {
         var targetTypeSyntax = context.TargetTypeSyntax;
         var targetType = context.TargetTypeSymbol.ToTypeMapping();
+        var location = targetTypeSyntax?.GetLocation() ?? context.TargetTypeSymbol.GetLocation() ?? Location.None;
+        var name = targetTypeSyntax?.Identifier.ValueText ?? targetType.Name;
 
         if (argumentMappings.IsDefaultOrEmpty)
         {
-            context.ReportDiagnostic(DiagnosticsFactory.MissingConstructorOnTargetClassError(targetTypeSyntax, targetTypeSyntax.Identifier.ValueText));
+            context.ReportDiagnostic(DiagnosticsFactory.MissingConstructorOnTargetClassError(location, name));
             return false;
         }
 
         var selfReferencingParameter = argumentMappings.FirstOrDefault(a => a.Type == targetType);
         if (selfReferencingParameter != default)
         {
-            context.ReportDiagnostic(DiagnosticsFactory.SelfReferencingConstructorMappingError(selfReferencingParameter.Location, targetTypeSyntax.Identifier.ValueText));
+            context.ReportDiagnostic(DiagnosticsFactory.SelfReferencingConstructorMappingError(selfReferencingParameter.Location, name));
             return false;
         }
 

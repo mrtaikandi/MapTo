@@ -111,7 +111,7 @@ internal static class SymbolExtensions
         !typeSymbol.IsPrimitiveType() && typeSymbol.GetAllMembers().OfType<IPropertySymbol>().Any(p => !p.Type.IsPrimitiveType(true));
 
     public static Location? GetLocation(this ISymbol? symbol) =>
-        symbol?.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation();
+        symbol?.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax().GetLocation() ?? symbol?.Locations.FirstOrDefault();
 
     public static bool IsGenericCollectionOf(this ITypeSymbol typeSymbol, SpecialType type)
     {
@@ -167,6 +167,22 @@ internal static class SymbolExtensions
     {
         { Symbol: { } symbol } => symbol as T,
         { CandidateReason: CandidateReason.MemberGroup, CandidateSymbols: { Length: 1 } candidateSymbols } => candidateSymbols[0] as T,
+        _ => null
+    };
+
+    public static string ToKeywordText(this TypeKind kind) => kind switch
+    {
+        TypeKind.Class => "class",
+        TypeKind.Enum => "enum",
+        TypeKind.Interface => "interface",
+        TypeKind.Struct => "struct",
+        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+    };
+
+    public static ITypeSymbol? GetElementType(this ITypeSymbol type) => type switch
+    {
+        IArrayTypeSymbol arrayTypeSymbol => arrayTypeSymbol.ElementType,
+        INamedTypeSymbol namedTypeSymbol => namedTypeSymbol.TypeArguments.FirstOrDefault(),
         _ => null
     };
 }

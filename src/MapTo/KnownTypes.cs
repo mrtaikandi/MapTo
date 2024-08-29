@@ -4,6 +4,7 @@ internal record KnownTypes(
     INamedTypeSymbol MapFromAttributeTypeSymbol,
     INamedTypeSymbol MapFromAttributeGenericTypeSymbol,
     INamedTypeSymbol GenericMapFromAttributeTypeSymbol,
+    INamedTypeSymbol MapAttributeTypeSymbol,
     INamedTypeSymbol IgnorePropertyAttributeTypeSymbol,
     INamedTypeSymbol MapPropertyAttributeTypeSymbol,
     INamedTypeSymbol MapConstructorAttributeTypeSymbol,
@@ -11,6 +12,8 @@ internal record KnownTypes(
     INamedTypeSymbol CompilerGeneratedAttributeTypeSymbol,
     INamedTypeSymbol IgnoreEnumMemberAttributeTypeSymbol)
 {
+    internal const string FriendlyMapToNamespace = "MapTo";
+    internal const string FriendlyMapAttributeName = "Map";
     internal const string FriendlyMapFromAttributeName = "MapFrom";
     internal const string NotNullIfNotNullAttributeFullName = "System.Diagnostics.CodeAnalysis.NotNullIfNotNullAttribute";
     internal const string CompilerGeneratedAttributeFullName = "System.Runtime.CompilerServices.CompilerGeneratedAttribute";
@@ -37,6 +40,7 @@ internal record KnownTypes(
         MapFromAttributeTypeSymbol: compilation.GetTypeByMetadataNameOrThrow<MapFromAttribute>(),
         MapFromAttributeGenericTypeSymbol: compilation.GetTypeByMetadataNameOrThrow(typeof(MapFromAttribute<>).FullName),
         GenericMapFromAttributeTypeSymbol: compilation.GetTypeByMetadataNameOrThrow(typeof(MapFromAttribute<>).FullName),
+        MapAttributeTypeSymbol: compilation.GetTypeByMetadataNameOrThrow(typeof(MapAttribute<,>).FullName),
         IgnorePropertyAttributeTypeSymbol: compilation.GetTypeByMetadataNameOrThrow<IgnorePropertyAttribute>(),
         MapPropertyAttributeTypeSymbol: compilation.GetTypeByMetadataNameOrThrow<MapPropertyAttribute>(),
         MapConstructorAttributeTypeSymbol: compilation.GetTypeByMetadataNameOrThrow<MapConstructorAttribute>(),

@@ -2,9 +2,9 @@
 
 internal static class NestingTypeConverterResolverExtensions
 {
-    public static string ToExtensionClassName(this ITypeSymbol typeSymbol, MappingContext context)
+    public static string ToExtensionClassName(this TypeMapping type, MappingContext context)
     {
-        if (typeSymbol.IsPrimitiveType())
+        if (type.IsPrimitive)
         {
             return "System";
         }
@@ -12,6 +12,6 @@ internal static class NestingTypeConverterResolverExtensions
         var ns = context.TargetTypeSymbol.ContainingNamespace.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var suffix = context.CodeGeneratorOptions.MapExtensionClassSuffix;
 
-        return $"{ns}.{typeSymbol.Name}{suffix}";
+        return $"{ns}.{type.Name}{suffix}";
     }
 }

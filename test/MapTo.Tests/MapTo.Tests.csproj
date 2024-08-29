@@ -8,6 +8,7 @@
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <LangVersion>latest</LangVersion>
         <NoWarn>$(NoWarn);SA1118</NoWarn>
+        <WarningsNotAsErrors>CS9113</WarningsNotAsErrors>
     </PropertyGroup>
 
     <ItemGroup>

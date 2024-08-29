@@ -8,6 +8,8 @@ MapTo.IgnorePropertyAttribute
 MapTo.IgnorePropertyAttribute.IgnorePropertyAttribute() -> void
 MapTo.MapConstructorAttribute
 MapTo.MapConstructorAttribute.MapConstructorAttribute() -> void
+MapTo.MapAttribute<TFrom, TTo>
+MapTo.MapAttribute<TFrom, TTo>.MapAttribute() -> void
 MapTo.MapFromAttribute<T>
 MapTo.MapFromAttribute<T>.MapFromAttribute() -> void
 MapTo.MapFromAttribute

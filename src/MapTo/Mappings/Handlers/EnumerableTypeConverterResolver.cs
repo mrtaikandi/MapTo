@@ -22,7 +22,7 @@ internal class EnumerableTypeConverterResolver : ITypeConverterResolver
         }
 
         var typeSymbol = enumerableTypeSymbol.TypeArguments.First();
-        var mapFromAttribute = typeSymbol.ToMapFromAttributeMapping(context.KnownTypes);
+        var mapFromAttribute = typeSymbol.ToMapFromAttributeMapping(context);
         if (mapFromAttribute is null)
         {
             return DiagnosticsFactory.SuitableMappingTypeInNestedPropertyNotFoundError(property, property.Type);
@@ -34,7 +34,7 @@ internal class EnumerableTypeConverterResolver : ITypeConverterResolver
 
         return new TypeConverterMapping(
             ContainingType: mappedSourcePropertyType.ToExtensionClassName(context),
-            MethodName: mappedSourcePropertyType.IsPrimitiveType() ? $"{methodPrefix}{mappedSourcePropertyType.Name}" : $"{methodPrefix}{propertyTypeName}",
+            MethodName: mappedSourcePropertyType.IsPrimitive ? $"{methodPrefix}{mappedSourcePropertyType.Name}" : $"{methodPrefix}{propertyTypeName}",
             Type: property.Type.ToTypeMapping(),
             Explicit: false,
             Parameter: null,
@@ -44,7 +44,7 @@ internal class EnumerableTypeConverterResolver : ITypeConverterResolver
             {
                 ReferenceHandling.Disabled => false,
                 ReferenceHandling.Enabled => true,
-                ReferenceHandling.Auto when mappedSourcePropertyType.HasNonPrimitiveProperties() => true,
+                ReferenceHandling.Auto when mappedSourcePropertyType.HasNonPrimitiveProperties => true,
                 _ => false
             });
     }

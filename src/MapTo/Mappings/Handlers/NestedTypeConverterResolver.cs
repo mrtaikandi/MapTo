@@ -6,16 +6,16 @@ internal class NestedTypeConverterResolver : ITypeConverterResolver
     public ResolverResult<TypeConverterMapping> Get(MappingContext context, IPropertySymbol property, SourceProperty sourceProperty)
     {
         var methodPrefix = context.CodeGeneratorOptions.MapMethodPrefix;
-        var mapFromAttribute = property.Type.ToMapFromAttributeMapping(context.KnownTypes);
+        var mapFromAttribute = property.Type.ToMapFromAttributeMapping(context);
         var mappedSourcePropertyType = mapFromAttribute?.SourceType;
 
         return mappedSourcePropertyType switch
         {
             null => ResolverResult.Undetermined<TypeConverterMapping>(),
-            { TypeKind: TypeKind.Enum } => ResolverResult.Undetermined<TypeConverterMapping>(), // Is handled by EnumTypeConverterResolver
+            { IsEnum: true } => ResolverResult.Undetermined<TypeConverterMapping>(), // Is handled by EnumTypeConverterResolver
             _ => new TypeConverterMapping(
-                ContainingType: mappedSourcePropertyType.ToExtensionClassName(context),
-                MethodName: mappedSourcePropertyType.IsPrimitiveType() ? $"{methodPrefix}{mappedSourcePropertyType.Name}" : $"{methodPrefix}{property.Type.Name}",
+                ContainingType: mappedSourcePropertyType.Value.ToExtensionClassName(context),
+                MethodName: mappedSourcePropertyType.Value.IsPrimitive ? $"{methodPrefix}{mappedSourcePropertyType.Value.Name}" : $"{methodPrefix}{property.Type.Name}",
                 Type: property.Type.ToTypeMapping(),
                 Explicit: false,
                 Parameter: null,
@@ -25,7 +25,7 @@ internal class NestedTypeConverterResolver : ITypeConverterResolver
                 {
                     ReferenceHandling.Disabled => false,
                     ReferenceHandling.Enabled => true,
-                    ReferenceHandling.Auto when mappedSourcePropertyType.HasNonPrimitiveProperties() => true,
+                    ReferenceHandling.Auto when mappedSourcePropertyType.Value.HasNonPrimitiveProperties => true,
                     _ => false
                 })
         };

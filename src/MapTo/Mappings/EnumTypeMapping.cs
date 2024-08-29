@@ -15,7 +15,7 @@ internal static class EnumTypeMappingFactory
 {
     public static EnumTypeMapping Create(MappingContext context)
     {
-        var mapFromAttribute = context.MapFromAttribute;
+        var mapFromAttribute = context.AttributeDataMapping;
         var enumMappingStrategy = GetEnumMappingStrategy(context, mapFromAttribute);
         var memberMappings = GetMemberMappings(context, enumMappingStrategy);
 
@@ -31,14 +31,14 @@ internal static class EnumTypeMappingFactory
             GetFallbackValue(context.TargetTypeSymbol, mapFromAttribute));
     }
 
-    internal static string? GetFallbackValue(ITypeSymbol enumTypeSymbol, AttributeData? mapFromAttribute)
+    internal static string? GetFallbackValue(ITypeSymbol enumTypeSymbol, AttributeDataMapping? mapFromAttribute)
     {
-        var value = mapFromAttribute.GetNamedArgument(nameof(MapFromAttribute.EnumMappingFallbackValue));
+        var value = mapFromAttribute?.EnumMappingFallbackValue;
         return value is null ? null : enumTypeSymbol.GetMembers().OfType<IFieldSymbol>().SingleOrDefault(m => m.ConstantValue == value)?.ToDisplayString();
     }
 
-    internal static EnumMappingStrategy GetEnumMappingStrategy(MappingContext context, AttributeData? mapFromAttribute) =>
-        mapFromAttribute.GetNamedArgument(nameof(MapFromAttribute.EnumMappingStrategy), context.CodeGeneratorOptions.EnumMappingStrategy);
+    internal static EnumMappingStrategy GetEnumMappingStrategy(MappingContext context, AttributeDataMapping? mapFromAttribute) =>
+        mapFromAttribute?.EnumMappingStrategy ?? context.CodeGeneratorOptions.EnumMappingStrategy;
 
     internal static bool VerifyIgnoreEnumMemberAttributeUsage(
         MappingContext context,
@@ -79,9 +79,9 @@ internal static class EnumTypeMappingFactory
     {
         error = null;
         var knownTypes = context.KnownTypes;
-        var mapFromAttribute = context.MapFromAttribute;
+        var mapFromAttribute = context.AttributeDataMapping;
 
-        var strictEnumMapping = mapFromAttribute.GetNamedArgument(nameof(MapFromAttribute.StrictEnumMapping), StrictEnumMapping.Off);
+        var strictEnumMapping = mapFromAttribute.StrictEnumMapping ?? StrictEnumMapping.Off;
         if (strictEnumMapping is StrictEnumMapping.Off)
         {
             return true;
