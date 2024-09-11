@@ -20,16 +20,20 @@ internal static class ConstructorMappingFactory
 
         if (constructor == null)
         {
-            // Checking if there is a constructor that has matching parameters with the properties
+            // Check if there is a constructor that has matching parameters with the properties
             var constructors = targetTypeSymbol.Constructors
-                .Where(c => c is { DeclaredAccessibility: Accessibility.Public or Accessibility.Internal, IsStatic: false, Parameters.Length: > 0 })
+                .Where(c => c is { DeclaredAccessibility: Accessibility.Public or Accessibility.Internal, IsStatic: false })
                 .OrderByDescending(c => c.Parameters.Length)
                 .ToArray();
 
-            constructor = constructors.FirstOrDefault(c => c.Parameters.All(param => properties.Any(param.IsEqual))) ?? constructors.FirstOrDefault();
+            constructor = constructors.FirstOrDefault(c => c.Parameters.Length > 0 && c.Parameters.All(param => properties.Any(param.IsEqual)));
+            if (constructor is null && constructors.Length == 1)
+            {
+                constructor = constructors[0];
+            }
         }
 
-        if (constructor is null)
+        if (constructor is null || constructor.Parameters.Length == 0)
         {
             var constructorProperties = properties.Where(p => p.InitializationMode == PropertyInitializationMode.Constructor).ToArray();
             return new ConstructorMapping(

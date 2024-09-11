@@ -49,6 +49,56 @@ public class MapTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public void When_MapAttributeIsUsedAndTargetHasMultipleConstructors_Should_MapSourceAndTarget()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddEmptyFile().WithBody(
+            """
+            using Source = Test.SourceNamespace;
+            using Target = AnotherTest.TargetNamespace;
+
+            [assembly: MapTo.Map<Source.SourceClass, Target.TargetClass>()]
+            """);
+
+        builder.AddEmptyFile().WithBody(
+            """
+            namespace Test.SourceNamespace;
+
+            public sealed class SourceClass
+            {
+                public required string Name { get; init; }
+                public required ulong Id { get; init; }
+            }
+            """);
+
+        builder.AddEmptyFile().WithBody(
+            """
+            namespace AnotherTest.TargetNamespace;
+
+            public sealed partial class TargetClass
+            {
+                public TargetClass() { }
+
+                public TargetClass(TargetClass other) { }
+
+                public required string Name { get; init; }
+                public required ulong Id { get; init; }
+            }
+            """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+        compilation.Dump(output);
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+        compilation
+            .GetClassDeclaration("SourceClassMapToExtensions")
+            .ShouldContain("public static global::AnotherTest.TargetNamespace.TargetClass[]? MapToTargetClasses(this global::Test.SourceNamespace.SourceClass[]? source)");
+    }
+
+    [Fact]
     public void When_NestedMappedPropertyIsUsed_Should_UseTheMapMethodOfTheNestedType()
     {
         // Arrange
