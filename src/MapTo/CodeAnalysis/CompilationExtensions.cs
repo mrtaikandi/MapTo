@@ -104,9 +104,14 @@ internal static class CompilationExtensions
         return typeSymbol?.GetMembers(methodName.ToString()).OfType<IMethodSymbol>().SingleOrDefault();
     }
 
-    public static IMethodSymbol? GetMethodSymbol(this Compilation compilation, InvocationExpressionSyntax expressionSyntax)
+    public static IMethodSymbol? GetMethodSymbol(this Compilation compilation, ExpressionSyntax expressionSyntax, Func<SymbolInfo, IMethodSymbol?>? candidateResolver = null)
     {
-        var identifier = expressionSyntax.ArgumentList.Arguments.FirstOrDefault()?.Expression;
+        var identifier = expressionSyntax switch
+        {
+            InvocationExpressionSyntax invocationExpressionSyntax => invocationExpressionSyntax.ArgumentList.Arguments.FirstOrDefault()?.Expression,
+            _ => expressionSyntax
+        };
+
         if (identifier is null)
         {
             return null;
@@ -114,12 +119,12 @@ internal static class CompilationExtensions
 
         var semanticModel = compilation.GetSemanticModel(expressionSyntax.SyntaxTree);
         var symbolInfo = semanticModel.GetSymbolInfo(identifier);
-        if (symbolInfo.CandidateReason is CandidateReason.MemberGroup)
+        return symbolInfo.CandidateReason switch
         {
-            return symbolInfo.CandidateSymbols.OfType<IMethodSymbol>().FirstOrDefault();
-        }
-
-        return null;
+            CandidateReason.MemberGroup => symbolInfo.CandidateSymbols.OfType<IMethodSymbol>().FirstOrDefault(),
+            CandidateReason.None => symbolInfo.Symbol as IMethodSymbol,
+            _ => candidateResolver?.Invoke(symbolInfo)
+        };
     }
 
     public static ITypeSymbol CreateGenericTypeSymbol(

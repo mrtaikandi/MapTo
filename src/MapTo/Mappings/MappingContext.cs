@@ -8,7 +8,7 @@ internal readonly record struct MappingContext(
     SemanticModel TargetSemanticModel,
     INamedTypeSymbol SourceTypeSymbol,
     KnownTypes KnownTypes,
-    AttributeDataMapping AttributeDataMapping,
+    MappingConfiguration Configuration,
     CodeGeneratorOptions CodeGeneratorOptions = default,
     CompilerOptions CompilerOptions = default)
 {
@@ -40,19 +40,20 @@ internal readonly record struct MappingContext(
 
     public static MappingContext WithOptions((MappingContext Builder, CodeGeneratorOptions Options) source, CancellationToken cancellationToken)
     {
-        var mapFromAttributeData = source.Builder.AttributeDataMapping;
+        var configuration = source.Builder.Configuration;
         var compilation = source.Builder.TargetSemanticModel.Compilation;
+
         return source.Builder with
         {
             CompilerOptions = CompilerOptions.From(compilation),
             CodeGeneratorOptions = source.Options with
             {
-                CopyPrimitiveArrays = mapFromAttributeData.CopyPrimitiveArrays ?? source.Options.CopyPrimitiveArrays,
-                ReferenceHandling = mapFromAttributeData.ReferenceHandling ?? source.Options.ReferenceHandling,
-                EnumMappingStrategy = mapFromAttributeData.EnumMappingStrategy ?? source.Options.EnumMappingStrategy,
-                StrictEnumMapping = mapFromAttributeData.StrictEnumMapping ?? source.Options.StrictEnumMapping,
-                ProjectionType = mapFromAttributeData.ProjectTo ?? source.Options.ProjectionType,
-                NullHandling = mapFromAttributeData.NullHandling ??
+                CopyPrimitiveArrays = configuration.CopyPrimitiveArrays ?? source.Options.CopyPrimitiveArrays,
+                ReferenceHandling = configuration.ReferenceHandling ?? source.Options.ReferenceHandling,
+                EnumMappingStrategy = configuration.EnumMappingStrategy ?? source.Options.EnumMappingStrategy,
+                StrictEnumMapping = configuration.StrictEnumMapping ?? source.Options.StrictEnumMapping,
+                ProjectionType = configuration.ProjectTo ?? source.Options.ProjectionType,
+                NullHandling = configuration.NullHandling ??
                                (compilation.Options.NullableContextOptions is NullableContextOptions.Disable && source.Options.NullHandling == NullHandling.Auto
                                    ? NullHandling.SetNull
                                    : source.Options.NullHandling)
@@ -90,10 +91,11 @@ internal static class MappingContextExtensions
                 var semanticModel = context.SemanticModel;
 
                 var knownTypes = KnownTypes.Create(semanticModel.Compilation);
-                AttributeData mapAttribute;
+                AttributeData? mapAttribute;
                 INamedTypeSymbol sourceTypeSymbol;
                 INamedTypeSymbol targetTypeSymbol;
                 BaseTypeDeclarationSyntax? targetTypeSyntax;
+                Result<MappingConfiguration> mappingConfiguration;
 
                 if (context.Node is AttributeListSyntax attributeListSyntax)
                 {
@@ -106,49 +108,61 @@ internal static class MappingContextExtensions
                     targetTypeSymbol = mapAttribute.AttributeClass?.TypeArguments[1] as INamedTypeSymbol ?? throw new InvalidOperationException("TTo type is not found");
 
                     targetTypeSyntax = targetTypeSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax(cancellationToken) as BaseTypeDeclarationSyntax;
+                    mappingConfiguration = mapAttribute.ToMappingConfiguration(context.SemanticModel, sourceTypeSymbol, targetTypeSymbol);
                 }
                 else
                 {
                     targetTypeSyntax = context.Node as BaseTypeDeclarationSyntax ?? throw new InvalidOperationException("TargetNode is not a ClassDeclarationSyntax");
                     targetTypeSymbol = semanticModel.GetDeclaredSymbol(targetTypeSyntax, cancellationToken: cancellationToken) ??
-                                   throw new InvalidOperationException("TargetSymbol is not an ITypeSymbol");
+                                       throw new InvalidOperationException("TargetSymbol is not an ITypeSymbol");
 
-                    mapAttribute = targetTypeSymbol.GetAttribute(knownTypes.GenericMapFromAttributeTypeSymbol)
-                                   ?? targetTypeSymbol.GetAttribute<MapFromAttribute>() ?? throw new InvalidOperationException("MapFromAttribute is not found");
+                    INamedTypeSymbol? sourceType;
+                    mapAttribute = targetTypeSymbol.GetAttribute(knownTypes.GenericMapFromAttributeTypeSymbol) ?? targetTypeSymbol.GetAttribute<MapFromAttribute>();
 
-                    var sourceType = mapAttribute.AttributeClass?.IsGenericType == true
-                        ? mapAttribute.AttributeClass.TypeArguments.First() as INamedTypeSymbol
-                        : mapAttribute.ConstructorArguments.First().Value as INamedTypeSymbol;
+                    if (mapAttribute is not null)
+                    {
+                        mappingConfiguration = mapAttribute.ToMappingConfiguration();
+                        sourceType = mapAttribute.AttributeClass?.IsGenericType == true
+                            ? mapAttribute.AttributeClass.TypeArguments.First() as INamedTypeSymbol
+                            : mapAttribute.ConstructorArguments.First().Value as INamedTypeSymbol;
+                    }
+                    else
+                    {
+                        mapAttribute = targetTypeSymbol.GetAttribute(knownTypes.MapAttributeTypeSymbol) ?? throw new InvalidOperationException("MapFromAttribute is not found");
+                        sourceType = mapAttribute.AttributeClass?.TypeArguments[0] as INamedTypeSymbol ?? throw new InvalidOperationException("TFrom type is not found");
+                        targetTypeSymbol = mapAttribute.AttributeClass?.TypeArguments[1] as INamedTypeSymbol ?? throw new InvalidOperationException("TTo type is not found");
+                        targetTypeSyntax = targetTypeSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax(cancellationToken) as BaseTypeDeclarationSyntax;
+
+                        mappingConfiguration = mapAttribute.ToMappingConfiguration(context.SemanticModel, sourceType, targetTypeSymbol);
+                    }
 
                     sourceTypeSymbol = sourceType ?? throw new InvalidOperationException("SourceType is not a ITypeSymbol");
                 }
 
-                return new MappingContext(
+                var mappingContext = new MappingContext(
                     TargetTypeSyntax: targetTypeSyntax,
                     TargetTypeSymbol: targetTypeSymbol,
                     TargetSemanticModel: semanticModel,
                     SourceTypeSymbol: sourceTypeSymbol ?? throw new InvalidOperationException("SourceType is not a ITypeSymbol"),
                     KnownTypes: knownTypes,
-                    AttributeDataMapping: mapAttribute.ToMapAttributeData());
+                    Configuration: mappingConfiguration.IsSuccess ? mappingConfiguration.Value : default);
+
+                if (mappingConfiguration.IsFailure)
+                {
+                    mappingContext.ReportDiagnostic(mappingConfiguration.Error);
+                }
+
+                return mappingContext;
             })
         .WithTrackingName(nameof(CreateMappingContext));
 
     [SuppressMessage("StyleCop.CSharp.LayoutRules", "SA1513:Closing brace should be followed by blank line", Justification = "Used in pattern matching")]
-    private static bool HasMapFromAttribute(this SyntaxNode node)
+    private static bool HasMapFromAttribute(this SyntaxNode node) => node switch
     {
-        if (node is AttributeListSyntax attributeListSyntax)
-        {
-            return attributeListSyntax.Target?.Identifier.IsKind(SyntaxKind.AssemblyKeyword) == true &&
-                   attributeListSyntax.Attributes.Any(
-                       a => a.Name is QualifiedNameSyntax
-                           {
-                               Left: SimpleNameSyntax { Identifier.Text: KnownTypes.FriendlyMapToNamespace },
-                               Right.Identifier.Text: KnownTypes.FriendlyMapAttributeName
-                           }
-                           or
-                           SimpleNameSyntax { Identifier.Text: KnownTypes.FriendlyMapAttributeName });
-        }
-
-        return node is BaseTypeDeclarationSyntax typeDeclarationSyntax && typeDeclarationSyntax.HasAttribute(KnownTypes.FriendlyMapFromAttributeName);
-    }
+        AttributeListSyntax attributeListSyntax => attributeListSyntax.Target?.Identifier.IsKind(SyntaxKind.AssemblyKeyword) == true &&
+                                                   attributeListSyntax.HasAttribute(KnownTypes.FriendlyMapAttributeName),
+        BaseTypeDeclarationSyntax typeDeclarationSyntax => typeDeclarationSyntax.HasAttribute(KnownTypes.FriendlyMapFromAttributeName) ||
+                                                           typeDeclarationSyntax.HasAttribute(KnownTypes.FriendlyMapAttributeName),
+        _ => false
+    };
 }

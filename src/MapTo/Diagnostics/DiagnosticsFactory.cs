@@ -123,7 +123,7 @@ internal static class DiagnosticsFactory
     /// <summary>
     /// Unable to find '{0}' method. Make sure a matching static method exists and it is accessible.
     /// </summary>
-    internal static Diagnostic BeforeMapMethodNotFoundError(AttributeDataMapping mapPropertyAttribute) => Create(
+    internal static Diagnostic BeforeMapMethodNotFoundError(MappingConfiguration mapPropertyAttribute) => Create(
         DiagnosticDescriptors.BeforeOrAfterMapMethodNotFoundError,
         mapPropertyAttribute.BeforeMapArgumentLocation,
         mapPropertyAttribute.BeforeMap?.ToString().Trim('\"'));
@@ -131,7 +131,7 @@ internal static class DiagnosticsFactory
     /// <summary>
     /// Unable to find '{0}' method. Make sure a matching static method exists and it is accessible.
     /// </summary>
-    internal static Diagnostic AfterMapMethodNotFoundError(AttributeDataMapping mapPropertyAttribute) => Create(
+    internal static Diagnostic AfterMapMethodNotFoundError(MappingConfiguration mapPropertyAttribute) => Create(
         DiagnosticDescriptors.BeforeOrAfterMapMethodNotFoundError,
         mapPropertyAttribute.AfterMapArgumentLocation,
         mapPropertyAttribute.AfterMap?.ToString().Trim('\"'));
@@ -139,7 +139,7 @@ internal static class DiagnosticsFactory
     /// <summary>
     /// The '{0}' method must have either no argument or a single argument assignable to the '{1}'.
     /// </summary>
-    internal static Diagnostic AfterMapMethodInvalidParameterError(AttributeDataMapping mapPropertyAttribute, ITypeSymbol sourceType) => Create(
+    internal static Diagnostic AfterMapMethodInvalidParameterError(MappingConfiguration mapPropertyAttribute, ITypeSymbol sourceType) => Create(
         DiagnosticDescriptors.BeforeOrAfterMapMethodInvalidParameterError,
         mapPropertyAttribute.AfterMapArgumentLocation,
         mapPropertyAttribute.AfterMap?.ToString().Trim('\"'),
@@ -148,7 +148,7 @@ internal static class DiagnosticsFactory
     /// <summary>
     /// The '{0}' method must have either no argument or a single argument assignable to the '{1}'.
     /// </summary>
-    internal static Diagnostic BeforeMapMethodInvalidParameterError(AttributeDataMapping mapPropertyAttribute, ITypeSymbol sourceType) => Create(
+    internal static Diagnostic BeforeMapMethodInvalidParameterError(MappingConfiguration mapPropertyAttribute, ITypeSymbol sourceType) => Create(
         DiagnosticDescriptors.BeforeOrAfterMapMethodInvalidParameterError,
         mapPropertyAttribute.BeforeMapArgumentLocation,
         mapPropertyAttribute.BeforeMap?.ToString().Trim('\"'),
@@ -157,7 +157,7 @@ internal static class DiagnosticsFactory
     /// <summary>
     /// The '{0}' method must return void or a type that is assignable to the type '{1}'.
     /// </summary>
-    internal static Diagnostic AfterMapMethodInvalidReturnTypeError(AttributeDataMapping mapPropertyAttribute, ITypeSymbol sourceType) => Create(
+    internal static Diagnostic AfterMapMethodInvalidReturnTypeError(MappingConfiguration mapPropertyAttribute, ITypeSymbol sourceType) => Create(
         DiagnosticDescriptors.BeforeOrAfterMapMethodInvalidReturnTypeError,
         mapPropertyAttribute.AfterMapArgumentLocation,
         mapPropertyAttribute.AfterMap?.ToString().Trim('\"'),
@@ -166,7 +166,7 @@ internal static class DiagnosticsFactory
     /// <summary>
     /// The '{0}' method must return void or a type that is assignable to the type '{1}'.
     /// </summary>
-    internal static Diagnostic BeforeMapMethodInvalidReturnTypeError(AttributeDataMapping mapPropertyAttribute,  ITypeSymbol sourceType) => Create(
+    internal static Diagnostic BeforeMapMethodInvalidReturnTypeError(MappingConfiguration mapPropertyAttribute,  ITypeSymbol sourceType) => Create(
         DiagnosticDescriptors.BeforeOrAfterMapMethodInvalidReturnTypeError,
         mapPropertyAttribute.BeforeMapArgumentLocation,
         mapPropertyAttribute.BeforeMap?.ToString().Trim('\"'),
@@ -175,7 +175,7 @@ internal static class DiagnosticsFactory
     /// <summary>
     /// The '{0}' method must return void or a single argument assignable to the type '{1}'.
     /// </summary>
-    internal static Diagnostic AfterMapMethodMissingParameterError(AttributeDataMapping mapPropertyAttribute, ITypeSymbol sourceType) => Create(
+    internal static Diagnostic AfterMapMethodMissingParameterError(MappingConfiguration mapPropertyAttribute, ITypeSymbol sourceType) => Create(
         DiagnosticDescriptors.BeforeOrAfterMapMethodMissingParameterError,
         mapPropertyAttribute.AfterMapArgumentLocation,
         mapPropertyAttribute.AfterMap?.ToString().Trim('\"'),
@@ -184,7 +184,7 @@ internal static class DiagnosticsFactory
     /// <summary>
     /// The '{0}' method must return void or a single argument assignable to the type '{1}'.
     /// </summary>
-    internal static Diagnostic BeforeMapMethodMissingParameterError(AttributeDataMapping mapPropertyAttribute, ITypeSymbol sourceType) => Create(
+    internal static Diagnostic BeforeMapMethodMissingParameterError(MappingConfiguration mapPropertyAttribute, ITypeSymbol sourceType) => Create(
         DiagnosticDescriptors.BeforeOrAfterMapMethodMissingParameterError,
         mapPropertyAttribute.BeforeMapArgumentLocation,
         mapPropertyAttribute.BeforeMap?.ToString().Trim('\"'),
@@ -193,7 +193,7 @@ internal static class DiagnosticsFactory
     /// <summary>
     /// The argument passed to the '{0}' method might be null but it is not annotated with nullability annotation.
     /// </summary>
-    internal static Diagnostic AfterMapMethodMissingParameterNullabilityAnnotationError(AttributeDataMapping mapPropertyAttribute) => Create(
+    internal static Diagnostic AfterMapMethodMissingParameterNullabilityAnnotationError(MappingConfiguration mapPropertyAttribute) => Create(
         DiagnosticDescriptors.BeforeOrAfterMapMethodMissingParameterNullabilityAnnotationError,
         mapPropertyAttribute.AfterMapArgumentLocation,
         mapPropertyAttribute.AfterMap?.ToString().Trim('\"'));
@@ -201,7 +201,7 @@ internal static class DiagnosticsFactory
     /// <summary>
     /// The argument passed to the '{0}' method might be null but it is not annotated with nullability annotation.
     /// </summary>
-    internal static Diagnostic BeforeMapMethodMissingParameterNullabilityAnnotationError(AttributeDataMapping mapPropertyAttribute) => Create(
+    internal static Diagnostic BeforeMapMethodMissingParameterNullabilityAnnotationError(MappingConfiguration mapPropertyAttribute) => Create(
         DiagnosticDescriptors.BeforeOrAfterMapMethodMissingParameterNullabilityAnnotationError,
         mapPropertyAttribute.BeforeMapArgumentLocation,
         mapPropertyAttribute.BeforeMap?.ToString().Trim('\"'));
@@ -209,7 +209,7 @@ internal static class DiagnosticsFactory
     /// <summary>
     /// The '{0}' method return type might be null but it is not annotated with nullability annotation.
     /// </summary>
-    internal static Diagnostic AfterMapMethodMissingReturnTypeNullabilityAnnotationError(AttributeDataMapping mapPropertyAttribute) => Create(
+    internal static Diagnostic AfterMapMethodMissingReturnTypeNullabilityAnnotationError(MappingConfiguration mapPropertyAttribute) => Create(
         DiagnosticDescriptors.BeforeOrAfterMapMethodMissingReturnTypeNullabilityAnnotationError,
         mapPropertyAttribute.AfterMapArgumentLocation,
         mapPropertyAttribute.AfterMap?.ToString().Trim('\"'));
@@ -217,7 +217,7 @@ internal static class DiagnosticsFactory
     /// <summary>
     /// The '{0}' method return type might be null but it is not annotated with nullability annotation.
     /// </summary>
-    internal static Diagnostic BeforeMapMethodMissingReturnTypeNullabilityAnnotationError(AttributeDataMapping mapPropertyAttribute) => Create(
+    internal static Diagnostic BeforeMapMethodMissingReturnTypeNullabilityAnnotationError(MappingConfiguration mapPropertyAttribute) => Create(
         DiagnosticDescriptors.BeforeOrAfterMapMethodMissingReturnTypeNullabilityAnnotationError,
         mapPropertyAttribute.BeforeMapArgumentLocation,
         mapPropertyAttribute.BeforeMap?.ToString().Trim('\"'));
@@ -225,7 +225,7 @@ internal static class DiagnosticsFactory
     /// <summary>
     /// The '{0}' method must have either no argument, a single argument assignable to the '{1}' or two arguments assignable to the '{1}' and '{2}'.
     /// </summary>
-    internal static Diagnostic AfterMapMethodInvalidParametersError(AttributeDataMapping mapPropertyAttribute, ITypeSymbol sourceType, ITypeSymbol targetType) =>
+    internal static Diagnostic AfterMapMethodInvalidParametersError(MappingConfiguration mapPropertyAttribute, ITypeSymbol sourceType, ITypeSymbol targetType) =>
         Create(
             DiagnosticDescriptors.AfterMapMethodInvalidParametersError,
             mapPropertyAttribute.AfterMapArgumentLocation,
@@ -266,6 +266,16 @@ internal static class DiagnosticsFactory
         DiagnosticDescriptors.IgnoreEnumMemberWithoutParameterTypeError,
         enumMemberAttribute.GetLocation(),
         ignoreEnumMemberAttributeSymbol.ToDisplayString());
+
+    /// <summary>
+    /// The mapping configuration method must have one parameter of type '{0}&lt;{1}, {2}&gt;'.
+    /// </summary>
+    internal static Diagnostic IncorrectConfigurationMethodParameters(IMethodSymbol configurationMethod, ITypeSymbol sourceType, ITypeSymbol targetType) => Create(
+        DiagnosticDescriptors.IncorrectConfigurationMethodParameters,
+        configurationMethod.GetLocation(),
+        KnownTypes.MappingConfigurationFullName,
+        sourceType.ToDisplayString(),
+        targetType.ToDisplayString());
 
     private static Diagnostic Create(DiagnosticDescriptor descriptor, Location? location, params object?[] messageArgs) =>
         Diagnostic.Create(descriptor, location ?? Location.None, messageArgs);

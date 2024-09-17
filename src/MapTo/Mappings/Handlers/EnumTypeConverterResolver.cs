@@ -11,7 +11,7 @@ internal class EnumTypeConverterResolver : ITypeConverterResolver
         }
 
         var methodPrefix = context.CodeGeneratorOptions.MapMethodPrefix;
-        var mapFromAttribute = GetEffectiveMapFromAttribute(context, property)?.ToMapAttributeData();
+        var mapFromAttribute = GetEffectiveMapFromAttribute(context, property)?.ToMappingConfiguration();
         var enumMappingStrategy = EnumTypeMappingFactory.GetEnumMappingStrategy(context, mapFromAttribute);
         var memberMappings = GetMemberMappings(context, property, sourceProperty, enumMappingStrategy);
         if (memberMappings.IsFailure)
@@ -20,9 +20,10 @@ internal class EnumTypeConverterResolver : ITypeConverterResolver
         }
 
         return new TypeConverterMapping(
-            ContainingType: string.Empty,
-            MethodName: $"{methodPrefix}{sourceProperty.TypeSymbol.Name}",
-            Type: property.Type.ToTypeMapping(),
+            Method: new MethodMapping(
+                ContainingType: string.Empty,
+                MethodName: $"{methodPrefix}{sourceProperty.TypeSymbol.Name}",
+                ReturnType: property.Type.ToTypeMapping()),
             Explicit: false,
             EnumMapping: new EnumTypeMapping(
                 Strategy: enumMappingStrategy,

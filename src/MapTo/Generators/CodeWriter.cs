@@ -1,5 +1,4 @@
 ﻿using System.CodeDom.Compiler;
-using MapTo.Configuration;
 
 namespace MapTo.Generators;
 

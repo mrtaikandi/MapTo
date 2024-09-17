@@ -1,5 +1,6 @@
 ﻿namespace MapTo.Diagnostics;
 
+[SuppressMessage("ReSharper", "ArrangeObjectCreationWhenTypeEvident", Justification = "Is required for static analysis.")]
 [SuppressMessage(category: "Style", checkId: "IDE0090:Use \'new(...)\'", Justification = "Is not supported. https://github.com/dotnet/roslyn-analyzers/issues/5828")]
 [SuppressMessage(category: "StyleCop.CSharp.OrderingRules", checkId: "SA1202:Elements should be ordered by access", Justification = "To improve diagnostics messages readability.")]
 [SuppressMessage(category: "StyleCop.CSharp.ReadabilityRules", checkId: "SA1118:Parameter should not span multiple lines", Justification = "To improve diagnostics messages readability.")]
@@ -266,6 +267,17 @@ internal static class DiagnosticDescriptors
         id: $"{ErrorId}022",
         title: string.Empty,
         messageFormat: "The '{0}' must have an argument when applied to an enum or class",
+        category: UsageCategory,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    /// <summary>
+    /// The mapping configuration method must have one parameter of type '{0}&lt;{1}, {2}&gt;'.
+    /// </summary>
+    internal static readonly DiagnosticDescriptor IncorrectConfigurationMethodParameters = new DiagnosticDescriptor(
+        id: $"{ErrorId}023",
+        title: string.Empty,
+        messageFormat: "The mapping configuration method must have one parameter of type '{0}<{1}, {2}>'",
         category: UsageCategory,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);

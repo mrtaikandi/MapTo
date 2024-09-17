@@ -1,12 +1,15 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
-
-namespace MapTo.Mappings.Handlers;
+﻿namespace MapTo.Mappings.Handlers;
 
 internal class ExplicitTypeConverterResolver : ITypeConverterResolver
 {
     /// <inheritdoc />
     public ResolverResult<TypeConverterMapping> Get(MappingContext context, IPropertySymbol property, SourceProperty sourceProperty)
     {
+        if (context.Configuration.TypeConverters.TryGetValue(property.Name, out var typeConverter))
+        {
+            return typeConverter;
+        }
+
         var converterMethodSymbolResult = GetTypeConverterMethod(context, property, sourceProperty);
         if (converterMethodSymbolResult.IsFailure)
         {
@@ -54,13 +57,9 @@ internal class ExplicitTypeConverterResolver : ITypeConverterResolver
             return DiagnosticsFactory.PropertyTypeConverterRequiredError(property);
         }
 
-        converterMethodSymbol = argumentExpressions.FirstOrDefault() switch
-        {
-            InvocationExpressionSyntax { Expression: IdentifierNameSyntax { Identifier.ValueText: "nameof" } } i => context.Compilation.GetMethodSymbol(i),
-            LiteralExpressionSyntax { Token.Value: string value } when value.Contains(".") => context.Compilation.GetMethodSymbolByFullyQualifiedName(value.AsSpan()),
-            LiteralExpressionSyntax { Token.Value: string value } => context.TargetTypeSymbol.GetMembers(value).OfType<IMethodSymbol>().SingleOrDefault(),
-            _ => null
-        };
+        converterMethodSymbol = argumentExpressions
+            .FirstOrDefault()
+            .GetMethodSymbol(context.Compilation, context.TargetTypeSymbol);
 
         return converterMethodSymbol is null
             ? DiagnosticsFactory.PropertyTypeConverterMethodNotFoundInTargetClassError(property, typeConverterAttribute!)

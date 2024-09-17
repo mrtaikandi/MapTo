@@ -98,9 +98,10 @@ internal static class TargetMappingFactory
         var methodPrefix = context.CodeGeneratorOptions.MapMethodPrefix;
 
         return new TypeConverterMapping(
-            ContainingType: string.Empty,
-            MethodName: $"{methodPrefix}{context.SourceTypeSymbol.Name}",
-            Type: context.TargetTypeSymbol.ToTypeMapping(),
+            Method: new MethodMapping(
+                ContainingType: string.Empty,
+                MethodName: $"{methodPrefix}{context.SourceTypeSymbol.Name}",
+                ReturnType: context.TargetTypeSymbol.ToTypeMapping()),
             Explicit: false,
             EnumMapping: EnumTypeMappingFactory.Create(context));
     }

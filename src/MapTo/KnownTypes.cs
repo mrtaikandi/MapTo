@@ -15,6 +15,13 @@ internal record KnownTypes(
     internal const string FriendlyMapToNamespace = "MapTo";
     internal const string FriendlyMapAttributeName = "Map";
     internal const string FriendlyMapFromAttributeName = "MapFrom";
+
+    internal const string MappingConfigurationFullName = "MapTo.MappingConfiguration";
+    internal const string MappingConfigurationPropertySelectorName = nameof(MappingConfiguration<int, int>.ForProperty);
+    internal const string MappingConfigurationTypeConverterSelectorName = nameof(PropertyMappingConfiguration<int, int>.UseTypeConverter);
+    internal const string MappingConfigurationIgnoreSelectorName = nameof(PropertyMappingConfiguration<int, int>.Ignore);
+    internal const string MappingConfigurationMapToSelectorName = nameof(PropertyMappingConfiguration<int, int>.MapTo);
+
     internal const string NotNullIfNotNullAttributeFullName = "System.Diagnostics.CodeAnalysis.NotNullIfNotNullAttribute";
     internal const string CompilerGeneratedAttributeFullName = "System.Runtime.CompilerServices.CompilerGeneratedAttribute";
     internal const string ArgumentNullException = "System.ArgumentNullException";
