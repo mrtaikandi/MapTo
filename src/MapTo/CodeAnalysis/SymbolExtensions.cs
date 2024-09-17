@@ -185,4 +185,20 @@ internal static class SymbolExtensions
         INamedTypeSymbol namedTypeSymbol => namedTypeSymbol.TypeArguments.FirstOrDefault(),
         _ => null
     };
+
+    public static ITypeSymbol GetDelegateReturnType(this TypeInfo typeInfo)
+    {
+        var typeSymbol = typeInfo.Type ?? typeInfo.ConvertedType;
+        return typeSymbol.GetDelegateReturnType() ?? throw new InvalidOperationException("Type is null.");
+    }
+
+    public static ITypeSymbol? GetDelegateReturnType(this ITypeSymbol? typeSymbol)
+    {
+        if (typeSymbol is INamedTypeSymbol { TypeKind: TypeKind.Delegate, IsGenericType: true } namedTypeSymbol)
+        {
+            return namedTypeSymbol.TypeArguments.LastOrDefault();
+        }
+
+        return null;
+    }
 }

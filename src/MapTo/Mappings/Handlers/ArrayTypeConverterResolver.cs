@@ -38,13 +38,12 @@ internal class ArrayTypeConverterResolver : ITypeConverterResolver
         }
 
         return new TypeConverterMapping(
-            ContainingType: mappedSourcePropertyType.ToExtensionClassName(context),
-            MethodName: mappedSourcePropertyType.IsPrimitive ? $"{methodPrefix}{mappedSourcePropertyType.Name}" : $"{methodPrefix}{propertyTypeName}",
-            Parameter: null,
-            Type: property.Type.ToTypeMapping(),
+            Method: new MethodMapping(
+                ContainingType: mappedSourcePropertyType.ToExtensionClassName(context),
+                MethodName: mappedSourcePropertyType.IsPrimitive ? $"{methodPrefix}{mappedSourcePropertyType.Name}" : $"{methodPrefix}{propertyTypeName}",
+                ReturnType: property.Type.ToTypeMapping()),
             Explicit: false,
             IsMapToExtensionMethod: mapFromAttribute is not null,
-            UsingDirectives: ImmutableArray.Create("global::System.Linq"),
             ReferenceHandling: context.CodeGeneratorOptions.ReferenceHandling switch
             {
                 ReferenceHandling.Disabled => false,

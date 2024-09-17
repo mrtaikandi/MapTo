@@ -15,12 +15,22 @@ internal readonly record struct PropertyMapping(
     string ParameterName,
     bool IsRequired,
     TypeConverterMapping TypeConverter,
-    ImmutableArray<string> UsingDirectives,
     NullHandling NullHandling)
 {
     public string TypeName => Type.FullName;
 
     public bool HasTypeConverter => TypeConverter != default;
+
+    public bool Equals(PropertyMapping other) =>
+        Name == other.Name &&
+        Type.Equals(other.Type) &&
+        SourceName == other.SourceName &&
+        SourceType.Equals(other.SourceType) &&
+        InitializationMode == other.InitializationMode &&
+        ParameterName == other.ParameterName &&
+        IsRequired == other.IsRequired;
+
+    public override int GetHashCode() => HashCode.Combine(Name, Type, SourceName, SourceType, InitializationMode, ParameterName, IsRequired);
 }
 
 internal static class PropertyMappingFactory
@@ -34,7 +44,8 @@ internal static class PropertyMappingFactory
             .OfType<IPropertySymbol>()
             .Where(p => p.DeclaredAccessibility is Accessibility.Public or Accessibility.Internal &&
                         !p.HasAttribute(knownTypes.CompilerGeneratedAttributeTypeSymbol) &&
-                        (!p.HasAttribute(knownTypes.IgnorePropertyAttributeTypeSymbol) || p.IsRequired))
+                        (!p.HasAttribute(knownTypes.IgnorePropertyAttributeTypeSymbol) || p.IsRequired) &&
+                        (!context.Configuration.IgnoredProperties.Contains(p.Name) || p.IsRequired))
             .Select(p => CreatePropertyMapping(context, p))
             .WhereNotNull()
             .ToImmutableArray();
@@ -56,8 +67,22 @@ internal static class PropertyMappingFactory
     {
         var (_, _, _, sourceTypeSymbol, knownTypes, _, _) = context;
         var mapPropertyAttribute = property.GetAttribute(knownTypes.MapPropertyAttributeTypeSymbol);
-        var sourceProperty = property.FindSource(sourceTypeSymbol, mapPropertyAttribute);
 
+        string? mappedPropertyName;
+        NullHandling nullHandling;
+
+        if (context.Configuration.MappedProperties.TryGetValue(property.Name, out var mapping))
+        {
+            mappedPropertyName = mapping.From;
+            nullHandling = mapping.NullHandling;
+        }
+        else
+        {
+            mappedPropertyName = mapPropertyAttribute.GetNamedArgumentStringValue(nameof(MapPropertyAttribute.From));
+            nullHandling = mapPropertyAttribute.GetNamedArgument(nameof(MapPropertyAttribute.NullHandling), context.CodeGeneratorOptions.NullHandling);
+        }
+
+        var sourceProperty = property.FindSource(sourceTypeSymbol, mappedPropertyName);
         if (sourceProperty.NotFound)
         {
             if (property.IsRequired)
@@ -71,8 +96,7 @@ internal static class PropertyMappingFactory
                     ParameterName: property.Name.ToParameterNameCasing(),
                     IsRequired: property.IsRequired,
                     TypeConverter: default,
-                    UsingDirectives: ImmutableArray<string>.Empty,
-                    NullHandling: mapPropertyAttribute.GetNamedArgument(nameof(MapPropertyAttribute.NullHandling), context.CodeGeneratorOptions.NullHandling));
+                    NullHandling: nullHandling);
             }
 
             return null;
@@ -92,20 +116,18 @@ internal static class PropertyMappingFactory
             ParameterName: property.Name.ToParameterNameCasing(),
             IsRequired: property.IsRequired,
             TypeConverter: converter,
-            UsingDirectives: converter.UsingDirectives ?? ImmutableArray<string>.Empty,
-            NullHandling: mapPropertyAttribute.GetNamedArgument(nameof(MapPropertyAttribute.NullHandling), context.CodeGeneratorOptions.NullHandling));
+            NullHandling: nullHandling);
     }
 
-    private static SourceProperty FindSource(
-        this IPropertySymbol property,
-        ITypeSymbol sourceTypeSymbol,
-        AttributeData? mapPropertyAttribute)
+    private static SourceProperty FindSource(this IPropertySymbol property, ITypeSymbol sourceTypeSymbol, string? propertyName)
     {
-        var propertyName = mapPropertyAttribute.GetNamedArgumentStringValue(nameof(MapPropertyAttribute.From)) ?? property.Name;
+        propertyName ??= property.Name;
         var propertySegments = propertyName.Split('.');
 
         var nullableAnnotation = NullableAnnotation.None;
         var sourcePropertyName = new StringBuilder();
+
+        // ReSharper disable once SuggestVarOrType_SimpleTypes
         ITypeSymbol? sourceType = sourceTypeSymbol;
 
         // No need to include the source type name if nameof is used.

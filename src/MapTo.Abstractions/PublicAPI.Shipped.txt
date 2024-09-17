@@ -10,6 +10,7 @@ MapTo.MapConstructorAttribute
 MapTo.MapConstructorAttribute.MapConstructorAttribute() -> void
 MapTo.MapAttribute<TFrom, TTo>
 MapTo.MapAttribute<TFrom, TTo>.MapAttribute() -> void
+MapTo.MapAttribute<TFrom, TTo>.MapAttribute(string! configuration) -> void
 MapTo.MapFromAttribute<T>
 MapTo.MapFromAttribute<T>.MapFromAttribute() -> void
 MapTo.MapFromAttribute
@@ -73,3 +74,30 @@ MapTo.ProjectionType.List = 64 -> MapTo.ProjectionType
 MapTo.ProjectionType.Memory = 128 -> MapTo.ProjectionType
 MapTo.ProjectionType.ReadOnlyMemory = 256 -> MapTo.ProjectionType
 MapTo.ProjectionType.All = -1 -> MapTo.ProjectionType
+MapTo.MappingConfiguration<TSource, TTarget>
+MapTo.MappingConfiguration<TSource, TTarget>.AfterMap.get -> string?
+MapTo.MappingConfiguration<TSource, TTarget>.AfterMap.set -> void
+MapTo.MappingConfiguration<TSource, TTarget>.BeforeMap.get -> string?
+MapTo.MappingConfiguration<TSource, TTarget>.BeforeMap.set -> void
+MapTo.MappingConfiguration<TSource, TTarget>.CopyPrimitiveArrays.get -> bool
+MapTo.MappingConfiguration<TSource, TTarget>.CopyPrimitiveArrays.set -> void
+MapTo.MappingConfiguration<TSource, TTarget>.EnumMappingFallbackValue.get -> object?
+MapTo.MappingConfiguration<TSource, TTarget>.EnumMappingFallbackValue.set -> void
+MapTo.MappingConfiguration<TSource, TTarget>.EnumMappingStrategy.get -> MapTo.EnumMappingStrategy
+MapTo.MappingConfiguration<TSource, TTarget>.EnumMappingStrategy.set -> void
+MapTo.MappingConfiguration<TSource, TTarget>.ForProperty<TProperty>(System.Linq.Expressions.Expression<System.Func<TTarget, TProperty>!>! property) -> MapTo.PropertyMappingConfiguration<TSource, TProperty>!
+MapTo.MappingConfiguration<TSource, TTarget>.MappingConfiguration() -> void
+MapTo.MappingConfiguration<TSource, TTarget>.NullHandling.get -> MapTo.NullHandling
+MapTo.MappingConfiguration<TSource, TTarget>.NullHandling.set -> void
+MapTo.MappingConfiguration<TSource, TTarget>.ProjectTo.get -> MapTo.ProjectionType
+MapTo.MappingConfiguration<TSource, TTarget>.ProjectTo.set -> void
+MapTo.MappingConfiguration<TSource, TTarget>.ReferenceHandling.get -> MapTo.Configuration.ReferenceHandling
+MapTo.MappingConfiguration<TSource, TTarget>.ReferenceHandling.set -> void
+MapTo.MappingConfiguration<TSource, TTarget>.StrictEnumMapping.get -> MapTo.StrictEnumMapping
+MapTo.MappingConfiguration<TSource, TTarget>.StrictEnumMapping.set -> void
+MapTo.PropertyMappingConfiguration<TSource, TProperty>
+MapTo.PropertyMappingConfiguration<TSource, TProperty>.Ignore() -> void
+MapTo.PropertyMappingConfiguration<TSource, TProperty>.MapTo(System.Linq.Expressions.Expression<System.Func<TSource, TProperty>!>! property, MapTo.NullHandling nullHandling = MapTo.NullHandling.Auto) -> MapTo.PropertyMappingConfiguration<TSource, TProperty>!
+MapTo.PropertyMappingConfiguration<TSource, TProperty>.PropertyMappingConfiguration() -> void
+MapTo.PropertyMappingConfiguration<TSource, TProperty>.UseTypeConverter<T>(System.Func<T, object![]?, TProperty>! converter, object![]? parameters) -> MapTo.PropertyMappingConfiguration<TSource, TProperty>!
+MapTo.PropertyMappingConfiguration<TSource, TProperty>.UseTypeConverter<T>(System.Func<T, TProperty>! converter) -> MapTo.PropertyMappingConfiguration<TSource, TProperty>!

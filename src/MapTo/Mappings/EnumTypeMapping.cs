@@ -15,7 +15,7 @@ internal static class EnumTypeMappingFactory
 {
     public static EnumTypeMapping Create(MappingContext context)
     {
-        var mapFromAttribute = context.AttributeDataMapping;
+        var mapFromAttribute = context.Configuration;
         var enumMappingStrategy = GetEnumMappingStrategy(context, mapFromAttribute);
         var memberMappings = GetMemberMappings(context, enumMappingStrategy);
 
@@ -31,13 +31,13 @@ internal static class EnumTypeMappingFactory
             GetFallbackValue(context.TargetTypeSymbol, mapFromAttribute));
     }
 
-    internal static string? GetFallbackValue(ITypeSymbol enumTypeSymbol, AttributeDataMapping? mapFromAttribute)
+    internal static string? GetFallbackValue(ITypeSymbol enumTypeSymbol, MappingConfiguration? mapFromAttribute)
     {
         var value = mapFromAttribute?.EnumMappingFallbackValue;
         return value is null ? null : enumTypeSymbol.GetMembers().OfType<IFieldSymbol>().SingleOrDefault(m => m.ConstantValue == value)?.ToDisplayString();
     }
 
-    internal static EnumMappingStrategy GetEnumMappingStrategy(MappingContext context, AttributeDataMapping? mapFromAttribute) =>
+    internal static EnumMappingStrategy GetEnumMappingStrategy(MappingContext context, MappingConfiguration? mapFromAttribute) =>
         mapFromAttribute?.EnumMappingStrategy ?? context.CodeGeneratorOptions.EnumMappingStrategy;
 
     internal static bool VerifyIgnoreEnumMemberAttributeUsage(
@@ -79,7 +79,7 @@ internal static class EnumTypeMappingFactory
     {
         error = null;
         var knownTypes = context.KnownTypes;
-        var mapFromAttribute = context.AttributeDataMapping;
+        var mapFromAttribute = context.Configuration;
 
         var strictEnumMapping = mapFromAttribute.StrictEnumMapping ?? StrictEnumMapping.Off;
         if (strictEnumMapping is StrictEnumMapping.Off)

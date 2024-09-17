@@ -13,6 +13,7 @@
 
     <ItemGroup>
         <PackageReference Include="Humanizer.Core" />
+        <PackageReference Include="Microsoft.Bcl.HashCode" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
         <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="All" />
     </ItemGroup>

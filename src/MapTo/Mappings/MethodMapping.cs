@@ -5,21 +5,33 @@ namespace MapTo.Mappings;
 internal readonly record struct MethodMapping(
     string ContainingType,
     string MethodName,
-    ImmutableArray<string> Parameters,
-    bool ReturnsVoid)
+    TypeMapping ReturnType,
+    ImmutableArray<ParameterMapping> Parameters = default,
+    ImmutableArray<string> Body = default)
 {
-    private MethodMapping(IMethodSymbol methodSymbol)
+    public MethodMapping(IMethodSymbol methodSymbol)
         : this(
             ContainingType: methodSymbol.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
             MethodName: methodSymbol.Name,
-            Parameters: methodSymbol.Parameters.Select(p => p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)).ToImmutableArray(),
-            ReturnsVoid: methodSymbol.ReturnsVoid) { }
+            ReturnType: methodSymbol.ReturnType.ToTypeMapping(),
+            Parameters: methodSymbol.Parameters.ToParameterMappings()) { }
 
     public string MethodFullName => $"{ContainingType}.{MethodName}";
 
+    public bool ReturnsVoid => ReturnType.SpecialType is SpecialType.System_Void;
+
+    public bool Equals(MethodMapping other) =>
+        ContainingType == other.ContainingType &&
+        MethodName == other.MethodName &&
+        (Parameters.IsDefaultOrEmpty == other.Parameters.IsDefaultOrEmpty || Parameters.SequenceEqual(other.Parameters)) &&
+        ReturnType.Equals(other.ReturnType) &&
+        (Body.IsDefaultOrEmpty == other.Body.IsDefaultOrEmpty || Body.SequenceEqual(other.Body));
+
+    public override int GetHashCode() => HashCode.Combine(ContainingType, MethodName, Parameters, ReturnType, Body);
+
     internal static MethodMapping CreateBeforeMapMethod(MappingContext context)
     {
-        var methodExpressionSyntax = context.AttributeDataMapping.BeforeMap;
+        var methodExpressionSyntax = context.Configuration.BeforeMap;
         if (methodExpressionSyntax is null)
         {
             return default;
@@ -31,7 +43,7 @@ internal readonly record struct MethodMapping(
 
     internal static MethodMapping CreateAfterMapMethod(MappingContext context)
     {
-        var methodExpressionSyntax = context.AttributeDataMapping.AfterMap;
+        var methodExpressionSyntax = context.Configuration.AfterMap;
         if (methodExpressionSyntax is null)
         {
             return default;
@@ -61,7 +73,7 @@ internal readonly record struct MethodMapping(
     {
         var sourceTypeSymbol = context.SourceTypeSymbol;
         var compilation = context.Compilation;
-        var mapFromAttribute = context.AttributeDataMapping;
+        var mapFromAttribute = context.Configuration;
         var compilerOptions = context.CompilerOptions;
 
         if (methodSymbol is null)
@@ -125,7 +137,7 @@ internal readonly record struct MethodMapping(
         var targetTypeSymbol = context.TargetTypeSymbol;
         var sourceTypeSymbol = context.SourceTypeSymbol;
         var compilation = context.Compilation;
-        var mapFromAttribute = context.AttributeDataMapping;
+        var mapFromAttribute = context.Configuration;
         var compilerOptions = context.CompilerOptions;
 
         if (methodSymbol is null)

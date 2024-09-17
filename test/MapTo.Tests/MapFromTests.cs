@@ -372,7 +372,7 @@ public class MapFromTests
             .ShouldNotBeNull();
 
         var expectedError = DiagnosticsFactory.BeforeMapMethodNotFoundError(
-            mapFromAttribute.ToMapAttributeData());
+            mapFromAttribute.ToMappingConfiguration());
 
         diagnostics.ShouldNotBeSuccessful(expectedError);
     }
@@ -451,7 +451,7 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        var expectedError = DiagnosticsFactory.BeforeMapMethodInvalidParameterError(mapFromAttribute.ToMapAttributeData(), sourceTypeSymbol);
+        var expectedError = DiagnosticsFactory.BeforeMapMethodInvalidParameterError(mapFromAttribute.ToMappingConfiguration(), sourceTypeSymbol);
         diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
@@ -481,7 +481,7 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        var expectedError = DiagnosticsFactory.BeforeMapMethodInvalidParameterError(mapFromAttribute.ToMapAttributeData(), sourceTypeSymbol);
+        var expectedError = DiagnosticsFactory.BeforeMapMethodInvalidParameterError(mapFromAttribute.ToMappingConfiguration(), sourceTypeSymbol);
         diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
@@ -556,7 +556,7 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        var expectedError = DiagnosticsFactory.BeforeMapMethodInvalidReturnTypeError(mapFromAttribute.ToMapAttributeData(), sourceTypeSymbol);
+        var expectedError = DiagnosticsFactory.BeforeMapMethodInvalidReturnTypeError(mapFromAttribute.ToMappingConfiguration(), sourceTypeSymbol);
         diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
@@ -609,7 +609,7 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        var expectedError = DiagnosticsFactory.BeforeMapMethodMissingParameterError(mapFromAttribute.ToMapAttributeData(), sourceTypeSymbol);
+        var expectedError = DiagnosticsFactory.BeforeMapMethodMissingParameterError(mapFromAttribute.ToMappingConfiguration(), sourceTypeSymbol);
         diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
@@ -659,7 +659,7 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        var expectedError = DiagnosticsFactory.BeforeMapMethodMissingParameterNullabilityAnnotationError(mapFromAttribute.ToMapAttributeData());
+        var expectedError = DiagnosticsFactory.BeforeMapMethodMissingParameterNullabilityAnnotationError(mapFromAttribute.ToMappingConfiguration());
         diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
@@ -708,7 +708,7 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        var expectedError = DiagnosticsFactory.BeforeMapMethodMissingReturnTypeNullabilityAnnotationError(mapFromAttribute.ToMapAttributeData());
+        var expectedError = DiagnosticsFactory.BeforeMapMethodMissingReturnTypeNullabilityAnnotationError(mapFromAttribute.ToMappingConfiguration());
         diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
@@ -756,7 +756,7 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        var expectedError = DiagnosticsFactory.AfterMapMethodNotFoundError(mapFromAttribute.ToMapAttributeData());
+        var expectedError = DiagnosticsFactory.AfterMapMethodNotFoundError(mapFromAttribute.ToMappingConfiguration());
         diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
@@ -835,7 +835,7 @@ public class MapFromTests
             .ShouldNotBeNull();
 
         var expectedError = DiagnosticsFactory.AfterMapMethodInvalidParametersError(
-            mapFromAttribute.ToMapAttributeData(), sourceTypeSymbol, targetTypeSymbol);
+            mapFromAttribute.ToMappingConfiguration(), sourceTypeSymbol, targetTypeSymbol);
 
         diagnostics.ShouldNotBeSuccessful(expectedError);
     }
@@ -867,7 +867,7 @@ public class MapFromTests
             .ShouldNotBeNull();
 
         var expectedError = DiagnosticsFactory.AfterMapMethodInvalidParametersError(
-            mapFromAttribute.ToMapAttributeData(), sourceTypeSymbol, targetTypeSymbol);
+            mapFromAttribute.ToMappingConfiguration(), sourceTypeSymbol, targetTypeSymbol);
 
         diagnostics.ShouldNotBeSuccessful(expectedError);
     }
@@ -899,7 +899,7 @@ public class MapFromTests
             .ShouldNotBeNull();
 
         var expectedError = DiagnosticsFactory.AfterMapMethodInvalidParametersError(
-            mapFromAttribute.ToMapAttributeData(), sourceTypeSymbol, targetTypeSymbol);
+            mapFromAttribute.ToMappingConfiguration(), sourceTypeSymbol, targetTypeSymbol);
 
         diagnostics.ShouldNotBeSuccessful(expectedError);
     }
@@ -931,7 +931,7 @@ public class MapFromTests
             .ShouldNotBeNull();
 
         var expectedError = DiagnosticsFactory.AfterMapMethodInvalidParametersError(
-            mapFromAttribute.ToMapAttributeData(), sourceTypeSymbol, targetTypeSymbol);
+            mapFromAttribute.ToMappingConfiguration(), sourceTypeSymbol, targetTypeSymbol);
 
         diagnostics.ShouldNotBeSuccessful(expectedError);
     }
@@ -1027,7 +1027,7 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        var expectedError = DiagnosticsFactory.AfterMapMethodMissingParameterNullabilityAnnotationError(mapFromAttribute.ToMapAttributeData());
+        var expectedError = DiagnosticsFactory.AfterMapMethodMissingParameterNullabilityAnnotationError(mapFromAttribute.ToMappingConfiguration());
         diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
@@ -1123,7 +1123,7 @@ public class MapFromTests
             .GetAttribute<MapFromAttribute>()
             .ShouldNotBeNull();
 
-        var expectedError = DiagnosticsFactory.AfterMapMethodInvalidReturnTypeError(mapFromAttribute.ToMapAttributeData(), targetTypeSymbol);
+        var expectedError = DiagnosticsFactory.AfterMapMethodInvalidReturnTypeError(mapFromAttribute.ToMappingConfiguration(), targetTypeSymbol);
         diagnostics.ShouldNotBeSuccessful(expectedError);
     }
 
@@ -1153,7 +1153,7 @@ public class MapFromTests
             .ShouldNotBeNull();
 
         var expectedError = DiagnosticsFactory
-            .AfterMapMethodMissingParameterError(mapFromAttribute.ToMapAttributeData(), targetTypeSymbol);
+            .AfterMapMethodMissingParameterError(mapFromAttribute.ToMappingConfiguration(), targetTypeSymbol);
 
         diagnostics.ShouldNotBeSuccessful(expectedError);
     }

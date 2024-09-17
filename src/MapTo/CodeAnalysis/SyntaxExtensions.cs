@@ -24,8 +24,20 @@ internal static class SyntaxExtensions
     public static bool HasAnyAttributes(this BaseTypeDeclarationSyntax typeDeclarationSyntax, params string[] attributeNames) =>
         attributeNames.Any(typeDeclarationSyntax.HasAttribute);
 
-    public static bool HasAttribute(this BaseTypeDeclarationSyntax typeDeclarationSyntax, string attributeName) => typeDeclarationSyntax.AttributeLists
+    public static bool HasAttribute(this BaseTypeDeclarationSyntax typeDeclarationSyntax, string attributeName) =>
+        typeDeclarationSyntax.AttributeLists.HasAttribute(attributeName);
+
+    public static bool HasAttribute(this SyntaxList<AttributeListSyntax> attributeLists, string attributeName) => attributeLists
         .SelectMany(al => al.Attributes)
+        .Any(a => a.Name switch
+        {
+            QualifiedNameSyntax q => q.Right.Identifier.ValueText == attributeName,
+            SimpleNameSyntax s => s.Identifier.ValueText == attributeName,
+            _ => false
+        });
+
+    public static bool HasAttribute(this AttributeListSyntax attributeLists, string attributeName) => attributeLists
+        .Attributes
         .Any(a => a.Name switch
         {
             QualifiedNameSyntax q => q.Right.Identifier.ValueText == attributeName,

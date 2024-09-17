@@ -23,6 +23,7 @@ internal readonly record struct ExtensionClassGenerator(
             .WriteMapWithReferenceHandlerMethod(TargetMapping, CompilerOptions)
             .WriteMapArrayMethods(TargetMapping)
             .WriteMapEnumMethods(TargetMapping)
+            .WriteGeneratedTypeConverters(TargetMapping)
             .WriteMapToPrimitiveArrayMethods(TargetMapping)
             .WriteProjectionExtensionMethods(TargetMapping, CompilerOptions)
             .WriteClosingBracket(); // Class closing bracket
@@ -133,6 +134,39 @@ static file class ExtensionClassGeneratorExtensions
                 .WriteClosingBracket(false)
                 .WriteLine(";")
                 .WriteClosingBracket(); // Method closing bracket
+        }
+
+        return writer;
+    }
+
+    internal static CodeWriter WriteGeneratedTypeConverters(this CodeWriter writer, TargetMapping targetMapping)
+    {
+        var generatedTypeConverters = targetMapping.Properties
+            .Where(p => p.TypeConverter is { Explicit: true, IsMapToExtensionMethod: true, ContainingType: "" })
+            .Select(p => p.TypeConverter);
+
+        foreach (var typeConverter in generatedTypeConverters)
+        {
+            var method = typeConverter.Method;
+
+            writer
+                .WriteLine()
+                .Write("private static ").Write(method.ReturnType.FullName).Write(" ").Write(method.MethodName).WriteOpenParenthesis()
+                .WriteJoin(", ", method.Parameters.Select(p => p.ToDisplayString()))
+                .Write(")");
+
+            if (method.Body.Length == 1)
+            {
+                writer.Write(" => ").Write(method.Body[0]).WriteLine(";");
+            }
+            else
+            {
+                writer
+                    .WriteLine()
+                    .WriteOpeningBracket()
+                    .WriteLineJoin(string.Empty, method.Body)
+                    .WriteClosingBracket();
+            }
         }
 
         return writer;
@@ -316,9 +350,9 @@ static file class ExtensionClassGeneratorExtensions
         {
             { Parameters.IsDefaultOrEmpty: true } => writer.Write(mapping.AfterMapMethod.MethodFullName).WriteLine("();").WriteLine(),
             { Parameters.Length: 1 } => writer.WriteLine($"{mapping.AfterMapMethod.MethodFullName}(target);").WriteLine(),
-            { Parameters.Length: 2 } when mapping.AfterMapMethod.Parameters[0] == mapping.Source.ToFullyQualifiedName() => writer
+            { Parameters.Length: 2 } when mapping.AfterMapMethod.Parameters[0].Type == mapping.Source.ToFullyQualifiedName() => writer
                 .WriteLine($"{mapping.AfterMapMethod.MethodFullName}({mapping.Source.Name.ToParameterNameCasing()}, target);").WriteLine(),
-            { Parameters.Length: 2 } when mapping.AfterMapMethod.Parameters[1] == mapping.Source.ToFullyQualifiedName() => writer
+            { Parameters.Length: 2 } when mapping.AfterMapMethod.Parameters[1].Type == mapping.Source.ToFullyQualifiedName() => writer
                 .WriteLine($"{mapping.AfterMapMethod.MethodFullName}(target, {mapping.Source.Name.ToParameterNameCasing()});").WriteLine(),
             _ => writer
         };
