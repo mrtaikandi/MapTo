@@ -97,7 +97,7 @@ MapTo.MappingConfiguration<TSource, TTarget>.StrictEnumMapping.get -> MapTo.Stri
 MapTo.MappingConfiguration<TSource, TTarget>.StrictEnumMapping.set -> void
 MapTo.PropertyMappingConfiguration<TSource, TProperty>
 MapTo.PropertyMappingConfiguration<TSource, TProperty>.Ignore() -> void
-MapTo.PropertyMappingConfiguration<TSource, TProperty>.MapTo(System.Linq.Expressions.Expression<System.Func<TSource, TProperty>!>! property, MapTo.NullHandling nullHandling = MapTo.NullHandling.Auto) -> MapTo.PropertyMappingConfiguration<TSource, TProperty>!
+MapTo.PropertyMappingConfiguration<TSource, TProperty>.MapTo<T>(System.Linq.Expressions.Expression<System.Func<TSource, T>!>! property, MapTo.NullHandling nullHandling = MapTo.NullHandling.Auto) -> MapTo.PropertyMappingConfiguration<TSource, TProperty>!
 MapTo.PropertyMappingConfiguration<TSource, TProperty>.PropertyMappingConfiguration() -> void
 MapTo.PropertyMappingConfiguration<TSource, TProperty>.UseTypeConverter<T>(System.Func<T, object![]?, TProperty>! converter, object![]? parameters) -> MapTo.PropertyMappingConfiguration<TSource, TProperty>!
 MapTo.PropertyMappingConfiguration<TSource, TProperty>.UseTypeConverter<T>(System.Func<T, TProperty>! converter) -> MapTo.PropertyMappingConfiguration<TSource, TProperty>!

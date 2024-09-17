@@ -34,8 +34,9 @@ public sealed class PropertyMappingConfiguration<TSource, TProperty>
     /// <summary>
     /// Configures the mapping to map the property to the specified <typeparamref name="TSource"/>'s property.
     /// </summary>
+    /// <typeparam name="T">The type of the property to map to.</typeparam>
     /// <param name="property">The property to map to.</param>
     /// <param name="nullHandling">The way to handle null properties.</param>
     /// <returns>The current instance of the <see cref="PropertyMappingConfiguration{TSource, TProperty}"/>.</returns>
-    public PropertyMappingConfiguration<TSource, TProperty> MapTo(Expression<Func<TSource, TProperty>> property, NullHandling nullHandling = NullHandling.Auto) => this;
+    public PropertyMappingConfiguration<TSource, TProperty> MapTo<T>(Expression<Func<TSource, T>> property, NullHandling nullHandling = NullHandling.Auto) => this;
 }
