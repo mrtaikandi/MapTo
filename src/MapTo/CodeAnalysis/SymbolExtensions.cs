@@ -9,8 +9,8 @@ internal static class SymbolExtensions
             : type.GetMembers();
     }
 
-    public static AttributeData? GetAttribute(this ISymbol symbol, ITypeSymbol attributeSymbol) =>
-        symbol.GetAttributes(attributeSymbol).FirstOrDefault();
+    public static AttributeData? GetAttribute(this ISymbol? symbol, ITypeSymbol attributeSymbol) =>
+        symbol?.GetAttributes(attributeSymbol).FirstOrDefault();
 
     public static AttributeData? GetAttribute<T>(this ISymbol symbol)
         where T : Attribute => symbol.GetAttribute(typeof(T).FullName!);

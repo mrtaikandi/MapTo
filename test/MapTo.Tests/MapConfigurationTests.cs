@@ -581,4 +581,64 @@ public class MapConfigurationTests(ITestOutputHelper output)
             }
             """);
     }
+
+    [Fact]
+    public void When_MappingConfigurationIsUsedWithMethodChaining_Should_MapAndUseTypeConverter()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(LanguageVersion.Latest));
+        var sourceFile = builder.AddFile();
+        builder.AddFile(supportNullableReferenceTypes: true).WithBody(
+            """
+            [Map<SourceClass, TargetClass>(nameof(Configuration.MappingConfiguration))]
+            internal static class Configuration
+            {
+                public static int StringToIntTypeConverter(string source) => int.Parse(source);
+
+                public static void MappingConfiguration(MappingConfiguration<SourceClass, TargetClass> config)
+                {
+                    config.ForProperty(x => x.Prop1).MapTo(p => p.Prop2).UseTypeConverter<string>(StringToIntTypeConverter);
+                    config.ForProperty(x => x.Prop2).UseTypeConverter<string>(StringToIntTypeConverter).MapTo(p => p.Prop1);
+                    config.ForProperty(x => x.Prop3).MapTo(p => p.SourceProp3);
+                    config.ForProperty(x => x.Prop4).MapTo(p => p.Prop4).UseTypeConverter<string>(StringToIntTypeConverter).Ignore();
+                }
+            }
+            """);
+
+        sourceFile.AddClass(Accessibility.Public, "SourceClass")
+            .WithProperty<string>("Prop1")
+            .WithProperty<string>("Prop2")
+            .WithProperty<int>("SourceProp3")
+            .WithProperty<string>("Prop4");
+
+        sourceFile.AddClass(Accessibility.Public, "TargetClass")
+            .WithProperty<int>("Prop1")
+            .WithProperty<int>("Prop2")
+            .WithProperty<int>("Prop3")
+            .WithProperty<int>("Prop4");
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldContain(
+            """
+            public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
+            {
+                if (sourceClass is null)
+                {
+                    return null;
+                }
+
+                return new TargetClass
+                {
+                    Prop1 = global::MapTo.Tests.Configuration.StringToIntTypeConverter(sourceClass.Prop2),
+                    Prop2 = global::MapTo.Tests.Configuration.StringToIntTypeConverter(sourceClass.Prop1),
+                    Prop3 = sourceClass.SourceProp3
+                };
+            }
+            """);
+    }
 }

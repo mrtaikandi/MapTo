@@ -52,6 +52,23 @@ internal static class AttributeDataMappingExtensions
         };
     }
 
+    private static MappingConfiguration CreateMappingConfiguration(AttributeData attribute, ITypeSymbol? sourceType) => new(
+        sourceType?.ToTypeMapping() ?? throw new InvalidOperationException("Unable to determine source type from MapTo attribute."),
+        attribute.GetNamedArgumentOrNull<bool>(nameof(MapFromAttribute.CopyPrimitiveArrays)),
+        attribute.GetNamedArgumentOrNull<ReferenceHandling>(nameof(MapFromAttribute.ReferenceHandling)),
+        attribute.GetNamedArgumentOrNull<NullHandling>(nameof(MapFromAttribute.NullHandling)),
+        attribute.GetNamedArgumentOrNull<EnumMappingStrategy>(nameof(MapFromAttribute.EnumMappingStrategy)),
+        attribute.GetNamedArgumentOrNull<StrictEnumMapping>(nameof(MapFromAttribute.StrictEnumMapping)),
+        attribute.GetNamedArgument(nameof(MapFromAttribute.EnumMappingFallbackValue)),
+        attribute.GetNamedArgumentOrNull<ProjectionType>(nameof(MapFromAttribute.ProjectTo)),
+        attribute.GetNamedArgumentExpression(nameof(MapFromAttribute.BeforeMap)),
+        AfterMap: attribute.GetNamedArgumentExpression(nameof(MapFromAttribute.AfterMap)),
+        BeforeMapArgumentLocation: attribute.GetNamedArgumentLocation(nameof(MapFromAttribute.BeforeMap)),
+        AfterMapArgumentLocation: attribute.GetNamedArgumentLocation(nameof(MapFromAttribute.AfterMap)),
+        TypeConverters: ImmutableDictionary<string, TypeConverterMapping>.Empty,
+        IgnoredProperties: ImmutableArray<string>.Empty,
+        MappedProperties: ImmutableDictionary<string, (string From, NullHandling NullHandling)>.Empty);
+
     private static Result<IMethodSymbol> GetConfigurationMethod(
         this AttributeData attributeData,
         Compilation compilation,
@@ -76,63 +93,6 @@ internal static class AttributeDataMappingExtensions
         return validationResult.IsSuccess ? Result.Success(configurationMethodSymbol) : validationResult;
     }
 
-    private static MappingConfiguration WithConfigurationMethod(this MappingConfiguration config, IMethodSymbol configurationMethodSymbol, SemanticModel semanticModel)
-    {
-        if (configurationMethodSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() is not MethodDeclarationSyntax configurationMethodDeclarationSyntax)
-        {
-            return config;
-        }
-
-        var statements = configurationMethodDeclarationSyntax.Body?.Statements ?? [];
-        foreach (var configurationStatement in statements.OfType<ExpressionStatementSyntax>())
-        {
-            switch (configurationStatement.Expression)
-            {
-                case AssignmentExpressionSyntax assignmentSyntax:
-                    var value = assignmentSyntax.Right;
-                    config = (assignmentSyntax.Left as MemberAccessExpressionSyntax)?.Name.Identifier.Text switch
-                    {
-                        nameof(MappingConfiguration.BeforeMap) => config with { BeforeMap = value, BeforeMapArgumentLocation = value.GetLocation() },
-                        nameof(MappingConfiguration.AfterMap) => config with { AfterMap = value, AfterMapArgumentLocation = value.GetLocation() },
-                        nameof(MappingConfiguration.NullHandling) => config with { NullHandling = value.GetEnumValue<NullHandling>() },
-                        nameof(MappingConfiguration.ReferenceHandling) => config with { ReferenceHandling = value.GetEnumValue<ReferenceHandling>() },
-                        nameof(MappingConfiguration.EnumMappingStrategy) => config with { EnumMappingStrategy = value.GetEnumValue<EnumMappingStrategy>() },
-                        nameof(MappingConfiguration.ProjectTo) => config with { ProjectTo = value.GetEnumValue<ProjectionType>() },
-                        nameof(MappingConfiguration.CopyPrimitiveArrays) => config with { CopyPrimitiveArrays = bool.Parse(value.ToString()) },
-                        nameof(MappingConfiguration.StrictEnumMapping) => config with { StrictEnumMapping = value.GetEnumValue<StrictEnumMapping>() },
-                        nameof(MappingConfiguration.EnumMappingFallbackValue) => config with { EnumMappingFallbackValue = (value as LiteralExpressionSyntax)?.Token.Value },
-                        _ => config
-                    };
-
-                    break;
-
-                case InvocationExpressionSyntax { Expression: MemberAccessExpressionSyntax memberAccess } invocationExpression
-                    when memberAccess.TryGetTargetPropertyName(out var propertyName):
-
-                    config = memberAccess.Name.Identifier.Text switch
-                    {
-                        KnownTypes.MappingConfigurationTypeConverterSelectorName => config with
-                        {
-                            TypeConverters = config.TypeConverters.SetItem(propertyName, invocationExpression.GetTypeConverterMapping(semanticModel, propertyName))
-                        },
-                        KnownTypes.MappingConfigurationIgnoreSelectorName => config with
-                        {
-                            IgnoredProperties = config.IgnoredProperties.Add(propertyName)
-                        },
-                        KnownTypes.MappingConfigurationMapToSelectorName => config with
-                        {
-                            MappedProperties = config.MappedProperties.SetItem(propertyName, invocationExpression.GetMappedProperty(semanticModel))
-                        },
-                        _ => throw new ArgumentOutOfRangeException($"Unexpected method name: {memberAccess.Name.Identifier.Text}")
-                    };
-
-                    break;
-            }
-        }
-
-        return config;
-    }
-
     private static (string From, NullHandling NullHandling) GetMappedProperty(this InvocationExpressionSyntax invocationExpression, SemanticModel semanticModel)
     {
         var invocationArgs = invocationExpression.ArgumentList.Arguments;
@@ -145,8 +105,8 @@ internal static class AttributeDataMappingExtensions
         var from = expression?.Body as MemberAccessExpressionSyntax ?? throw new InvalidOperationException("Unable to determine target property from MapTo attribute.");
 
         return (
-            from.Name.Identifier.Text,
-            invocationArgs.Skip(1).SingleOrDefault()?.Expression.GetEnumValue<NullHandling>(semanticModel) ?? NullHandling.Auto);
+            From: from.Name.Identifier.Text,
+            NullHandling: invocationArgs.Skip(1).SingleOrDefault()?.Expression.GetEnumValue<NullHandling>(semanticModel) ?? NullHandling.Auto);
     }
 
     private static TypeConverterMapping GetTypeConverterMapping(this InvocationExpressionSyntax invocationExpression, SemanticModel semanticModel, string propertyName)
@@ -212,13 +172,25 @@ internal static class AttributeDataMappingExtensions
         }
     }
 
-    private static bool TryGetTargetPropertyName(this MemberAccessExpressionSyntax memberAccess, out string propertyName)
+    private static bool TryGetTargetPropertyName(this InvocationExpressionSyntax? invocationExpression, out string propertyName)
     {
-        if (memberAccess.Expression is InvocationExpressionSyntax { ArgumentList.Arguments.Count: 1 } invocationExpressionSyntax &&
-            invocationExpressionSyntax.ArgumentList.Arguments[0].Expression is SimpleLambdaExpressionSyntax { Body: MemberAccessExpressionSyntax memberAccessExpressionSyntax })
+        // Traverse the chain to find the ForProperty method call
+        while (invocationExpression?.Expression is MemberAccessExpressionSyntax memberAccess)
         {
-            propertyName = memberAccessExpressionSyntax.Name.Identifier.Text;
-            return true;
+            if (memberAccess.Name.Identifier.Text == KnownTypes.MappingConfigurationPropertySelectorName)
+            {
+                // Get the argument of the ForProperty method and
+                // extract the property name from the lambda expression
+                var argument = invocationExpression.ArgumentList.Arguments.FirstOrDefault()?.Expression;
+                if (argument is SimpleLambdaExpressionSyntax { Body: MemberAccessExpressionSyntax propertyAccess })
+                {
+                    propertyName = propertyAccess.Name.Identifier.Text;
+                    return true;
+                }
+            }
+
+            // Move to the next method in the chain
+            invocationExpression = memberAccess.Expression as InvocationExpressionSyntax;
         }
 
         propertyName = string.Empty;
@@ -239,20 +211,81 @@ internal static class AttributeDataMappingExtensions
         return Result.Success(methodSymbol);
     }
 
-    private static MappingConfiguration CreateMappingConfiguration(AttributeData attribute, ITypeSymbol? sourceType) => new(
-        sourceType?.ToTypeMapping() ?? throw new InvalidOperationException("Unable to determine source type from MapTo attribute."),
-        attribute.GetNamedArgumentOrNull<bool>(nameof(MapFromAttribute.CopyPrimitiveArrays)),
-        attribute.GetNamedArgumentOrNull<ReferenceHandling>(nameof(MapFromAttribute.ReferenceHandling)),
-        attribute.GetNamedArgumentOrNull<NullHandling>(nameof(MapFromAttribute.NullHandling)),
-        attribute.GetNamedArgumentOrNull<EnumMappingStrategy>(nameof(MapFromAttribute.EnumMappingStrategy)),
-        attribute.GetNamedArgumentOrNull<StrictEnumMapping>(nameof(MapFromAttribute.StrictEnumMapping)),
-        attribute.GetNamedArgument(nameof(MapFromAttribute.EnumMappingFallbackValue)),
-        attribute.GetNamedArgumentOrNull<ProjectionType>(nameof(MapFromAttribute.ProjectTo)),
-        attribute.GetNamedArgumentExpression(nameof(MapFromAttribute.BeforeMap)),
-        AfterMap: attribute.GetNamedArgumentExpression(nameof(MapFromAttribute.AfterMap)),
-        BeforeMapArgumentLocation: attribute.GetNamedArgumentLocation(nameof(MapFromAttribute.BeforeMap)),
-        AfterMapArgumentLocation: attribute.GetNamedArgumentLocation(nameof(MapFromAttribute.AfterMap)),
-        TypeConverters: ImmutableDictionary<string, TypeConverterMapping>.Empty,
-        IgnoredProperties: ImmutableArray<string>.Empty,
-        MappedProperties: ImmutableDictionary<string, (string From, NullHandling NullHandling)>.Empty);
+    private static MappingConfiguration WithConfigurationMethod(this MappingConfiguration config, IMethodSymbol configurationMethodSymbol, SemanticModel semanticModel)
+    {
+        if (configurationMethodSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax() is not MethodDeclarationSyntax configurationMethodDeclarationSyntax)
+        {
+            return config;
+        }
+
+        var statements = configurationMethodDeclarationSyntax.Body?.Statements ?? [];
+        foreach (var configurationStatement in statements.OfType<ExpressionStatementSyntax>())
+        {
+            config = configurationStatement.Expression switch
+            {
+                AssignmentExpressionSyntax assignmentSyntax => config.WithPropertyAssignmentConfiguration(assignmentSyntax),
+                _ => config.WithExpressionAssignmentConfiguration(semanticModel, configurationStatement)
+            };
+        }
+
+        return config;
+    }
+
+    private static MappingConfiguration WithExpressionAssignmentConfiguration(
+        this MappingConfiguration config,
+        SemanticModel semanticModel,
+        ExpressionStatementSyntax configurationStatement)
+    {
+        var invocationExpression = configurationStatement.Expression as InvocationExpressionSyntax;
+        if (invocationExpression?.TryGetTargetPropertyName(out var propertyName) != true)
+        {
+            return config;
+        }
+
+        var memberAccess = invocationExpression.Expression as MemberAccessExpressionSyntax;
+
+        while (invocationExpression is not null && memberAccess is not null)
+        {
+            config = memberAccess.Name.Identifier.Text switch
+            {
+                KnownTypes.MappingConfigurationTypeConverterSelectorName => config with
+                {
+                    TypeConverters = config.TypeConverters.SetItem(propertyName, invocationExpression.GetTypeConverterMapping(semanticModel, propertyName))
+                },
+                KnownTypes.MappingConfigurationIgnoreSelectorName => config with
+                {
+                    IgnoredProperties = config.IgnoredProperties.Add(propertyName)
+                },
+                KnownTypes.MappingConfigurationMapToSelectorName => config with
+                {
+                    MappedProperties = config.MappedProperties.SetItem(propertyName, invocationExpression.GetMappedProperty(semanticModel))
+                },
+                KnownTypes.MappingConfigurationPropertySelectorName => config,
+                _ => throw new ArgumentOutOfRangeException($"Unexpected method name: {memberAccess.Name.Identifier.Text}")
+            };
+
+            invocationExpression = memberAccess.Expression as InvocationExpressionSyntax;
+            memberAccess = invocationExpression?.Expression as MemberAccessExpressionSyntax;
+        }
+
+        return config;
+    }
+
+    private static MappingConfiguration WithPropertyAssignmentConfiguration(this MappingConfiguration config, AssignmentExpressionSyntax assignmentSyntax)
+    {
+        var value = assignmentSyntax.Right;
+        return (assignmentSyntax.Left as MemberAccessExpressionSyntax)?.Name.Identifier.Text switch
+        {
+            nameof(MappingConfiguration.BeforeMap) => config with { BeforeMap = value, BeforeMapArgumentLocation = value.GetLocation() },
+            nameof(MappingConfiguration.AfterMap) => config with { AfterMap = value, AfterMapArgumentLocation = value.GetLocation() },
+            nameof(MappingConfiguration.NullHandling) => config with { NullHandling = value.GetEnumValue<NullHandling>() },
+            nameof(MappingConfiguration.ReferenceHandling) => config with { ReferenceHandling = value.GetEnumValue<ReferenceHandling>() },
+            nameof(MappingConfiguration.EnumMappingStrategy) => config with { EnumMappingStrategy = value.GetEnumValue<EnumMappingStrategy>() },
+            nameof(MappingConfiguration.ProjectTo) => config with { ProjectTo = value.GetEnumValue<ProjectionType>() },
+            nameof(MappingConfiguration.CopyPrimitiveArrays) => config with { CopyPrimitiveArrays = bool.Parse(value.ToString()) },
+            nameof(MappingConfiguration.StrictEnumMapping) => config with { StrictEnumMapping = value.GetEnumValue<StrictEnumMapping>() },
+            nameof(MappingConfiguration.EnumMappingFallbackValue) => config with { EnumMappingFallbackValue = (value as LiteralExpressionSyntax)?.Token.Value },
+            _ => config
+        };
+    }
 }
