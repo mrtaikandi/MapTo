@@ -32,7 +32,7 @@ public class MapProjectionMethodTests
                       [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceRecords")]
                       internal static partial global::MapTo.Tests.DestinationRecord[]? MapToDestinationRecordArray(global::MapTo.Tests.SourceRecord[]? sourceRecords)
                       {
-                          return global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecordArray(sourceRecords);
+                          return global::MapTo.Tests.SourceRecordToDestinationRecordMapToExtensions.MapToDestinationRecordArray(sourceRecords);
                       }
                   }
                   """);
@@ -51,7 +51,7 @@ public class MapProjectionMethodTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceRecordMapToExtensions").ShouldContain(
+        compilation.GetClassDeclaration("SourceRecordToDestinationRecordMapToExtensions").ShouldContain(
             """
             [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceRecords")]
             internal static global::MapTo.Tests.DestinationRecord[]? MapToDestinationRecordArray(this global::MapTo.Tests.SourceRecord[]? sourceRecords)
@@ -60,13 +60,13 @@ public class MapProjectionMethodTests
                 {
                     return null;
                 }
-            
+
                 var target = new global::MapTo.Tests.DestinationRecord[sourceRecords.Length];
                 for (var i = 0; i < sourceRecords.Length; i++)
                 {
                     target[i] = MapToDestinationRecord(sourceRecords[i]);
                 }
-            
+
                 return target;
             }
             """);
@@ -107,11 +107,11 @@ public class MapProjectionMethodTests
         var methods = partialRecordSyntax.Members.OfType<MethodDeclarationSyntax>().ToArray();
         methods.Length.ShouldBe(2);
         methods[0].Identifier.Text.ShouldBe("MapToDestinationRecordArray");
-        methods[0].Body?.Statements.ToString().ShouldBe("return global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecordArray(sourceRecords);");
+        methods[0].Body?.Statements.ToString().ShouldBe("return global::MapTo.Tests.SourceRecordToDestinationRecordMapToExtensions.MapToDestinationRecordArray(sourceRecords);");
         methods[1].Identifier.Text.ShouldBe("MapToDestinationRecordEnumerable");
-        methods[1].Body?.Statements.ToString().ShouldBe("return global::MapTo.Tests.SourceRecordMapToExtensions.MapToDestinationRecordEnumerable(sourceRecords);");
+        methods[1].Body?.Statements.ToString().ShouldBe("return global::MapTo.Tests.SourceRecordToDestinationRecordMapToExtensions.MapToDestinationRecordEnumerable(sourceRecords);");
 
-        var extensionClass = compilation.GetClassDeclaration("SourceRecordMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceRecordToDestinationRecordMapToExtensions").ShouldNotBeNull();
         var extensionMethods = extensionClass.Members.OfType<MethodDeclarationSyntax>().ToArray();
         extensionMethods.Length.ShouldBe(3);
         extensionMethods[1].Identifier.Text.ShouldBe("MapToDestinationRecordArray");
@@ -331,7 +331,7 @@ public class MapProjectionMethodTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceRecordMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceRecordToDestinationRecordMapToExtensions").ShouldNotBeNull();
 
         var projectionMethod = extensionClass.Members.OfType<MethodDeclarationSyntax>().SingleOrDefault(m => m.Identifier.Text == "MapProjectionTest").ShouldNotBeNull();
         projectionMethod.ReturnType.ToString().ShouldBe(expectedReturnType);

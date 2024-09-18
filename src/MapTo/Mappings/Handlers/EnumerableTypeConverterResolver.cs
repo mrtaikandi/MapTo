@@ -34,7 +34,7 @@ internal class EnumerableTypeConverterResolver : ITypeConverterResolver
 
         return new TypeConverterMapping(
             Method: new MethodMapping(
-                ContainingType: mappedSourcePropertyType.ToExtensionClassName(context),
+                ContainingType: mappedSourcePropertyType.ToExtensionClassName(typeSymbol, context),
                 MethodName: mappedSourcePropertyType.IsPrimitive ? $"{methodPrefix}{mappedSourcePropertyType.Name}" : $"{methodPrefix}{propertyTypeName}",
                 ReturnType: property.Type.ToTypeMapping()),
             Explicit: false,

@@ -15,7 +15,7 @@ internal class NestedTypeConverterResolver : ITypeConverterResolver
             { IsEnum: true } => ResolverResult.Undetermined<TypeConverterMapping>(), // Is handled by EnumTypeConverterResolver
             _ => new TypeConverterMapping(
                 Method: new MethodMapping(
-                    ContainingType: mappedSourcePropertyType.Value.ToExtensionClassName(context),
+                    ContainingType: mappedSourcePropertyType.Value.ToExtensionClassName(property.Type, context),
                     MethodName: mappedSourcePropertyType.Value.IsPrimitive ? $"{methodPrefix}{mappedSourcePropertyType.Value.Name}" : $"{methodPrefix}{property.Type.Name}",
                     ReturnType: property.Type.ToTypeMapping()),
                 Explicit: false,

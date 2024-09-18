@@ -24,7 +24,7 @@ public class FlatteningTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var extensionClass = compilation.GetClassDeclaration("OrderMapToExtensions", "MapTo.Tests.OrderDto.g.cs").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("OrderToOrderDtoMapToExtensions", "MapTo.Tests.OrderDto.g.cs").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
             return new OrderDto
@@ -51,7 +51,7 @@ public class FlatteningTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var extensionClass = compilation.GetClassDeclaration("OrderMapToExtensions", "MapTo.Tests.OrderDto.g.cs").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("OrderToOrderDtoMapToExtensions", "MapTo.Tests.OrderDto.g.cs").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
             return new OrderDto
@@ -80,7 +80,7 @@ public class FlatteningTests
         compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
 
-        var extensionClass = compilation.GetClassDeclaration("OrderMapToExtensions", "MapTo.Tests.OrderDto.g.cs").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("OrderToOrderDtoMapToExtensions", "MapTo.Tests.OrderDto.g.cs").ShouldNotBeNull();
         extensionClass.ShouldContain("target.Total = order.GetTotal();");
     }
 }

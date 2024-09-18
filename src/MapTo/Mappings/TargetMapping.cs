@@ -17,7 +17,7 @@ internal readonly record struct TargetMapping(
     TypeConverterMapping? TypeConverter,
     CodeGeneratorOptions Options)
 {
-    internal string ExtensionClassName => $"{Source.Name}{Options.MapExtensionClassSuffix}";
+    internal string ExtensionClassName => $"{Source.Name}To{Name}{Options.MapExtensionClassSuffix}";
 }
 
 internal static class TargetMappingFactory

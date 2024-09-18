@@ -23,7 +23,7 @@ public class MapEnumsTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var targetClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var targetClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         targetClass.ShouldContain(
             """
             target.Prop1 = MapToSourceEnum(sourceClass.Prop1);
@@ -56,7 +56,7 @@ public class MapEnumsTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var targetClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var targetClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         targetClass.ShouldContain(
             """
             target.Prop1 = (global::MapTo.Tests.TargetEnum)sourceClass.Prop1;
@@ -95,7 +95,7 @@ public class MapEnumsTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var targetClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var targetClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         targetClass.ShouldContain("return new TargetClass((global::MapTo.Tests.TargetEnum)sourceClass.Prop1);");
     }
 
@@ -111,7 +111,7 @@ public class MapEnumsTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var targetClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var targetClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         targetClass.ShouldContain(
             """
             target.Prop1 = (global::MapTo.Tests.TargetEnum)sourceClass.Prop1;
@@ -131,7 +131,7 @@ public class MapEnumsTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var targetClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var targetClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         targetClass.ShouldContain(
             """
             private static global::MapTo.Tests.TargetEnum MapToSourceEnum(global::MapTo.Tests.SourceEnum source)
@@ -177,7 +177,7 @@ public class MapEnumsTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var targetClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var targetClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         targetClass.ShouldContain("return new TargetClass(MapToSourceEnum(sourceClass.Prop1));");
         targetClass.ShouldContain(
             """
@@ -205,7 +205,7 @@ public class MapEnumsTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var targetClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var targetClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         targetClass.ShouldContain(
             """
             private static global::MapTo.Tests.TargetEnum MapToSourceEnum(global::MapTo.Tests.SourceEnum source)
@@ -232,7 +232,7 @@ public class MapEnumsTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var targetClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var targetClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         targetClass.ShouldContain(
             """
             private static global::MapTo.Tests.TargetEnum MapToSourceEnum(global::MapTo.Tests.SourceEnum source)
@@ -259,7 +259,7 @@ public class MapEnumsTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var targetClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var targetClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         targetClass.ShouldContain(
             """
             target.Prop1 = MapToSourceEnum(sourceClass.Prop1);
@@ -820,7 +820,7 @@ public class MapEnumsTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var targetClass = compilation.GetClassDeclaration("SourceEnumMapToExtensions").ShouldNotBeNull();
+        var targetClass = compilation.GetClassDeclaration("SourceEnumToTargetEnumMapToExtensions").ShouldNotBeNull();
         targetClass.ShouldContain(
             """
             [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceEnum")]
@@ -859,7 +859,7 @@ public class MapEnumsTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var targetClass = compilation.GetClassDeclaration("SourceEnumMapToExtensions").ShouldNotBeNull();
+        var targetClass = compilation.GetClassDeclaration("SourceEnumToTargetEnumMapToExtensions").ShouldNotBeNull();
         targetClass.ShouldContain(
             """
             [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceEnum")]
@@ -918,7 +918,7 @@ public class MapEnumsTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var targetClass = compilation.GetClassDeclaration("SourceEnumMapToExtensions").ShouldNotBeNull();
+        var targetClass = compilation.GetClassDeclaration("SourceEnumToTargetEnumMapToExtensions").ShouldNotBeNull();
         targetClass.ShouldContain(
             """
             [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceEnum")]

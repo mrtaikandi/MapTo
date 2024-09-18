@@ -38,8 +38,8 @@ public class MapRecordTests
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation
-            .GetClassDeclaration("Class1MapToExtensions")
-            .ShouldContain("return new Class1(class1.Id, class1.Name, class1.Targets?.Select(global::TargetNamespace.Class2MapToExtensions.MapToClass2).ToArray());");
+            .GetClassDeclaration("Class1ToClass1MapToExtensions")
+            .ShouldContain("return new Class1(class1.Id, class1.Name, class1.Targets?.Select(global::TargetNamespace.Class2ToClass2MapToExtensions.MapToClass2).ToArray());");
     }
 
     [Fact]
@@ -67,13 +67,12 @@ public class MapRecordTests
 
         // Act
         var (compilation, diagnostics) = builder.Compile(false);
-        compilation.Dump(_output);
         compilation.ShouldBeSuccessful();
 
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation
-            .GetClassDeclaration("Class1MapToExtensions")
+            .GetClassDeclaration("Class1ToClass1MapToExtensions")
             .ShouldContain("return new Class1(class1.Id, class1.Name, MapToClass2Array(class1.Targets));");
     }
 
@@ -108,7 +107,7 @@ public class MapRecordTests
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation
-            .GetClassDeclaration("Class1MapToExtensions")
+            .GetClassDeclaration("Class1ToClass1MapToExtensions")
             .ShouldContain("return new Class1(class1.Id, class1.Name, MapToClass2Array(class1.Targets));");
     }
 
@@ -137,7 +136,7 @@ public class MapRecordTests
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation
-            .GetClassDeclaration("SourceRecordMapToExtensions")
+            .GetClassDeclaration("SourceRecordToTargetRecordMapToExtensions")
             .ShouldContain(
                 """
                 return new TargetRecord
@@ -173,7 +172,7 @@ public class MapRecordTests
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation
-            .GetClassDeclaration("SourceRecordMapToExtensions")
+            .GetClassDeclaration("SourceRecordToTargetRecordMapToExtensions")
             .ShouldContain(
                 """
                 [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceRecord")]
@@ -216,7 +215,7 @@ public class MapRecordTests
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation
-            .GetClassDeclaration("SourceRecordMapToExtensions")
+            .GetClassDeclaration("SourceRecordToTargetRecordMapToExtensions")
             .ShouldContain(
                 """
                 return new TargetRecord
@@ -254,7 +253,7 @@ public class MapRecordTests
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation
-            .GetClassDeclaration("SourceRecordMapToExtensions")
+            .GetClassDeclaration("SourceRecordToTargetRecordMapToExtensions")
             .ShouldContain(
                 """
                 return new TargetRecord(sourceRecord.Id, sourceRecord.Name)
@@ -287,11 +286,11 @@ public class MapRecordTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceToTargetMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldBe(
             $$"""
               {{ScenarioBuilder.GeneratedCodeAttribute}}
-              public static class SourceMapToExtensions
+              public static class SourceToTargetMapToExtensions
               {
                   [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
                   public static Target? MapToTarget(this Source? source)
@@ -334,7 +333,7 @@ public class MapRecordTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceToTargetMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
             return new Target
@@ -370,7 +369,7 @@ public class MapRecordTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceToTargetMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
             return new Target(source.LastName)
@@ -402,7 +401,7 @@ public class MapRecordTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceChildMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceChildToTargetMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain("return new Target(sourceChild.Name, sourceChild.LastName);");
     }
 
@@ -431,7 +430,7 @@ public class MapRecordTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceToTargetMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
             return new Target(LastName: source.LastName)
@@ -465,7 +464,7 @@ public class MapRecordTests
         compilation.Dump(_output);
         compilation.ShouldBeSuccessful();
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceToTargetMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain("return new Target(LastName: source.LastName, FirstName: source.FirstName);");
     }
 
@@ -496,7 +495,7 @@ public class MapRecordTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceToTargetMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
             return new Target
@@ -537,7 +536,7 @@ public class MapRecordTests
         // Assert
         compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceToTargetMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
             public static Target? MapToTarget(this Source? source, double prop2)
@@ -586,7 +585,7 @@ public class MapRecordTests
         // Assert
         compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceToTargetMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
             public static Target? MapToTarget(this Source? source, double prop3)
@@ -633,7 +632,7 @@ public class MapRecordTests
         // Assert
         compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceToTargetMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
             public static Target? MapToTarget(this Source? source, double prop3)
