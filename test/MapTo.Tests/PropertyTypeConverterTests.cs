@@ -256,7 +256,7 @@ public class PropertyTypeConverterTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var targetClassDeclaration = compilation.GetClassDeclaration("SourceClassMapToExtensions", "MapTo.Tests.TargetClass.g.cs").ShouldNotBeNull();
+        var targetClassDeclaration = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions", "MapTo.Tests.TargetClass.g.cs").ShouldNotBeNull();
         targetClassDeclaration.ShouldContain("""Id = global::MapTo.Tests.TargetClass.DoubleToIntTypeConverter(sourceClass.Id, new object[] { "g", 2 })""");
     }
 
@@ -342,7 +342,7 @@ public class PropertyTypeConverterTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var targetClassDeclaration = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var targetClassDeclaration = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         targetClassDeclaration.ShouldContain("target.Prop1 = global::MapTo.Tests.TargetClass.MapProp1(sourceClass.Prop1);");
     }
 
@@ -366,7 +366,7 @@ public class PropertyTypeConverterTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var targetClassDeclaration = compilation.GetClassDeclaration("SourceClassMapToExtensions", "MapTo.Tests.TargetClass.g.cs").ShouldNotBeNull();
+        var targetClassDeclaration = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions", "MapTo.Tests.TargetClass.g.cs").ShouldNotBeNull();
         targetClassDeclaration.ShouldContain("Id = global::MapTo.Internals.TypeConverter.StringToIntTypeConverter(sourceClass.Id)");
     }
 
@@ -391,7 +391,7 @@ public class PropertyTypeConverterTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var targetClassDeclaration = compilation.GetClassDeclaration("SourceClassMapToExtensions", "MapTo.Tests.TargetClass.g.cs").ShouldNotBeNull();
+        var targetClassDeclaration = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions", "MapTo.Tests.TargetClass.g.cs").ShouldNotBeNull();
         targetClassDeclaration.ShouldContain("Id = global::MapTo.Internals.TypeConverter.StringToIntTypeConverter(sourceClass.Id)");
     }
 
@@ -445,7 +445,7 @@ public class PropertyTypeConverterTests
         // Assert
         compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceToTargetMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
             public static Target? MapToTarget(this Source? source)

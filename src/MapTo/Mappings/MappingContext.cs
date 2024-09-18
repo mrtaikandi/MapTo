@@ -101,8 +101,17 @@ internal static class MappingContextExtensions
                 {
                     var mapAttributeSyntax = attributeListSyntax.Attributes.SingleOrDefault() ?? throw new InvalidOperationException("MapAttribute is not found");
                     var mapAttributeTypeInfo = semanticModel.GetTypeInfo(mapAttributeSyntax, cancellationToken: cancellationToken);
-                    mapAttribute = semanticModel.Compilation.Assembly.GetAttributes()
-                        .Single(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, mapAttributeTypeInfo.Type));
+
+                    if (attributeListSyntax.Parent is not null &&
+                        semanticModel.GetDeclaredSymbol(attributeListSyntax.Parent, cancellationToken: cancellationToken) is { } parentSymbol)
+                    {
+                        mapAttribute = parentSymbol.GetAttributes().Single(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, mapAttributeTypeInfo.Type));
+                    }
+                    else
+                    {
+                        mapAttribute = semanticModel.Compilation.Assembly.GetAttributes()
+                            .Single(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, mapAttributeTypeInfo.Type));
+                    }
 
                     sourceTypeSymbol = mapAttribute.AttributeClass?.TypeArguments[0] as INamedTypeSymbol ?? throw new InvalidOperationException("TFrom type is not found");
                     targetTypeSymbol = mapAttribute.AttributeClass?.TypeArguments[1] as INamedTypeSymbol ?? throw new InvalidOperationException("TTo type is not found");
@@ -159,10 +168,8 @@ internal static class MappingContextExtensions
     [SuppressMessage("StyleCop.CSharp.LayoutRules", "SA1513:Closing brace should be followed by blank line", Justification = "Used in pattern matching")]
     private static bool HasMapFromAttribute(this SyntaxNode node) => node switch
     {
-        AttributeListSyntax attributeListSyntax => attributeListSyntax.Target?.Identifier.IsKind(SyntaxKind.AssemblyKeyword) == true &&
-                                                   attributeListSyntax.HasAttribute(KnownTypes.FriendlyMapAttributeName),
-        BaseTypeDeclarationSyntax typeDeclarationSyntax => typeDeclarationSyntax.HasAttribute(KnownTypes.FriendlyMapFromAttributeName) ||
-                                                           typeDeclarationSyntax.HasAttribute(KnownTypes.FriendlyMapAttributeName),
+        AttributeListSyntax attributeListSyntax => attributeListSyntax.HasAttribute(KnownTypes.FriendlyMapAttributeName),
+        BaseTypeDeclarationSyntax typeDeclarationSyntax => typeDeclarationSyntax.HasAttribute(KnownTypes.FriendlyMapFromAttributeName),
         _ => false
     };
 }

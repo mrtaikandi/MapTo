@@ -39,7 +39,7 @@ internal class ArrayTypeConverterResolver : ITypeConverterResolver
 
         return new TypeConverterMapping(
             Method: new MethodMapping(
-                ContainingType: mappedSourcePropertyType.ToExtensionClassName(context),
+                ContainingType: mappedSourcePropertyType.ToExtensionClassName(arrayNamedTypeSymbol, context),
                 MethodName: mappedSourcePropertyType.IsPrimitive ? $"{methodPrefix}{mappedSourcePropertyType.Name}" : $"{methodPrefix}{propertyTypeName}",
                 ReturnType: property.Type.ToTypeMapping()),
             Explicit: false,

@@ -75,8 +75,8 @@ public class MapFromCollectionTests
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.ManagerModel.g.cs")
-            .GetClassDeclaration("ManagerMapToExtensions")
-            .ShouldContain($"Employees = manager.Employees?.Select<global::MapTo.Tests.Employee, global::MapTo.Tests.EmployeeModel>(global::MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeModel).{expectedLinqMethod}()");
+            .GetClassDeclaration("ManagerToManagerModelMapToExtensions")
+            .ShouldContain($"Employees = manager.Employees?.Select<global::MapTo.Tests.Employee, global::MapTo.Tests.EmployeeModel>(global::MapTo.Tests.EmployeeToEmployeeModelMapToExtensions.MapToEmployeeModel).{expectedLinqMethod}()");
     }
 
     [Theory]
@@ -158,11 +158,11 @@ public class MapFromCollectionTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.ManagerModel.g.cs").GetClassDeclaration("ManagerMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.ManagerModel.g.cs").GetClassDeclaration("ManagerToManagerModelMapToExtensions").ShouldNotBeNull();
 
         if (!shouldGenerateMapItemArrays)
         {
-            extensionClass.ShouldContain("Employees = manager.Employees?.Select(global::MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeModel).ToArray()");
+            extensionClass.ShouldContain("Employees = manager.Employees?.Select(global::MapTo.Tests.EmployeeToEmployeeModelMapToExtensions.MapToEmployeeModel).ToArray()");
         }
         else
         {
@@ -175,7 +175,7 @@ public class MapFromCollectionTests
                     var targetArray = new global::MapTo.Tests.EmployeeModel[sourceArray.Length];
                     for (var i = 0; i < sourceArray.Length; i++)
                     {
-                        targetArray[i] = global::MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeModel(sourceArray[i]);
+                        targetArray[i] = global::MapTo.Tests.EmployeeToEmployeeModelMapToExtensions.MapToEmployeeModel(sourceArray[i]);
                     }
 
                     return targetArray;
@@ -199,7 +199,7 @@ public class MapFromCollectionTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var extensionClass = compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.AlbumViewModel.g.cs").GetClassDeclaration("AlbumMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.AlbumViewModel.g.cs").GetClassDeclaration("AlbumToAlbumViewModelMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain("target.Artists = MapToArtistViewModelArray(album.Artists, referenceHandler);");
 
         extensionClass.ShouldContain(
@@ -209,7 +209,7 @@ public class MapFromCollectionTests
                 var targetArray = new global::MapTo.Tests.ArtistViewModel[sourceArray.Length];
                 for (var i = 0; i < sourceArray.Length; i++)
                 {
-                    targetArray[i] = global::MapTo.Tests.ArtistMapToExtensions.MapToArtistViewModel(sourceArray[i], referenceHandler);
+                    targetArray[i] = global::MapTo.Tests.ArtistToArtistViewModelMapToExtensions.MapToArtistViewModel(sourceArray[i], referenceHandler);
                 }
 
                 return targetArray;
@@ -228,11 +228,12 @@ public class MapFromCollectionTests
 
         // Act
         var (compilation, diagnostics) = builder.Compile();
+        compilation.Dump(_output);
 
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var extensionClass = compilation.GetGeneratedFileSyntaxTree("ExternalTestData.Models.SpotifyAlbum.g.cs").GetClassDeclaration("SpotifyAlbumDtoMapToExtensions")
+        var extensionClass = compilation.GetGeneratedFileSyntaxTree("ExternalTestData.Models.SpotifyAlbum.g.cs").GetClassDeclaration("SpotifyAlbumDtoToSpotifyAlbumMapToExtensions")
             .ShouldNotBeNull();
 
         extensionClass.ShouldContain("target.Artists = MapToArtistArray(spotifyAlbumDto.Artists);");
@@ -243,7 +244,7 @@ public class MapFromCollectionTests
                 var targetArray = new global::ExternalTestData.Models.Artist[sourceArray.Length];
                 for (var i = 0; i < sourceArray.Length; i++)
                 {
-                    targetArray[i] = global::ExternalTestData.Models.ArtistDtoMapToExtensions.MapToArtist(sourceArray[i]);
+                    targetArray[i] = global::ExternalTestData.Models.ArtistDtoToArtistMapToExtensions.MapToArtist(sourceArray[i]);
                 }
 
                 return targetArray;
@@ -268,7 +269,7 @@ public class MapFromCollectionTests
         diagnostics.ShouldBeSuccessful();
 
         var extensionClass = compilation.GetGeneratedFileSyntaxTree("ExternalTestData.Models.SpotifyAlbum.g.cs")
-            .GetClassDeclaration("SpotifyAlbumDtoMapToExtensions")
+            .GetClassDeclaration("SpotifyAlbumDtoToSpotifyAlbumMapToExtensions")
             .ShouldNotBeNull();
 
         extensionClass.ShouldContain("target.Artists = MapToArtistArray(spotifyAlbumDto.Artists, referenceHandler);");
@@ -279,11 +280,11 @@ public class MapFromCollectionTests
                 var targetArray = new global::ExternalTestData.Models.Artist[sourceArray.Length];
                 for (var i = 0; i < sourceArray.Length; i++)
                 {
-                    targetArray[i] = global::ExternalTestData.Models.ArtistDtoMapToExtensions.MapToArtist(sourceArray[i], referenceHandler);
-                 }
+                    targetArray[i] = global::ExternalTestData.Models.ArtistDtoToArtistMapToExtensions.MapToArtist(sourceArray[i], referenceHandler);
+                }
 
-                 return targetArray;
-             }
+                return targetArray;
+            }
             """);
 
         extensionClass.ShouldContain("target.Copyrights = MapToCopyrightArray(spotifyAlbumDto.Copyrights);");
@@ -295,7 +296,7 @@ public class MapFromCollectionTests
                 var targetArray = new global::ExternalTestData.Models.Copyright[sourceArray.Length];
                 for (var i = 0; i < sourceArray.Length; i++)
                 {
-                    targetArray[i] = global::ExternalTestData.Models.CopyrightDtoMapToExtensions.MapToCopyright(sourceArray[i]);
+                    targetArray[i] = global::ExternalTestData.Models.CopyrightDtoToCopyrightMapToExtensions.MapToCopyright(sourceArray[i]);
                 }
 
                 return targetArray;
@@ -322,7 +323,7 @@ public class MapFromCollectionTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var extensionClass = compilation.GetGeneratedFileSyntaxTree("ExternalTestData.Models.SpotifyAlbum.g.cs").GetClassDeclaration("SpotifyAlbumDtoMapToExtensions")
+        var extensionClass = compilation.GetGeneratedFileSyntaxTree("ExternalTestData.Models.SpotifyAlbum.g.cs").GetClassDeclaration("SpotifyAlbumDtoToSpotifyAlbumMapToExtensions")
             .ShouldNotBeNull();
 
         extensionClass.ShouldContain("target.AvailableMarkets = MapToStringArray(spotifyAlbumDto.AvailableMarkets);");
@@ -411,7 +412,7 @@ public class MapFromCollectionTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
             target.Prop1 = sourceClass.Prop1;
@@ -428,7 +429,7 @@ public class MapFromCollectionTests
 
             if (sourceClass.Prop4 is not null)
             {
-                target.Prop4 = sourceClass.Prop4.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToList();
+                target.Prop4 = sourceClass.Prop4.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToList();
             }
             """);
     }
@@ -450,7 +451,7 @@ public class MapFromCollectionTests
         var (compilation, diagnostics) = builder.Compile();
         diagnostics.ShouldBeSuccessful();
 
-        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain("target.Prop1 = global::MapTo.Tests.TargetClass.MapProp1(sourceClass.Prop1);");
     }
 
@@ -483,7 +484,7 @@ public class MapFromCollectionTests
         compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
 
-        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
             var target = new TargetClass();
@@ -544,7 +545,7 @@ public class MapFromCollectionTests
         compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
 
-        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
             if (sourceClass is null)

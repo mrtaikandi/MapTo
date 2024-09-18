@@ -26,12 +26,12 @@ public class NullHandlingTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var employeeExtensionClass = compilation.GetClassDeclaration("EmployeeMapToExtensions", "MapTo.Tests.EmployeeViewModel.g.cs");
+        var employeeExtensionClass = compilation.GetClassDeclaration("EmployeeToEmployeeViewModelMapToExtensions", "MapTo.Tests.EmployeeViewModel.g.cs");
         employeeExtensionClass.ShouldContain(
             """
             if (employee.Manager is not null)
             {
-                target.Manager = global::MapTo.Tests.ManagerMapToExtensions.MapToManagerViewModel(employee.Manager);
+                target.Manager = global::MapTo.Tests.ManagerToManagerViewModelMapToExtensions.MapToManagerViewModel(employee.Manager);
             }
             """);
     }
@@ -51,9 +51,9 @@ public class NullHandlingTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var employeeExtensionClass = compilation.GetClassDeclaration("EmployeeMapToExtensions", "MapTo.Tests.EmployeeViewModel.g.cs");
+        var employeeExtensionClass = compilation.GetClassDeclaration("EmployeeToEmployeeViewModelMapToExtensions", "MapTo.Tests.EmployeeViewModel.g.cs");
         employeeExtensionClass.ShouldContain(
-            "target.Manager = employee.Manager is null ? throw new global::System.ArgumentNullException(nameof(employee.Manager)) : global::MapTo.Tests.ManagerMapToExtensions.MapToManagerViewModel(employee.Manager);");
+            "target.Manager = employee.Manager is null ? throw new global::System.ArgumentNullException(nameof(employee.Manager)) : global::MapTo.Tests.ManagerToManagerViewModelMapToExtensions.MapToManagerViewModel(employee.Manager);");
     }
 
     [Fact]
@@ -69,16 +69,17 @@ public class NullHandlingTests
 
         // Act
         var (compilation, diagnostics) = builder.Compile();
+        compilation.Dump(_output);
 
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var employeeExtensionClass = compilation.GetClassDeclaration("EmployeeMapToExtensions", "MapTo.Tests.EmployeeViewModel.g.cs");
+        var employeeExtensionClass = compilation.GetClassDeclaration("EmployeeToEmployeeViewModelMapToExtensions", "MapTo.Tests.EmployeeViewModel.g.cs");
         employeeExtensionClass.ShouldContain(
             """
             if (employee.Manager is not null)
             {
-                target.Manager = global::MapTo.Tests.ManagerMapToExtensions.MapToManagerViewModel(employee.Manager);
+                target.Manager = global::MapTo.Tests.ManagerToManagerViewModelMapToExtensions.MapToManagerViewModel(employee.Manager);
             }
             """);
     }
@@ -100,12 +101,12 @@ public class NullHandlingTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var employeeExtensionClass = compilation.GetClassDeclaration("EmployeeMapToExtensions", "MapTo.Tests.EmployeeViewModel.g.cs");
+        var employeeExtensionClass = compilation.GetClassDeclaration("EmployeeToEmployeeViewModelMapToExtensions", "MapTo.Tests.EmployeeViewModel.g.cs");
         employeeExtensionClass.ShouldContain(
             """
             if (employee.Manager is not null)
             {
-                target.Manager = global::MapTo.Tests.ManagerMapToExtensions.MapToManagerViewModel(employee.Manager);
+                target.Manager = global::MapTo.Tests.ManagerToManagerViewModelMapToExtensions.MapToManagerViewModel(employee.Manager);
             }
             """);
     }
@@ -136,12 +137,12 @@ public class NullHandlingTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
             if (sourceClass.Prop1 is not null)
             {
-                target.Prop1 = global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass(sourceClass.Prop1);
+                target.Prop1 = global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass(sourceClass.Prop1);
             }
             """);
     }
@@ -172,8 +173,8 @@ public class NullHandlingTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
-        extensionClass.ShouldContain("target.Prop1 = global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass(sourceClass.Prop1);");
+        var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
+        extensionClass.ShouldContain("target.Prop1 = global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass(sourceClass.Prop1);");
     }
 
     [Theory]
@@ -217,7 +218,7 @@ public class NullHandlingTests
         compilation.ShouldBeSuccessful();
         diagnostics.ShouldBeSuccessful();
 
-        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(expected);
     }
 
@@ -245,7 +246,7 @@ public class NullHandlingTests
         yield return new object[]
         {
             4, false, false, NullHandling.ThrowException, "List<MiddleClass>", "List<MappedMiddleClass>",
-            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToList() ?? throw new global::System.ArgumentNullException(nameof(sourceClass.Prop1));"
+            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToList() ?? throw new global::System.ArgumentNullException(nameof(sourceClass.Prop1));"
         };
 
         yield return new object[]
@@ -317,25 +318,25 @@ public class NullHandlingTests
         yield return new object[]
         {
             16, true, true, NullHandling.ThrowException, "List<MiddleClass>", "List<MappedMiddleClass>?",
-            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToList() ?? throw new global::System.ArgumentNullException(nameof(sourceClass.Prop1));"
+            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToList() ?? throw new global::System.ArgumentNullException(nameof(sourceClass.Prop1));"
         };
 
         yield return new object[]
         {
             17, true, true, NullHandling.ThrowException, "List<MiddleClass>?", "List<MappedMiddleClass>",
-            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToList() ?? throw new global::System.ArgumentNullException(nameof(sourceClass.Prop1));"
+            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToList() ?? throw new global::System.ArgumentNullException(nameof(sourceClass.Prop1));"
         };
 
         yield return new object[]
         {
             18, true, true, NullHandling.ThrowException, "List<MiddleClass>?", "List<MappedMiddleClass>?",
-            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToList() ?? throw new global::System.ArgumentNullException(nameof(sourceClass.Prop1));"
+            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToList() ?? throw new global::System.ArgumentNullException(nameof(sourceClass.Prop1));"
         };
 
         yield return new object[]
         {
             19, true, true, NullHandling.ThrowException, "List<MiddleClass?>", "List<MappedMiddleClass?>",
-            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass?, global::MapTo.Tests.MappedMiddleClass?>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToList() ?? throw new global::System.ArgumentNullException(nameof(sourceClass.Prop1));"
+            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass?, global::MapTo.Tests.MappedMiddleClass?>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToList() ?? throw new global::System.ArgumentNullException(nameof(sourceClass.Prop1));"
         };
     }
 
@@ -363,7 +364,7 @@ public class NullHandlingTests
         yield return new object[]
         {
             23, false, false, NullHandling.SetEmptyCollection, "List<MiddleClass>", "IEnumerable<MappedMiddleClass>",
-            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray() ?? global::System.Linq.Enumerable.Empty<global::MapTo.Tests.MappedMiddleClass>();"
+            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray() ?? global::System.Linq.Enumerable.Empty<global::MapTo.Tests.MappedMiddleClass>();"
         };
 
         yield return new object[]
@@ -393,7 +394,7 @@ public class NullHandlingTests
         yield return new object[]
         {
             28, false, true, NullHandling.SetEmptyCollection, "List<MiddleClass>", "IEnumerable<MappedMiddleClass>",
-            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray() ?? global::System.Linq.Enumerable.Empty<global::MapTo.Tests.MappedMiddleClass>();"
+            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray() ?? global::System.Linq.Enumerable.Empty<global::MapTo.Tests.MappedMiddleClass>();"
         };
 
         yield return new object[]
@@ -460,7 +461,7 @@ public class NullHandlingTests
             """
             if (sourceClass.Prop1 is not null)
             {
-                target.Prop1 = sourceClass.Prop1.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray();
+                target.Prop1 = sourceClass.Prop1.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray();
             }
             """
         };
@@ -505,7 +506,7 @@ public class NullHandlingTests
             """
             if (sourceClass.Prop1 is not null)
             {
-                target.Prop1 = sourceClass.Prop1.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray();
+                target.Prop1 = sourceClass.Prop1.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray();
             }
             """
         };
@@ -534,7 +535,7 @@ public class NullHandlingTests
             """
             if (sourceClass.Prop1 is not null)
             {
-                target.Prop1 = sourceClass.Prop1.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass?>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray();
+                target.Prop1 = sourceClass.Prop1.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass?>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray();
             }
             """
         };
@@ -579,7 +580,7 @@ public class NullHandlingTests
             """
             if (sourceClass.Prop1 is not null)
             {
-                target.Prop1 = sourceClass.Prop1.Select<global::MapTo.Tests.MiddleClass?, global::MapTo.Tests.MappedMiddleClass?>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray();
+                target.Prop1 = sourceClass.Prop1.Select<global::MapTo.Tests.MiddleClass?, global::MapTo.Tests.MappedMiddleClass?>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray();
             }
             """
         };
@@ -645,25 +646,25 @@ public class NullHandlingTests
         yield return new object[]
         {
             62, true, false, NullHandling.Auto, "List<MiddleClass>", "IEnumerable<MappedMiddleClass>",
-            "target.Prop1 = sourceClass.Prop1.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray()"
+            "target.Prop1 = sourceClass.Prop1.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray()"
         };
 
         yield return new object[]
         {
             67, true, false, NullHandling.Auto, "List<MiddleClass>", "IEnumerable<MappedMiddleClass>?",
-            "target.Prop1 = sourceClass.Prop1.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray()"
+            "target.Prop1 = sourceClass.Prop1.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray()"
         };
 
         yield return new object[]
         {
             68, true, false, NullHandling.Auto, "List<MiddleClass>?", "IEnumerable<MappedMiddleClass>",
-            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray() ?? global::System.Linq.Enumerable.Empty<global::MapTo.Tests.MappedMiddleClass>();"
+            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray() ?? global::System.Linq.Enumerable.Empty<global::MapTo.Tests.MappedMiddleClass>();"
         };
 
         yield return new object[]
         {
             69, true, false, NullHandling.Auto, "List<MiddleClass>?", "IEnumerable<MappedMiddleClass>?",
-            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray()"
+            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray()"
         };
 
         yield return new object[]
@@ -722,25 +723,25 @@ public class NullHandlingTests
         yield return new object[]
         {
             78, true, true, NullHandling.Auto, "List<MiddleClass>", "IEnumerable<MappedMiddleClass>",
-            "target.Prop1 = sourceClass.Prop1.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray();"
+            "target.Prop1 = sourceClass.Prop1.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray();"
         };
 
         yield return new object[]
         {
             79, true, true, NullHandling.Auto, "List<MiddleClass>", "IEnumerable<MappedMiddleClass>?",
-            "target.Prop1 = sourceClass.Prop1.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray();"
+            "target.Prop1 = sourceClass.Prop1.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray();"
         };
 
         yield return new object[]
         {
             80, true, true, NullHandling.Auto, "List<MiddleClass>?", "IEnumerable<MappedMiddleClass>",
-            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray() ?? global::System.Linq.Enumerable.Empty<global::MapTo.Tests.MappedMiddleClass>();"
+            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray() ?? global::System.Linq.Enumerable.Empty<global::MapTo.Tests.MappedMiddleClass>();"
         };
 
         yield return new object[]
         {
             81, true, true, NullHandling.Auto, "List<MiddleClass>?", "IEnumerable<MappedMiddleClass>?",
-            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray();"
+            "target.Prop1 = sourceClass.Prop1?.Select<global::MapTo.Tests.MiddleClass, global::MapTo.Tests.MappedMiddleClass>(global::MapTo.Tests.MiddleClassToMappedMiddleClassMapToExtensions.MapToMappedMiddleClass).ToArray();"
         };
     }
 }

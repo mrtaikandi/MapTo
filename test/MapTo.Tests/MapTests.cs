@@ -44,7 +44,7 @@ public class MapTests(ITestOutputHelper output)
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation
-            .GetClassDeclaration("SourceClassMapToExtensions")
+            .GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("public static global::AnotherTest.TargetNamespace.TargetClass[]? MapToTargetClasses(this global::Test.SourceNamespace.SourceClass[]? source)");
     }
 
@@ -94,7 +94,7 @@ public class MapTests(ITestOutputHelper output)
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation
-            .GetClassDeclaration("SourceClassMapToExtensions")
+            .GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("public static global::AnotherTest.TargetNamespace.TargetClass[]? MapToTargetClasses(this global::Test.SourceNamespace.SourceClass[]? source)");
     }
 
@@ -147,12 +147,11 @@ public class MapTests(ITestOutputHelper output)
 
         // Act
         var (compilation, diagnostics) = builder.Compile();
-        compilation.Dump(output);
 
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation
-            .GetClassDeclaration("Class1MapToExtensions")
+            .GetClassDeclaration("Class1ToClass1MapToExtensions")
             .ShouldContain(
                 """
                 public static global::TargetNamespace.Class1? MapToClass1(this global::SourceNamespace.Class1? class1)

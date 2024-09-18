@@ -14,4 +14,17 @@ internal static class NestingTypeConverterResolverExtensions
 
         return $"{ns}.{type.Name}{suffix}";
     }
+
+    public static string ToExtensionClassName(this TypeMapping sourceType, ITypeSymbol targetType, MappingContext context)
+    {
+        if (sourceType.IsPrimitive)
+        {
+            return "System";
+        }
+
+        var ns = targetType.ContainingNamespace?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        var suffix = context.CodeGeneratorOptions.MapExtensionClassSuffix;
+
+        return $"{ns}.{sourceType.Name}To{targetType.Name}{suffix}";
+    }
 }

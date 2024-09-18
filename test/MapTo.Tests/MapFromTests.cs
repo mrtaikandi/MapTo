@@ -33,7 +33,7 @@ public class MapFromTests
         compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
         compilation
-            .GetClassDeclaration("SourceClassMapToExtensions")
+            .GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("""[return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]""");
     }
 
@@ -53,7 +53,7 @@ public class MapFromTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var targetClass = compilation.GetClassDeclaration("SourceClassMapToExtensions");
+        var targetClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions");
 
         targetClass.ShouldContain(version > LanguageVersion.CSharp7_3 && supportNullReferenceTypes
             ? "public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)"
@@ -92,10 +92,10 @@ public class MapFromTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldBe($$"""
                         {{ScenarioBuilder.GeneratedCodeAttribute}}
-                        public static class SourceClassMapToExtensions
+                        public static class SourceClassToTargetClassMapToExtensions
                         {
                             [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                             public static global::ExternalLibMap.TargetClass? MapToTargetClass(this global::ExternalLib.SourceClass? sourceClass)
@@ -147,10 +147,10 @@ public class MapFromTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldBe($$"""
                         {{ScenarioBuilder.GeneratedCodeAttribute}}
-                        public static class SourceClassMapToExtensions
+                        public static class SourceClassToTargetClassMapToExtensions
                         {
                             [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                             public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
@@ -183,7 +183,7 @@ public class MapFromTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldContain("public static TargetClass? ToTargetClass(this SourceClass? sourceClass)");
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldContain("public static TargetClass? ToTargetClass(this SourceClass? sourceClass)");
     }
 
     [Fact]
@@ -199,7 +199,7 @@ public class MapFromTests
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation
-            .GetClassDeclaration("SourceClassMapToExtensions")
+            .GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("public static TargetClass MapToTargetClass([global::System.Diagnostics.CodeAnalysis.AllowNull] this SourceClass sourceClass)");
     }
 
@@ -216,7 +216,7 @@ public class MapFromTests
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation
-            .GetClassDeclaration("SourceClassMapToExtensions")
+            .GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)");
     }
 
@@ -233,7 +233,7 @@ public class MapFromTests
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation
-            .GetClassDeclaration("SourceClassMapToExtensions")
+            .GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("public static TargetClass MapToTargetClass([global::System.Diagnostics.CodeAnalysis.AllowNull] this SourceClass sourceClass)");
     }
 
@@ -248,10 +248,10 @@ public class MapFromTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldBe(
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldBe(
             $$"""
               {{ScenarioBuilder.GeneratedCodeAttribute}}
-              public static class SourceClassMapToExtensions
+              public static class SourceClassToTargetClassMapToExtensions
               {
                   [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                   public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
@@ -344,8 +344,8 @@ public class MapFromTests
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.TargetClass.g.cs")
-            .GetClassDeclaration("SourceClassMapToExtensions")
-            .ShouldContain("Prop2 = global::MapTo.Tests.NestedSourceClassMapToExtensions.MapToNestedTargetClass(sourceClass.Prop2)");
+            .GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
+            .ShouldContain("Prop2 = global::MapTo.Tests.NestedSourceClassToNestedTargetClassMapToExtensions.MapToNestedTargetClass(sourceClass.Prop2)");
     }
 
     [Fact]
@@ -421,7 +421,7 @@ public class MapFromTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("ThirdParty.Utilities.HelperClass.CustomBeforeMapMethod();");
     }
 
@@ -505,7 +505,7 @@ public class MapFromTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("MapTo.Tests.TargetClass.CustomBeforeMapMethod();");
     }
 
@@ -526,7 +526,7 @@ public class MapFromTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("MapTo.Tests.TargetClass.CustomBeforeMapMethod(sourceClass);");
     }
 
@@ -578,7 +578,7 @@ public class MapFromTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("sourceClass = global::MapTo.Tests.TargetClass.CustomBeforeMapMethod(sourceClass);");
     }
 
@@ -631,7 +631,7 @@ public class MapFromTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceSubClassMapToExtensions")
+        compilation.GetClassDeclaration("SourceSubClassToTargetClassMapToExtensions")
             .ShouldContain("sourceSubClass = global::MapTo.Tests.TargetClass.CustomBeforeMapMethod(sourceSubClass);");
     }
 
@@ -680,7 +680,7 @@ public class MapFromTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("MapTo.Tests.TargetClass.CustomBeforeMapMethod(sourceClass);");
     }
 
@@ -729,7 +729,7 @@ public class MapFromTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("sourceClass = global::MapTo.Tests.TargetClass.CustomBeforeMapMethod(sourceClass);");
     }
 
@@ -804,7 +804,7 @@ public class MapFromTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("ThirdParty.Utilities.HelperClass.CustomAfterMapMethod();");
     }
 
@@ -956,7 +956,7 @@ public class MapFromTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("MapTo.Tests.TargetClass.CustomAfterMapMethod();");
     }
 
@@ -977,7 +977,7 @@ public class MapFromTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("MapTo.Tests.TargetClass.CustomAfterMapMethod(target);");
     }
 
@@ -999,7 +999,7 @@ public class MapFromTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("target = global::MapTo.Tests.TargetClass.CustomAfterMapMethod(target);");
     }
 
@@ -1048,7 +1048,7 @@ public class MapFromTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("MapTo.Tests.TargetClass.CustomAfterMapMethod(target);");
     }
 
@@ -1070,7 +1070,7 @@ public class MapFromTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldNotBeNull()
             .ShouldContain("MapTo.Tests.TargetClass.CustomAfterMapMethod(target, sourceClass);");
     }
@@ -1093,7 +1093,7 @@ public class MapFromTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldNotBeNull()
             .ShouldContain("MapTo.Tests.TargetClass.CustomAfterMapMethod(sourceClass, target);");
     }
@@ -1190,7 +1190,7 @@ public class MapFromTests
         // Assert
         compilation.Dump(_output);
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceToTargetMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
             public static Target? MapToTarget(this Source? source, double prop3)

@@ -33,7 +33,7 @@ public class ConstructorMappingTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("""
                            return new TargetClass(sourceClass.Id)
                            {
@@ -58,7 +58,7 @@ public class ConstructorMappingTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("""
                            return new TargetClass(sourceClass.Id)
                            {
@@ -110,7 +110,7 @@ public class ConstructorMappingTests
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation
-            .GetClassDeclaration("SourceClassMapToExtensions")
+            .GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("return new TargetClass(sourceClass.Name, sourceClass.Id);");
     }
 
@@ -139,7 +139,7 @@ public class ConstructorMappingTests
         diagnostics.ShouldBeSuccessful();
 
         compilation
-            .GetClassDeclaration("SourceClassMapToExtensions")
+            .GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain(
                 """
                 return new TargetClass(sourceClass.Id, sourceClass.Name)
@@ -171,7 +171,7 @@ public class ConstructorMappingTests
         diagnostics.ShouldBeSuccessful();
 
         compilation
-            .GetClassDeclaration("SourceClassMapToExtensions")
+            .GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain(
                 """
                 return new TargetClass(sourceClass.Name)
@@ -203,7 +203,7 @@ public class ConstructorMappingTests
         diagnostics.ShouldBeSuccessful();
 
         compilation
-            .GetClassDeclaration("SourceClassMapToExtensions")
+            .GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("return new TargetClass(sourceClass.Id);");
     }
 
@@ -226,7 +226,7 @@ public class ConstructorMappingTests
         diagnostics.ShouldBeSuccessful();
 
         compilation
-            .GetClassDeclaration("SourceClassMapToExtensions")
+            .GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain(
                 """
                 return new TargetClass

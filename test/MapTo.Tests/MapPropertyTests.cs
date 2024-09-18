@@ -25,7 +25,7 @@ public class MapPropertyTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions")
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldContain("""
                            return new TargetClass
                            {
@@ -52,7 +52,7 @@ public class MapPropertyTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldContain(
+        compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldContain(
             """
             return new TargetClass
             {

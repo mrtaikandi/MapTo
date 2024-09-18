@@ -150,7 +150,7 @@ public class MapConfigurationTests(ITestOutputHelper output)
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain("Prop1 = global::MapTo.Tests.Configuration.StringToIntTypeConverter(sourceClass.Prop1),");
     }
 
@@ -182,7 +182,7 @@ public class MapConfigurationTests(ITestOutputHelper output)
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain("Prop1 = global::MapTo.Tests.Configuration.StringToIntTypeConverter(sourceClass.Prop1, new object[] { 1 }),");
     }
 
@@ -218,10 +218,10 @@ public class MapConfigurationTests(ITestOutputHelper output)
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
-            public static class SourceClassMapToExtensions
+            public static class SourceClassToTargetClassMapToExtensions
             {
                 [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                 public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
@@ -274,10 +274,10 @@ public class MapConfigurationTests(ITestOutputHelper output)
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
-            public static class SourceClassMapToExtensions
+            public static class SourceClassToTargetClassMapToExtensions
             {
                 [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                 public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
@@ -332,10 +332,10 @@ public class MapConfigurationTests(ITestOutputHelper output)
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
-            public static class SourceClassMapToExtensions
+            public static class SourceClassToTargetClassMapToExtensions
             {
                 [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                 public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
@@ -396,10 +396,10 @@ public class MapConfigurationTests(ITestOutputHelper output)
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
-            public static class SourceClassMapToExtensions
+            public static class SourceClassToTargetClassMapToExtensions
             {
                 [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                 public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
@@ -452,10 +452,10 @@ public class MapConfigurationTests(ITestOutputHelper output)
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
-            public static class SourceClassMapToExtensions
+            public static class SourceClassToTargetClassMapToExtensions
             {
                 [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                 public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
@@ -506,10 +506,10 @@ public class MapConfigurationTests(ITestOutputHelper output)
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
-            public static class SourceClassMapToExtensions
+            public static class SourceClassToTargetClassMapToExtensions
             {
                 [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                 public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
@@ -559,10 +559,10 @@ public class MapConfigurationTests(ITestOutputHelper output)
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
-            public static class SourceClassMapToExtensions
+            public static class SourceClassToTargetClassMapToExtensions
             {
                 [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                 public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
@@ -622,7 +622,7 @@ public class MapConfigurationTests(ITestOutputHelper output)
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var extensionClass = compilation.GetClassDeclaration("SourceClassMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
             public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
@@ -640,5 +640,61 @@ public class MapConfigurationTests(ITestOutputHelper output)
                 };
             }
             """);
+    }
+
+    [Fact]
+    public void When_MultipleMapAttributeIsUsed_Should_CorrectlyMappAllOfThem()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(LanguageVersion.Latest));
+        var sourceFile = builder.AddFile();
+        sourceFile.AddClass(Accessibility.Public, "SourceClass").WithProperty<int>("Prop1");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass1").WithProperty<int>("Prop1");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass2").WithProperty<int>("Prop1");
+        sourceFile.AddClass(Accessibility.Public, "TargetClass3").WithProperty<int>("Prop1");
+
+        builder.AddFile(supportNullableReferenceTypes: true, fileName: "ConfigurationFile", usings: ["MapTo.Configuration"]).WithBody(
+            """
+            [Map<SourceClass, TargetClass1>()]
+            [Map<SourceClass, TargetClass2>()]
+            [Map<SourceClass, TargetClass3>()]
+            internal static class Configuration { }
+            """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+        compilation.Dump(output);
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+        compilation.GetClassDeclaration("SourceClassToTargetClass1MapToExtensions")
+            .ShouldNotBeNull()
+            .ShouldContain(
+                """
+                return new TargetClass1
+                {
+                    Prop1 = sourceClass.Prop1
+                };
+                """);
+
+        compilation.GetClassDeclaration("SourceClassToTargetClass2MapToExtensions")
+            .ShouldNotBeNull()
+            .ShouldContain(
+                """
+                return new TargetClass2
+                {
+                    Prop1 = sourceClass.Prop1
+                };
+                """);
+
+        compilation.GetClassDeclaration("SourceClassToTargetClass3MapToExtensions")
+            .ShouldNotBeNull()
+            .ShouldContain(
+                """
+                return new TargetClass3
+                {
+                    Prop1 = sourceClass.Prop1
+                };
+                """);
     }
 }

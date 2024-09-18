@@ -35,8 +35,8 @@ public class ReferenceHandlingTests
         // Assert
         diagnostics.ShouldBeSuccessful();
         compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.TargetClass.g.cs")
-            .GetClassDeclaration("SourceClassMapToExtensions")
-            .ShouldContain("Prop2 = global::MapTo.Tests.NestedSourceClassMapToExtensions.MapToNestedTargetClass(sourceClass.Prop2)");
+            .GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
+            .ShouldContain("Prop2 = global::MapTo.Tests.NestedSourceClassToNestedTargetClassMapToExtensions.MapToNestedTargetClass(sourceClass.Prop2)");
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public class ReferenceHandlingTests
 
         // Assert
         diagnostics.ShouldBeSuccessful();
-        var managerMapExtensionClass = compilation.GetClassDeclaration("ManagerMapToExtensions", "MapTo.Tests.ManagerViewModel.g.cs").ShouldNotBeNull();
+        var managerMapExtensionClass = compilation.GetClassDeclaration("ManagerToManagerViewModelMapToExtensions", "MapTo.Tests.ManagerViewModel.g.cs").ShouldNotBeNull();
         managerMapExtensionClass.ShouldContain(
             """
             [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("manager")]
@@ -96,29 +96,31 @@ public class ReferenceHandlingTests
             internal static ManagerViewModel? MapToManagerViewModel(Manager? manager, global::System.Collections.Generic.Dictionary<int, object> referenceHandler)
             {
                 if (manager is null)
-                {
-                    return null;
-                }
-            
-                if (referenceHandler.TryGetValue(manager.GetHashCode(), out var cachedTarget))
-                {
-                    return (ManagerViewModel)cachedTarget;
-                }
-            
-                var target = new ManagerViewModel(manager.Id)
-                {
-                    Level = manager.Level,
-                    EmployeeCode = manager.EmployeeCode
-                };
-            
-                referenceHandler.Add(manager.GetHashCode(), target);
-            
-                target.Employees = manager.Employees?.Select(e => global::MapTo.Tests.EmployeeMapToExtensions.MapToEmployeeViewModel(e, referenceHandler)).ToList();
-                if (manager.Manager is not null)
-                {
-                    target.Manager = global::MapTo.Tests.ManagerMapToExtensions.MapToManagerViewModel(manager.Manager, referenceHandler);
-                }
-                return target;
+                 {
+                     return null;
+                 }
+
+                 if (referenceHandler.TryGetValue(manager.GetHashCode(), out var cachedTarget))
+                 {
+                     return (ManagerViewModel)cachedTarget;
+                 }
+
+                 var target = new ManagerViewModel(manager.Id)
+                 {
+                     Level = manager.Level,
+                     EmployeeCode = manager.EmployeeCode
+                 };
+
+                 referenceHandler.Add(manager.GetHashCode(), target);
+
+                 target.Employees = manager.Employees?.Select(e => global::MapTo.Tests.EmployeeToEmployeeViewModelMapToExtensions.MapToEmployeeViewModel(e, referenceHandler)).ToList();
+
+                 if (manager.Manager is not null)
+                 {
+                     target.Manager = global::MapTo.Tests.ManagerToManagerViewModelMapToExtensions.MapToManagerViewModel(manager.Manager, referenceHandler);
+                 }
+
+                 return target;
             }
             """);
     }
@@ -151,11 +153,12 @@ public class ReferenceHandlingTests
 
         // Act
         var (compilation, diagnostics) = builder.Compile();
+        compilation.Dump(_output);
 
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var managerExtensionClass = compilation.GetClassDeclaration("ManagerMapToExtensions", "MapTo.Tests.ManagerViewModel.g.cs");
+        var managerExtensionClass = compilation.GetClassDeclaration("ManagerToManagerViewModelMapToExtensions", "MapTo.Tests.ManagerViewModel.g.cs");
         managerExtensionClass.ShouldNotContain("""
                                                return new ManagerViewModel(manager.Id)
                                                {
@@ -169,7 +172,7 @@ public class ReferenceHandlingTests
         managerExtensionClass.ShouldNotContain(
             "internal static ManagerViewModel? MapToManagerViewModel(Manager? manager, global::System.Collections.Generic.Dictionary<int, object> referenceHandler)");
 
-        var employeeExtensionClass = compilation.GetClassDeclaration("EmployeeMapToExtensions", "MapTo.Tests.EmployeeViewModel.g.cs");
+        var employeeExtensionClass = compilation.GetClassDeclaration("EmployeeToEmployeeViewModelMapToExtensions", "MapTo.Tests.EmployeeViewModel.g.cs");
         employeeExtensionClass.ShouldContain(
             """
             var target = new EmployeeViewModel
@@ -180,7 +183,7 @@ public class ReferenceHandlingTests
 
             if (employee.Manager is not null)
             {
-                target.Manager = global::MapTo.Tests.ManagerMapToExtensions.MapToManagerViewModel(employee.Manager);
+                target.Manager = global::MapTo.Tests.ManagerToManagerViewModelMapToExtensions.MapToManagerViewModel(employee.Manager);
             }
 
             return target;
