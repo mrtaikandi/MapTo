@@ -36,7 +36,7 @@ internal static class MapFromAttributeMappingExtensions
                 .FirstOrDefault(
                     a => a.AttributeClass is not null &&
                          SymbolEqualityComparer.Default.Equals(a.AttributeClass.ConstructedFrom, context.KnownTypes.MapAttributeTypeSymbol) &&
-                         a.AttributeClass.TypeArguments[0].Equals(typeSymbol, SymbolEqualityComparer.Default));
+                         a.AttributeClass.TypeArguments[1].Equals(typeSymbol, SymbolEqualityComparer.Default));
         }
 
         return mapFromAttribute;

@@ -23,7 +23,7 @@ internal readonly record struct TypeMapping(
 {
 #if DEBUG
     [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global", Justification = "Is for debugging purposes only.")]
-    internal ITypeSymbol OriginalTypeSymbol { get; init; }
+    internal ITypeSymbol OriginalTypeSymbol { get; init; } = null!;
 #endif
 }
 

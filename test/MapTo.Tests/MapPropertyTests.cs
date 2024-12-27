@@ -61,4 +61,53 @@ public class MapPropertyTests
             };
             """);
     }
+
+    [Fact]
+    public void When_PropertyTypeIsMappedInAnotherNamespace_Should_MapToFullyQualifiedExtensionName()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        var sourceFile1 = builder.AddFile(ns: "Node.System");
+        sourceFile1.AddClass(Accessibility.Public, "MemoryStatus").WithProperty<int>("Id");
+        sourceFile1.AddClass(Accessibility.Public, "SystemInfo").WithProperty("MemoryStatus", "MemoryStatus");
+
+        var sourceFile2 = builder.AddFile(ns: "Contract.System");
+        sourceFile2.AddClass(Accessibility.Public, "MemoryStatus").WithProperty<int>("Id");
+        sourceFile2.AddClass(Accessibility.Public, "SystemInfo").WithProperty("MemoryStatus", "MemoryStatus");
+
+        builder.AddEmptyFile().WithBody(
+            """
+            using MapTo;
+            using N = Node.System;
+            using C = Contract.System;
+
+            [assembly: Map<N.MemoryStatus, C.MemoryStatus>]
+            [assembly: Map<N.SystemInfo, C.SystemInfo>]
+            """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        compilation.Dump(_output);
+        diagnostics.ShouldBeSuccessful();
+        compilation.GetClassDeclaration("SystemInfoToSystemInfoMapToExtensions").ShouldNotBeNull().ShouldContain(
+            """
+            public static global::Contract.System.SystemInfo? MapToSystemInfo(this global::Node.System.SystemInfo? systemInfo)
+            {
+                if (systemInfo is null)
+                {
+                    return null;
+                }
+
+                var target = new SystemInfo();
+
+                if (systemInfo.MemoryStatus is not null)
+                {
+                    target.MemoryStatus = global::Contract.System.MemoryStatusToMemoryStatusMapToExtensions.MapToMemoryStatus(systemInfo.MemoryStatus);
+                }
+
+                return target;
+            }
+            """);
+    }
 }
