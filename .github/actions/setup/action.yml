@@ -16,7 +16,7 @@ runs:
           exit 1
         fi
         if [ -z "${{ env.DOTNET_VERSION }}" ]; then
-          echo "::error::DOTNET_VERSION environment variable is not set. Using 8.0.x instead."          
+          echo "::error::DOTNET_VERSION environment variable is not set. Using 9.0.x instead."          
         fi
       shell: bash
         
@@ -33,7 +33,7 @@ runs:
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: ${{ env.DOTNET_VERSION || '8.0.x' }}
+        dotnet-version: ${{ env.DOTNET_VERSION || '9.0.x' }}
 
     - name: Setup Nerdbank.GitVersioning
       uses: dotnet/nbgv@master
