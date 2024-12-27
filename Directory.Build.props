@@ -1,14 +1,14 @@
 ﻿<Project>
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <Version>$(Version)</Version>
         <Authors>Mohammadreza Taikandi</Authors>
-        
+
         <DebugSymbols>true</DebugSymbols>
         <DebugType>embedded</DebugType>
-        
+
         <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)\stylecop.ruleset</CodeAnalysisRuleSet>
     </PropertyGroup>
 
