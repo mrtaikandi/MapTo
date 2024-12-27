@@ -12,7 +12,7 @@ on:
         description: "The .NET version"
         type: string
         required: false
-        default: "7.0.x"
+        default: "9.0.x"
 
   pull_request:
     branches:
@@ -22,7 +22,7 @@ on:
 #      - 'dev/**'
 env:
   BUILD_CONFIGURATION: ${{ inputs.build-configuration || 'Debug' }}
-  DOTNET_VERSION: ${{ inputs.dotnet-version || '7.0.x' }}
+  DOTNET_VERSION: ${{ inputs.dotnet-version || '9.0.x' }}
   
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
