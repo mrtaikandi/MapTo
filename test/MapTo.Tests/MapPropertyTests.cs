@@ -110,4 +110,45 @@ public class MapPropertyTests
             }
             """);
     }
+
+    [Fact]
+    public void When_TypeConverterIsUsedWithConstructorParameters_Should_GenerateTypeConverterMethod()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder(TestSourceBuilderOptions.Create(LanguageVersion.Latest, supportNullReferenceTypes: true));
+        builder.AddFile(supportNullableReferenceTypes: true, ns: "Source", usings: ["System"]).WithBody(
+            """
+            public class Node
+            {
+                public int Id { get; set; }
+                public string[] Processors { get; set; } = Array.Empty<string>();
+            }
+            """);
+
+        builder.AddFile(supportNullableReferenceTypes: true, ns: "Contract").WithBody(
+            """
+            public record Node(int Id, string Processor);
+            """);
+
+        builder.AddEmptyFile().WithBody(
+            """
+            using MapTo;
+            using System.Linq;
+
+            [Map<Source.Node, Contract.Node>(nameof(SystemInfoMappings))]
+            file static class Mappings
+            {
+                internal static void SystemInfoMappings(MappingConfiguration<Source.Node, Contract.Node> map)
+                {
+                    map.ForProperty(p => p.Processor).MapTo(p => p.Processors).UseTypeConverter<string[]>(p => p.First());
+                }
+            }
+            """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        compilation.Dump(_output);
+        diagnostics.ShouldBeSuccessful();
+    }
 }

@@ -142,6 +142,7 @@ static file class ExtensionClassGeneratorExtensions
     internal static CodeWriter WriteGeneratedTypeConverters(this CodeWriter writer, TargetMapping targetMapping)
     {
         var generatedTypeConverters = targetMapping.Properties
+            .Union(targetMapping.Constructor.Parameters.Select(p => p.Property))
             .Where(p => p.TypeConverter is { Explicit: true, IsMapToExtensionMethod: true, ContainingType: "" })
             .Select(p => p.TypeConverter);
 
