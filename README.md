@@ -6,6 +6,9 @@ A convention based object to object mapper using [Roslyn source generator](https
 
 MapTo is a library that programmatically generates the necessary code to map one object to another during compile-time. It eliminates the need to use reflection to map objects and makes it much faster in runtime. It provides compile-time safety checks and ease of use by leveraging extension methods.
 
+## GitAds Sponsored
+[![Sponsored by GitAds](https://gitads.dev/v1/ad-serve?source=mrtaikandi/mapto@github)](https://gitads.dev/v1/ad-track?source=mrtaikandi/mapto@github)
+
 
 ## Installation
 ```
