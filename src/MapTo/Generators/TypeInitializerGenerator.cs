@@ -13,7 +13,8 @@ internal static class TypeInitializerGenerator
         var (sourceName, targetName, targetConstructor, targetProperties, options) = mapping;
         var sourceType = sourceName;
         var parameterName = sourceType.ToParameterNameCasing();
-        var hasObjectInitializer = targetProperties.Any(p => p.InitializationMode == PropertyInitializationMode.ObjectInitializer);
+        var hasObjectInitializer = targetProperties.Any(p =>
+            p.InitializationMode == PropertyInitializationMode.ObjectInitializer || (p.InitializationMode is PropertyInitializationMode.None && p.IsRequired));
 
         if (!targetConstructor.HasParameters)
         {
