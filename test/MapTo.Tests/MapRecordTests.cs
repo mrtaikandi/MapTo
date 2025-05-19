@@ -226,11 +226,72 @@ public class MapRecordTests
     }
 
     [Fact]
+    public void When_SourceRecordWithRequiredInitProperty_Should_UserObjectInitializer()
+    {
+        // Arrange
+        var options = TestSourceBuilderOptions.Create(LanguageVersion.Latest, supportNullReferenceTypes: true);
+        var builder = new TestSourceBuilder(options);
+        builder.AddFile(ns: "SourceNamespace").WithBody(
+             """
+                  using System;
+
+                  public class ClientAccess
+                  {
+                      public required Guid ClientId { get; init; }
+                      public Guid Id { get; init; } = Guid.CreateVersion7();
+                      public Guid? ProjectId { get; set; }
+                      public Guid? TenantId { get; set; }
+                  }
+                  """);
+
+        builder.AddFile(ns: "TargetNamespace").WithBody(
+            """
+                  using SourceNamespace;
+                  using System;
+
+                  [MapTo.Map<ClientAccessRequest, SourceNamespace.ClientAccess>]
+                  public record ClientAccessRequest(Guid? ProjectId, Guid? TenantId)
+                  {
+                      public ClientAccess MapToClientAccess() => this.MapToClientAccess(Guid.CreateVersion7());
+                  }
+                  """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+        compilation
+            .GetClassDeclaration("ClientAccessRequestToClientAccessMapToExtensions")
+            .ShouldContain(
+                """
+                [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("clientAccessRequest")]
+                public static global::SourceNamespace.ClientAccess? MapToClientAccess(this global::TargetNamespace.ClientAccessRequest? clientAccessRequest, global::System.Guid clientId)
+                {
+                    if (clientAccessRequest is null)
+                    {
+                        return null;
+                    }
+
+                    var target = new ClientAccess
+                    {
+                        ClientId = clientId
+                    };
+
+                    target.ProjectId = clientAccessRequest.ProjectId;
+                    target.TenantId = clientAccessRequest.TenantId;
+
+                    return target;
+                }
+                """);
+    }
+
+    [Fact]
     public void When_TargetRecordHasSecondaryConstructor_Should_ChooseTheOneWithMostParameters()
     {
         // Arrange
         var builder = new TestSourceBuilder();
-        var sourceFile = builder.AddFile();
+        var sourceFile = builder.AddFile(usings: ["System"]);
 
         sourceFile.AddClass(
             body: """
