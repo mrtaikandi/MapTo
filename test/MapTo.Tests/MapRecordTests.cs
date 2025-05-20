@@ -351,7 +351,7 @@ public class MapRecordTests
         extensionClass.ShouldBe(
             $$"""
               {{ScenarioBuilder.GeneratedCodeAttribute}}
-              public static class SourceToTargetMapToExtensions
+              public static partial class SourceToTargetMapToExtensions
               {
                   [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("source")]
                   public static Target? MapToTarget(this Source? source)

@@ -95,7 +95,7 @@ public class MapFromTests
         compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldBe($$"""
                         {{ScenarioBuilder.GeneratedCodeAttribute}}
-                        public static class SourceClassToTargetClassMapToExtensions
+                        public static partial class SourceClassToTargetClassMapToExtensions
                         {
                             [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                             public static global::ExternalLibMap.TargetClass? MapToTargetClass(this global::ExternalLib.SourceClass? sourceClass)
@@ -150,7 +150,7 @@ public class MapFromTests
         compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions")
             .ShouldBe($$"""
                         {{ScenarioBuilder.GeneratedCodeAttribute}}
-                        public static class SourceClassToTargetClassMapToExtensions
+                        public static partial class SourceClassToTargetClassMapToExtensions
                         {
                             [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                             public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
@@ -251,7 +251,7 @@ public class MapFromTests
         compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldBe(
             $$"""
               {{ScenarioBuilder.GeneratedCodeAttribute}}
-              public static class SourceClassToTargetClassMapToExtensions
+              public static partial class SourceClassToTargetClassMapToExtensions
               {
                   [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                   public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)

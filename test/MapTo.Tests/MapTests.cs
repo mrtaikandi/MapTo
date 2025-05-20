@@ -169,4 +169,64 @@ public class MapTests(ITestOutputHelper output)
                 }
                 """);
     }
+
+    [Fact]
+    public void When_MappingDifferentSourcesToSameTarget_Should_GenerateSeparateFiles()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder(
+            supportNullReferenceTypes: true,
+            analyzerConfigOptions: new Dictionary<string, string>
+            {
+                [nameof(CodeGeneratorOptions.GenerateFullExtensionClassNames)] = "true"
+            });
+
+        builder.AddEmptyFile().WithBody(
+            """
+            using MapTo;
+            using System;
+
+            namespace Contracts1;
+
+            [Map<Contract1, Models.Variable>]
+            public sealed record Contract1(Guid Id, string Name, string Value, string? Description, bool IsSensitive, int Version);
+            """);
+
+        builder.AddEmptyFile().WithBody(
+            """
+            using MapTo;
+            using System;
+
+            namespace Contracts2;
+
+            [Map<Contract1, Models.Variable>]
+            public sealed record Contract1(Guid Id, string Name, string Value, string? Description, bool IsSensitive, int Version);
+            """);
+
+        builder.AddEmptyFile().WithBody(
+            """
+            using System;
+
+            namespace Models;
+
+            public sealed class Variable
+            {
+                public string? Description { get; set; }
+                public Guid Id { get; init; } = Guid.NewGuid();
+                public bool IsSensitive { get; set; }
+                public required string Name { get; set; }
+                public required string Value { get; set; }
+                public int Version { get; init; } = 1;
+            }
+            """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+
+        compilation.GetClassDeclaration("Contracts2Contract1ToModelsVariableMapToExtensions").ShouldNotBeNull();
+        compilation.GetClassDeclaration("Contracts1Contract1ToModelsVariableMapToExtensions").ShouldNotBeNull();
+    }
 }

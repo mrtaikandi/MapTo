@@ -33,7 +33,7 @@ internal readonly record struct ExtensionClassGenerator(
 static file class ExtensionClassGeneratorExtensions
 {
     internal static CodeWriter WriteExtensionClassDefinition(this CodeWriter writer, TargetMapping mapping) =>
-        writer.WriteLine($"public static class {mapping.ExtensionClassName}");
+        writer.WriteLine($"public static partial class {mapping.ExtensionClassName}");
 
     internal static CodeWriter WriteMapArrayMethods(this CodeWriter writer, TargetMapping mapping)
     {

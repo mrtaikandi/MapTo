@@ -14,6 +14,7 @@ namespace MapTo.Configuration;
 /// <param name="StrictEnumMapping">Indicates how strict the enum mapping should be.</param>
 /// <param name="ProjectionType">Indicates the type of projection mappings to generate.</param>
 /// <param name="SuppressXmlDocWarnings">Indicates whether to suppress XML doc warnings.</param>
+/// <param name="GenerateFullExtensionClassNames">Indicates whether to use target namespace for the generated extension class name.</param>
 internal readonly record struct CodeGeneratorOptions(
     string MapMethodPrefix = "MapTo",
     string MapExtensionClassSuffix = "MapToExtensions",
@@ -23,7 +24,8 @@ internal readonly record struct CodeGeneratorOptions(
     EnumMappingStrategy EnumMappingStrategy = EnumMappingStrategy.ByValue,
     StrictEnumMapping StrictEnumMapping = StrictEnumMapping.Off,
     ProjectionType ProjectionType = ProjectionType.Array | ProjectionType.IEnumerable | ProjectionType.List,
-    bool SuppressXmlDocWarnings = true)
+    bool SuppressXmlDocWarnings = true,
+    bool GenerateFullExtensionClassNames = false)
 {
     /// <summary>
     /// The prefix of the property name in the .editorconfig file.
@@ -48,6 +50,7 @@ internal readonly record struct CodeGeneratorOptions(
             EnumMappingStrategy: provider.GlobalOptions.GetOption(nameof(EnumMappingStrategy), EnumMappingStrategy.ByValue),
             StrictEnumMapping: provider.GlobalOptions.GetOption(nameof(StrictEnumMapping), StrictEnumMapping.Off),
             ProjectionType: provider.GlobalOptions.GetOption(nameof(ProjectionType), ProjectionType.Array | ProjectionType.IEnumerable | ProjectionType.List),
-            SuppressXmlDocWarnings: provider.GlobalOptions.GetOption(nameof(SuppressXmlDocWarnings), true));
+            SuppressXmlDocWarnings: provider.GlobalOptions.GetOption(nameof(SuppressXmlDocWarnings), true),
+            GenerateFullExtensionClassNames: provider.GlobalOptions.GetOption(nameof(GenerateFullExtensionClassNames), false));
     }
 }
