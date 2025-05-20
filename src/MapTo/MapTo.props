@@ -9,5 +9,6 @@
         <CompilerVisibleProperty Include="MapTo_StrictEnumMapping"/>
         <CompilerVisibleProperty Include="MapTo_ProjectionType"/>
         <CompilerVisibleProperty Include="MapTo_SuppressXmlDocWarnings"/>
+        <CompilerVisibleProperty Include="MapTo_GenerateFullExtensionClassNames"/>
     </ItemGroup>
 </Project>
