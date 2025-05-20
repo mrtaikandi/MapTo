@@ -12,4 +12,7 @@ internal static class SourceTypeMappingExtensions
         mapping.Namespace.IsGlobalNamespace ? mapping.Name : $"global::{mapping.Namespace}.{mapping.Name}";
 
     internal static string ToFullName(this SourceMapping mapping) => $"{mapping.Namespace}.{mapping.Name}";
+
+    internal static string GetFullClassName(this SourceMapping mapping) =>
+        $"{mapping.Namespace.Value.Replace(".", string.Empty)}{mapping.Name}";
 }

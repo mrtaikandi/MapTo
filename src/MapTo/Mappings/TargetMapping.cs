@@ -7,6 +7,7 @@ internal readonly record struct TargetMapping(
     bool IsPartial,
     string TypeKeyword,
     TypeKind TypeKind,
+    string ExtensionClassName,
     SourceMapping Source,
     ConstructorMapping Constructor,
     ImmutableArray<PropertyMapping> Properties,
@@ -15,10 +16,7 @@ internal readonly record struct TargetMapping(
     MethodMapping AfterMapMethod,
     ImmutableArray<ProjectionMapping> Projections,
     TypeConverterMapping? TypeConverter,
-    CodeGeneratorOptions Options)
-{
-    internal string ExtensionClassName => $"{Source.Name}To{Name}{Options.MapExtensionClassSuffix}";
-}
+    CodeGeneratorOptions Options);
 
 internal static class TargetMappingFactory
 {
@@ -31,14 +29,22 @@ internal static class TargetMappingFactory
         var constructorMapping = ConstructorMappingFactory.Create(context, properties);
         properties = properties.ExceptConstructorInitializers(constructorMapping);
 
+        var ns = NamespaceMapping.Create(targetTypeSymbol);
+        var name = targetTypeSyntax?.Identifier.Text ?? targetTypeSymbol.Name;
+        var source = SourceMapping.Create(sourceTypeSymbol);
+        var extensionClassName = context.CodeGeneratorOptions.GenerateFullExtensionClassNames
+            ? $"{source.GetFullClassName()}To{GetFullClassName(ns, name)}{context.CodeGeneratorOptions.MapExtensionClassSuffix}"
+            : $"{source.Name}To{name}{context.CodeGeneratorOptions.MapExtensionClassSuffix}";
+
         var mapping = new TargetMapping(
             Modifier: targetTypeSyntax?.GetAccessibility() ?? targetTypeSymbol.DeclaredAccessibility,
-            Name: targetTypeSyntax?.Identifier.Text ?? targetTypeSymbol.Name,
-            Namespace: NamespaceMapping.Create(targetTypeSymbol),
+            Name: name,
+            Namespace: ns,
             IsPartial: targetTypeSyntax?.IsPartial() ?? false,
             TypeKeyword: targetTypeSyntax?.GetKeywordText() ?? targetTypeSymbol.TypeKind.ToKeywordText(),
             TypeKind: targetTypeSymbol.TypeKind,
-            Source: SourceMapping.Create(sourceTypeSymbol),
+            ExtensionClassName: extensionClassName,
+            Source: source,
             Constructor: constructorMapping,
             Properties: properties,
             Location: targetTypeSyntax?.Identifier.GetLocation() ?? targetTypeSymbol.GetLocation() ?? Location.None,
@@ -67,6 +73,9 @@ internal static class TargetMappingFactory
 
     private static bool UseFullyQualifiedName(this TargetMapping mapping) =>
         mapping.Namespace != mapping.Source.Namespace;
+
+    private static string GetFullClassName(NamespaceMapping ns, string name) =>
+        $"{ns.Value.Replace(".", string.Empty)}{name}";
 
     private static ReferenceHandling UseReferenceHandling(this MappingContext context, ImmutableArray<PropertyMapping> properties)
     {

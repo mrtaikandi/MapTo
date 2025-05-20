@@ -25,7 +25,7 @@ public class MapProjectionTests
                 ignoreWhitespace: true,
                 $$"""
                   {{ScenarioBuilder.GeneratedCodeAttribute}}
-                  public static class SourceRecordToDestinationRecordMapToExtensions
+                  public static partial class SourceRecordToDestinationRecordMapToExtensions
                   {
                       [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceRecord")]
                       public static DestinationRecord? MapToDestinationRecord(this SourceRecord? sourceRecord)

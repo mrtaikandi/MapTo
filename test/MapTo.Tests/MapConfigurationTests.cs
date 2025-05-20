@@ -221,7 +221,7 @@ public class MapConfigurationTests(ITestOutputHelper output)
         var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
-            public static class SourceClassToTargetClassMapToExtensions
+            public static partial class SourceClassToTargetClassMapToExtensions
             {
                 [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                 public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
@@ -277,7 +277,7 @@ public class MapConfigurationTests(ITestOutputHelper output)
         var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
-            public static class SourceClassToTargetClassMapToExtensions
+            public static partial class SourceClassToTargetClassMapToExtensions
             {
                 [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                 public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
@@ -335,7 +335,7 @@ public class MapConfigurationTests(ITestOutputHelper output)
         var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
-            public static class SourceClassToTargetClassMapToExtensions
+            public static partial class SourceClassToTargetClassMapToExtensions
             {
                 [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                 public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
@@ -399,7 +399,7 @@ public class MapConfigurationTests(ITestOutputHelper output)
         var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
-            public static class SourceClassToTargetClassMapToExtensions
+            public static partial class SourceClassToTargetClassMapToExtensions
             {
                 [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                 public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
@@ -455,7 +455,7 @@ public class MapConfigurationTests(ITestOutputHelper output)
         var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
-            public static class SourceClassToTargetClassMapToExtensions
+            public static partial class SourceClassToTargetClassMapToExtensions
             {
                 [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                 public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
@@ -509,7 +509,7 @@ public class MapConfigurationTests(ITestOutputHelper output)
         var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
-            public static class SourceClassToTargetClassMapToExtensions
+            public static partial class SourceClassToTargetClassMapToExtensions
             {
                 [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                 public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
@@ -562,7 +562,7 @@ public class MapConfigurationTests(ITestOutputHelper output)
         var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
         extensionClass.ShouldContain(
             """
-            public static class SourceClassToTargetClassMapToExtensions
+            public static partial class SourceClassToTargetClassMapToExtensions
             {
                 [return: global::System.Diagnostics.CodeAnalysis.NotNullIfNotNull("sourceClass")]
                 public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)

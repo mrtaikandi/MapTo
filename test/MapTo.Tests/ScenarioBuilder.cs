@@ -430,7 +430,7 @@ internal static class ScenarioBuilder
     private static string SimpleExpectedExtensionClassThatMapsIdAndNameProperties(ITestSourceBuilder builder) => builder.Options.SupportNullReferenceTypes
         ? $$"""
             {{GeneratedCodeAttribute}}
-            public static class SourceClassToTargetClassMapToExtensions
+            public static partial class SourceClassToTargetClassMapToExtensions
             {
                 [return: {{NotNullIfNotNull}}("sourceClass")]
                 public static TargetClass? MapToTargetClass(this SourceClass? sourceClass)
@@ -450,7 +450,7 @@ internal static class ScenarioBuilder
             """
         : $$"""
             {{GeneratedCodeAttribute}}
-            public static class SourceClassToTargetClassMapToExtensions
+            public static partial class SourceClassToTargetClassMapToExtensions
             {
                 [return: {{NotNullIfNotNull}}("sourceClass")]
                 public static TargetClass MapToTargetClass([{{AllowNull}}] this SourceClass sourceClass)
