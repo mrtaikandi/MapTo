@@ -8,7 +8,7 @@ MapTo is a library that programmatically generates the necessary code to map one
 
 ## Installation
 ```
-dotnet add package MapTo --prerelease
+dotnet add package MapTo
 ```
 
 ## Usage
