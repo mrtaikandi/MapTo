@@ -1,4 +1,6 @@
 ﻿using MapTo.Mappings;
+using static MapTo.NullHandling;
+using static Microsoft.CodeAnalysis.NullableAnnotation;
 
 namespace MapTo.Generators.Properties;
 
@@ -53,6 +55,14 @@ internal sealed class TypeConverterPropertyMappingGenerator : PropertyMappingGen
     private static CodeWriter Map(CodeWriter writer, PropertyMapping property, string parameterName, string? referenceHandlerName)
     {
         var typeConverter = property.TypeConverter;
+        var isPrimitive = property.SourceType.ElementTypeIsPrimitive && property.Type.ElementTypeIsPrimitive;
+        var parameter = property switch
+        {
+            { NullHandling: SetNull } => parameterName,
+            { NullHandling: Auto, SourceType.NullableAnnotation: NotAnnotated } => parameterName,
+            { SourceType.IsNullable: true } => $"{parameterName}?",
+            _ => parameterName
+        };
 
         return typeConverter switch
         {
@@ -60,6 +70,7 @@ internal sealed class TypeConverterPropertyMappingGenerator : PropertyMappingGen
                 .Write(typeConverter.MethodFullName).Write("(").Write(parameterName).Write(", ").Write(typeConverter.Parameter).Write(")"),
             { HasParameter: false, IsMapToExtensionMethod: false, EnumMapping: { IsNull: false, Strategy: EnumMappingStrategy.ByValue } } => writer
                 .Write("(").Write(property.TypeName).Write(")").Write(parameterName),
+            { IsMapToExtensionMethod: false, Explicit: false } when isPrimitive => writer.Write(parameter).Write(".").Write(property.TypeConverter.Type.EnumerableType.ToLinqSourceCodeString()),
             { HasParameter: false, ReferenceHandling: false } => writer
                 .Write(typeConverter.MethodFullName).Write("(").Write(parameterName).Write(")"),
             { HasParameter: false, ReferenceHandling: true } => writer

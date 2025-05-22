@@ -21,14 +21,26 @@ internal class EnumerableTypeConverterResolver : ITypeConverterResolver
             return DiagnosticsFactory.SuitableMappingTypeInNestedPropertyNotFoundError(property, property.Type);
         }
 
+        TypeMapping mappedSourcePropertyType;
         var typeSymbol = enumerableTypeSymbol.TypeArguments.First();
         var mapFromAttribute = typeSymbol.ToMapFromAttributeMapping(context);
-        if (mapFromAttribute is null)
+
+        if (mapFromAttribute?.SourceType is not null)
         {
-            return DiagnosticsFactory.SuitableMappingTypeInNestedPropertyNotFoundError(property, property.Type);
+            mappedSourcePropertyType = mapFromAttribute.Value.SourceType;
+        }
+        else
+        {
+            var elementType = typeSymbol.GetElementType();
+            if (elementType is null || !elementType.IsPrimitiveType())
+            {
+                return DiagnosticsFactory.SuitableMappingTypeInNestedPropertyNotFoundError(property, property.Type);
+            }
+
+            mapFromAttribute = elementType.ToMapFromAttributeMapping(context);
+            mappedSourcePropertyType = mapFromAttribute?.SourceType ?? elementType.ToTypeMapping();
         }
 
-        var mappedSourcePropertyType = mapFromAttribute.Value.SourceType;
         var propertyTypeName = typeSymbol.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
         var methodPrefix = context.CodeGeneratorOptions.MapMethodPrefix;
 
@@ -38,8 +50,7 @@ internal class EnumerableTypeConverterResolver : ITypeConverterResolver
                 MethodName: mappedSourcePropertyType.IsPrimitive ? $"{methodPrefix}{mappedSourcePropertyType.Name}" : $"{methodPrefix}{propertyTypeName}",
                 ReturnType: property.Type.ToTypeMapping()),
             Explicit: false,
-            Parameter: null,
-            IsMapToExtensionMethod: true,
+            IsMapToExtensionMethod: mapFromAttribute is not null,
             ReferenceHandling: context.CodeGeneratorOptions.ReferenceHandling switch
             {
                 ReferenceHandling.Disabled => false,
