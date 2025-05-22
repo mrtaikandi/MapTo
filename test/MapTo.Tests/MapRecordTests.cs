@@ -273,15 +273,12 @@ public class MapRecordTests
                         return null;
                     }
 
-                    var target = new ClientAccess
+                    return new ClientAccess
                     {
-                        ClientId = clientId
+                        ClientId = clientId,
+                        ProjectId = clientAccessRequest.ProjectId,
+                        TenantId = clientAccessRequest.TenantId
                     };
-
-                    target.ProjectId = clientAccessRequest.ProjectId;
-                    target.TenantId = clientAccessRequest.TenantId;
-
-                    return target;
                 }
                 """);
     }

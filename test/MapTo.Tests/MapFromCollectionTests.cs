@@ -76,7 +76,8 @@ public class MapFromCollectionTests
         diagnostics.ShouldBeSuccessful();
         compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.ManagerModel.g.cs")
             .GetClassDeclaration("ManagerToManagerModelMapToExtensions")
-            .ShouldContain($"Employees = manager.Employees?.Select<global::MapTo.Tests.Employee, global::MapTo.Tests.EmployeeModel>(global::MapTo.Tests.EmployeeToEmployeeModelMapToExtensions.MapToEmployeeModel).{expectedLinqMethod}()");
+            .ShouldContain(
+                $"Employees = manager.Employees?.Select<global::MapTo.Tests.Employee, global::MapTo.Tests.EmployeeModel>(global::MapTo.Tests.EmployeeToEmployeeModelMapToExtensions.MapToEmployeeModel).{expectedLinqMethod}()");
     }
 
     [Theory]
@@ -199,7 +200,9 @@ public class MapFromCollectionTests
         // Assert
         diagnostics.ShouldBeSuccessful();
 
-        var extensionClass = compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.AlbumViewModel.g.cs").GetClassDeclaration("AlbumToAlbumViewModelMapToExtensions").ShouldNotBeNull();
+        var extensionClass = compilation.GetGeneratedFileSyntaxTree("MapTo.Tests.AlbumViewModel.g.cs").GetClassDeclaration("AlbumToAlbumViewModelMapToExtensions")
+            .ShouldNotBeNull();
+
         extensionClass.ShouldContain("target.Artists = MapToArtistViewModelArray(album.Artists, referenceHandler);");
 
         extensionClass.ShouldContain(
@@ -570,5 +573,103 @@ public class MapFromCollectionTests
 
             return target;
             """);
+    }
+
+    [Theory]
+    [InlineData("IEnumerable<int>", "List<int>", "ToList")]
+    [InlineData("IEnumerable<int>", "ICollection<int>", "ToList")]
+    [InlineData("IEnumerable<int>", "IReadOnlyCollection<int>", "ToArray")]
+    [InlineData("IEnumerable<int>", "IReadOnlyList<int>", "ToList")]
+    [InlineData("IEnumerable<int>", "int[]", "ToArray")]
+    [InlineData("IEnumerable<int>", "IList<int>", "ToList")]
+    [InlineData("IEnumerable<int>", "IEnumerable<int>", "")]
+    [InlineData("IEnumerable<Guid>", "ICollection<Guid>", "ToList ")]
+    public void When_MappedPropertyIsEnumerableOfPrimitiveType_Should_MapItemsUsingLinq(string sourceCollectionType, string targetCollectionType, string expectedLinqMethod)
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        var globalUsings = new[] { "System.Collections.Generic", "System.Linq", "System" };
+
+        var sourceFile = builder.AddFile(usings: globalUsings);
+        sourceFile.AddClass(Accessibility.Public, "SourceClass")
+            .WithProperty<int>("Prop1")
+            .WithProperty<int>("Prop2")
+            .WithProperty(sourceCollectionType, "Prop3")
+            .WithProperty(sourceCollectionType, "Prop4");
+
+        var targetFile = builder.AddFile(usings: globalUsings);
+        targetFile.AddClass(Accessibility.Public, "TargetClass", partial: true, attributes: "[MapFrom(typeof(SourceClass))]")
+            .WithProperty<int>("Prop1")
+            .WithProperty<int>("Prop2")
+            .WithProperty(targetCollectionType, "Prop3")
+            .WithProperty(targetCollectionType, "Prop4");
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+        compilation.Dump(_output);
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+
+        var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
+        if (string.IsNullOrWhiteSpace(expectedLinqMethod))
+        {
+            extensionClass.ShouldContain("Prop3 = sourceClass.Prop3;");
+            extensionClass.ShouldContain("Prop4 = sourceClass.Prop4;");
+        }
+        else
+        {
+            extensionClass.ShouldContain($"Prop3 = sourceClass.Prop3?.{expectedLinqMethod}()");
+            extensionClass.ShouldContain($"Prop4 = sourceClass.Prop4?.{expectedLinqMethod}()");
+        }
+    }
+
+    [Theory]
+    [InlineData("IEnumerable<int>", "List<int>", "ToList")]
+    [InlineData("IEnumerable<int>", "ICollection<int>", "ToList")]
+    [InlineData("IEnumerable<int>", "IReadOnlyCollection<int>", "ToArray")]
+    [InlineData("IEnumerable<int>", "IReadOnlyList<int>", "ToList")]
+    [InlineData("IEnumerable<int>", "int[]", "ToArray")]
+    [InlineData("IEnumerable<int>", "IList<int>", "ToList")]
+    [InlineData("IEnumerable<int>", "IEnumerable<int>", "")]
+    [InlineData("IEnumerable<Guid>", "ICollection<Guid>", "ToList ")]
+    public void When_UsingMapAttribute_MappedPropertyIsEnumerableOfPrimitiveType_Should_MapItemsUsingLinq(
+        string sourceCollectionType,
+        string targetCollectionType,
+        string expectedLinqMethod)
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        var globalUsings = new[] { "System.Collections.Generic", "System.Linq", "System" };
+
+        var sourceFile = builder.AddFile(usings: globalUsings);
+        sourceFile.WithBody(
+            $"""
+            [Map<SourceClass, TargetClass>]
+            public sealed record SourceClass({sourceCollectionType} Prop4);
+            """);
+
+        var targetFile = builder.AddFile(usings: globalUsings);
+        targetFile.WithBody(
+            $"""
+            public sealed record TargetClass({targetCollectionType} Prop4);
+            """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+        compilation.Dump(_output);
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+
+        var extensionClass = compilation.GetClassDeclaration("SourceClassToTargetClassMapToExtensions").ShouldNotBeNull();
+        if (string.IsNullOrWhiteSpace(expectedLinqMethod))
+        {
+            extensionClass.ShouldContain("new TargetClass(sourceClass.Prop4)");
+        }
+        else
+        {
+            extensionClass.ShouldContain($"new TargetClass(sourceClass.Prop4?.{expectedLinqMethod}())");
+        }
     }
 }

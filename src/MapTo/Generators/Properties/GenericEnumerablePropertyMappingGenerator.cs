@@ -60,7 +60,7 @@ internal sealed class GenericEnumerablePropertyMappingGenerator : PropertyMappin
                 break;
 
             default:
-                writer.Write($"{targetInstanceName}.{property.Name} = ").Wrap(Map(writer, property, parameterName, refHandler)).Write(";");
+                writer.Write($"{targetInstanceName}.{property.Name} = ").Wrap(Map(writer, property, parameterName, refHandler)).WriteLine(";");
                 break;
         }
 
@@ -72,14 +72,16 @@ internal sealed class GenericEnumerablePropertyMappingGenerator : PropertyMappin
         var p = property.ParameterName[0];
         var converterMethod = property.TypeConverter.MethodFullName;
         var linqMethod = property.TypeConverter.Type.EnumerableType.ToLinqSourceCodeString();
+        var isPrimitive = property.SourceType.ElementTypeIsPrimitive && property.Type.ElementTypeIsPrimitive;
 
         return property switch
         {
             { TypeConverter.HasParameter: true } =>
                 writer.Write(parameterName).Write(".Select(").Write(p).Write(" => ").Write(converterMethod).Write("(").Write(p).Write(")).").Write(linqMethod),
-            { TypeConverter.ReferenceHandling: true } => writer
-                .Write(parameterName).Write(".Select(").Write(p).Write(" => ")
-                .Write(converterMethod).Write("(").Write(p).Write(", ").Write(refHandler).Write(")).").Write(linqMethod),
+            { TypeConverter.ReferenceHandling: true } =>
+                writer.Write(parameterName).Write(".Select(").Write(p).Write(" => ").Write(converterMethod).Write("(").Write(p).Write(", ").Write(refHandler).Write(")).")
+                    .Write(linqMethod),
+            { TypeConverter: { IsMapToExtensionMethod: false, Explicit: false } } when isPrimitive => writer.Write(parameterName).Write(".").Write(linqMethod),
             _ => writer.Write(parameterName).Write($".Select<{property.SourceType.ElementTypeName}, {property.Type.ElementTypeName}>({converterMethod}).{linqMethod}"),
         };
     }

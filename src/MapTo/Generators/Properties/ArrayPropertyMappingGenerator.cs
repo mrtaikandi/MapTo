@@ -172,7 +172,7 @@ internal sealed class ArrayPropertyMappingGenerator : PropertyMappingGenerator
             default:
                 writer.WriteIf(targetInstanceName is not null, $"{targetInstanceName}.{property.Name} = ")
                     .Wrap(Map(writer, property, parameterName, refHandler))
-                    .WriteIf(property.InitializationMode is PropertyInitializationMode.Setter, ";");
+                    .WriteLineIf(property.InitializationMode is PropertyInitializationMode.Setter, ";");
                 break;
         }
 
@@ -183,6 +183,7 @@ internal sealed class ArrayPropertyMappingGenerator : PropertyMappingGenerator
             var p = property.ParameterName[0];
             var converterMethod = property.TypeConverter.MethodFullName;
             var linqMethod = property.TypeConverter.Type.EnumerableType.ToLinqSourceCodeString();
+            var isPrimitive = property.SourceType.ElementTypeIsPrimitive && property.Type.ElementTypeIsPrimitive;
             var parameter = property switch
             {
                 { NullHandling: SetNull } => parameterName,
@@ -199,6 +200,7 @@ internal sealed class ArrayPropertyMappingGenerator : PropertyMappingGenerator
                 { ReferenceHandling: true } => writer
                     .Write(parameter).Write(".Select(").Write(p).Write(" => ")
                     .Write(converterMethod).Write("(").Write(p).Write(", ").Write(refHandler).Write(")).").Write(linqMethod),
+                { IsMapToExtensionMethod: false, Explicit: false } when isPrimitive => writer.Write(parameter).Write(".").Write(linqMethod),
                 _ => writer.Write(parameter).Write(".Select(").Write(converterMethod).Write(").").Write(linqMethod)
             };
         }
