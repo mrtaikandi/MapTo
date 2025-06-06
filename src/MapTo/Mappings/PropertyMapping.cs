@@ -187,7 +187,7 @@ internal static class PropertyMappingFactory
         {
             null => PropertyInitializationMode.Constructor,
             { IsInitOnly: true } => PropertyInitializationMode.ObjectInitializer,
-            { IsInitOnly: false } when property.Type.IsPrimitiveType(true) => PropertyInitializationMode.ObjectInitializer,
+            { IsInitOnly: false } when property.Type.IsPrimitiveType(true) || property.IsRequired => PropertyInitializationMode.ObjectInitializer,
             _ => PropertyInitializationMode.Setter
         };
     }

@@ -49,6 +49,55 @@ public class MapTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public void When_MappingRequiredPropertyWithSetter_Should_UseObjectInitializer()
+    {
+        // Arrange
+        var builder = new TestSourceBuilder();
+        builder.AddEmptyFile().WithBody(
+            """
+            namespace Store;
+
+            public class ConfigurationEntryValue
+            {
+                public required object? Value { get; set; }
+            }
+            """);
+
+        builder.AddEmptyFile().WithBody(
+            """
+            using MapTo;
+            namespace Api;
+
+            [Map<ConfigurationEntryValue, Store.ConfigurationEntryValue>]
+            public class ConfigurationEntryValue
+            {
+                public required object? Value { get; set; }
+            }
+            """);
+
+        // Act
+        var (compilation, diagnostics) = builder.Compile();
+        compilation.Dump(output);
+
+        // Assert
+        diagnostics.ShouldBeSuccessful();
+        compilation
+            .GetClassDeclaration("ConfigurationEntryValueToConfigurationEntryValueMapToExtensions")
+            .ShouldContain(
+                """
+                if (configurationEntryValue is null)
+                {
+                    return null;
+                }
+
+                return new ConfigurationEntryValue
+                {
+                    Value = configurationEntryValue.Value
+                };
+                """);
+    }
+
+    [Fact]
     public void When_MapAttributeIsUsedAndTargetHasMultipleConstructors_Should_MapSourceAndTarget()
     {
         // Arrange
